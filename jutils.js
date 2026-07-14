@@ -1916,7 +1916,6 @@ Object.defineProperty(jUtils.fn, key, {
    enumerable: true
 });   
 }
-sam
 
 /**
  * Computes a value from the given input.
