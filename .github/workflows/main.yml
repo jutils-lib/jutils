@@ -6,9 +6,9 @@ on:
       - main
     paths:
       - "core.js"
+      - "util.js"
       - "dom.js"
       - "anim.js"
-      - "util.js"
 
 permissions:
   contents: write
@@ -34,13 +34,13 @@ jobs:
       - name: Check source files
         run: |
           test -f core.js
+          test -f util.js
           test -f dom.js
           test -f anim.js
-          test -f util.js
 
       - name: Build jutils.js
         run: |
-          cat core.js dom.js anim.js util.js > jutils.js
+          cat core.js util.js dom.js anim.js > jutils.js
 
       - name: Build jutils.min.js
         run: |
