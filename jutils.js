@@ -2057,6 +2057,7 @@ const stack = String(err.stack).split('at')
   if(item.includes('util.js')) return false;
   if(item.includes('dom.js')) return false;
   if(item.includes('anim.js')) return false;
+  if(item.includes('jutils.js')) return false;
   if(item.includes('http')) return true;
 }).shift();
 
