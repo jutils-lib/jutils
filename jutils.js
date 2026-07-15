@@ -2053,7 +2053,7 @@ if(info instanceof Error) {
 // Split the stack trace into parts and ignore internal utility frames.
 const stack = String(err.stack).split('at')
 .filter(item => {
- return /\S+/.test(String(item).trim()) && item.includes('http');
+ console.log(item);
 }).shift();
 
 // Break the selected stack frame into colon-separated parts.
