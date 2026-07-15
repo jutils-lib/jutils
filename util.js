@@ -136,7 +136,6 @@ if(info instanceof Error) {
 const stack = String(err.stack).split('at')
 .filter(item => {
   if(item.includes('core.js')) return false;
-  if(item.includes('util.js')) return false;
   if(item.includes('dom.js')) return false;
   if(item.includes('anim.js')) return false;
   if(item.includes('jutils.js')) return false;
