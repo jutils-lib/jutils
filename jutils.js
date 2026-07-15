@@ -2053,7 +2053,6 @@ if(info instanceof Error) {
 // Split the stack trace into parts and ignore internal utility frames.
 const stack = String(err.stack).split('at')
 .filter(item => {
-  console.log(item);
   if(item.includes('jutils-lib') || item.includes('jutils.js')) return false;
   if(item.includes('http')) return true;
 }).shift();
