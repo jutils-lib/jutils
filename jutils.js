@@ -2044,7 +2044,7 @@ if(info instanceof Error) {
  info = info.message;   
 } 
 
- throw new type(normalized); 
+ throw new type(info); 
    } catch(err) {     
 
 // Split the stack trace into parts and ignore internal utility frames.
