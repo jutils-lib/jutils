@@ -2044,20 +2044,19 @@ if(info instanceof Error) {
  info = info.message;   
 } 
 
- const normalized = String(info).replace(/(http)/g, (m) => {
- return `(${m.slice(0, 1)})${m.slice(1)}`
- });
  throw new type(normalized); 
    } catch(err) {     
 
 // Split the stack trace into parts and ignore internal utility frames.
-let stack = String(err.stack).split('at');
+const stack = String(err.stack).split('at');
 
-if(stack[stack.length - 1].includes('HTML')) stack = stack[stack.length - 2];
-    
+let n = 1;
+
+if(stack[stack.length - 1].includes('HTML')) n = 2;
+
 // Break the selected stack frame into colon-separated parts.
-const part = String(stack).split(':');
-
+const part = String(stack[stack.length - n]).split(':');
+    
 // Helper for reading values from the end of the stack frame parts.
 const fn = (n) => part[part.length - n] ?? '';
 
