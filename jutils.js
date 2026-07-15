@@ -2053,6 +2053,7 @@ if(info instanceof Error) {
 // Split the stack trace into parts and ignore internal utility frames.
 const stack = String(err.stack).split('at')
 .filter(item => {
+  console.log(item);
   if(item.includes('core.js')) return false;
   if(item.includes('dom.js')) return false;
   if(item.includes('anim.js')) return false;
