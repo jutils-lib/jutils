@@ -133,11 +133,8 @@ if(info instanceof Error) {
    } catch(err) {     
 
 // Split the stack trace into parts and ignore internal utility frames.
-const stack = String(err.stack).split('at')
-.filter(item => {
- console.log(item);
-}).shift();
-
+const stack = String(err.stack).split('at').pop();
+    
 // Break the selected stack frame into colon-separated parts.
 const part = String(stack).split(':');
 
