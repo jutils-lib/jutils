@@ -2054,8 +2054,7 @@ if(info instanceof Error) {
 const stack = String(err.stack).split('at')
 .filter(item => {
   console.log(item);
-  if(item.includes('jutils-lib')) return false;
-  if(item.includes('jutils.js')) return false;
+  if(item.includes('jutils-lib') || item.includes('jutils.js')) return false;
   if(item.includes('http')) return true;
 }).shift();
 
