@@ -126,19 +126,19 @@ if(info instanceof Error) {
  info = info.message;   
 } 
 
- throw new type(info); 
+const normalized = String(info).replace(/(http)/g, (m) => {
+ return `(${m.slice(0, 1)})${m.slice(1)}`
+ }); 
+throw new type(normalized); 
    } catch(err) {     
 
 // Split the stack trace into parts and ignore internal utility frames.
-const stack = String(err.stack).split('at');
+const stack = String(err.stack).split('at').filter(item => item.includes('http'));
 
-let n = 1;
-
-if(stack[stack.length - 1].includes('HTML')) n = 2;
-
+const config = (input) => {
 // Break the selected stack frame into colon-separated parts.
-const part = String(stack[stack.length - n]).split(':');
-    
+const part = String(input).split(':');
+
 // Helper for reading values from the end of the stack frame parts.
 const fn = (n) => part[part.length - n] ?? '';
 
@@ -147,9 +147,25 @@ const line = fn(2) || 'unknown';
 const column = fn(1).replace(')', '');
 const url = fn(3).split('/').pop() || 'unknown.file';
 
+return { url, line, column };
+}
+
+const errorInfo = config(stack[stack.length - 2]);
+
+const callerInfo = config(stack[stack.length - 1]);
+
+
 // Build a more informative error message with source location details.
-const errDetails =
-      `${err.message}\n→ line ${line}, column ${column} in ${url}`; 
+const errDetails = (() => {
+
+let errorLocation = `\nError at line ${errorInfo.line}, column ${errorInfo.column} in ${errorInfo.url}\n`;
+
+if(stack.length <= 2) errorLocation = '';
+
+return `${err.message}
+${errorLocation}
+Called from line ${callerInfo.line}, column ${callerInfo.column} in ${callerInfo.url}`;
+})();
 
 err.message = errDetails;
 
