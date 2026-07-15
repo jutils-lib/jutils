@@ -2051,11 +2051,10 @@ if(info instanceof Error) {
    } catch(err) {     
 
 // Split the stack trace into parts and ignore internal utility frames.
-const stack = String(err.stack).split('at').filter(item => {
-  console.log(item);
-  return item.includes('http');
-})[1];
-  console.log(stack);
+let stack = String(err.stack).split('at');
+
+if(stack[stack.length - 1].includes('HTML')) stack = stack[stack.length - 2];
+    
 // Break the selected stack frame into colon-separated parts.
 const part = String(stack).split(':');
 
