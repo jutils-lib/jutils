@@ -2053,8 +2053,10 @@ if(info instanceof Error) {
 // Split the stack trace into parts and ignore internal utility frames.
 const stack = String(err.stack).split('at')
 .filter(item => {
-  if(item.includes('utils.js')) return false;
+  if(item.includes('core.js')) return false;
+  if(item.includes('util.js')) return false;
   if(item.includes('dom.js')) return false;
+  if(item.includes('anim.js')) return false;
   if(item.includes('http')) return true;
 }).shift();
 
@@ -2393,7 +2395,7 @@ return input[Math.floor(Math.random() * input.length)];
  */
 $.randToken = function (length = 8, options = {}) {
 // Read token settings with defaults.
-  const { custom = "", merge = true, include = ['letters'] } = options;
+  const { custom = "", merge = true, include = ['letters'] } = Object(options);
 
 // Predefined character sets that can be combined to build the token pool.  
 const charset = {
@@ -2724,7 +2726,7 @@ $.redirect = function (url, options = {}) {
 if(typeof url !== 'string') $.error(`${url} is not a string at argument 1`);
 
 // Read redirect options with a default for replace behavior.  
-const { delay, replace = false } = options;
+const { delay, replace = false } = Object(options);
 
   // Perform the actual navigation, either by replacing the current history
   // entry or by assigning a new location.  
@@ -2999,7 +3001,7 @@ const {
  timeout, 
  delay, 
  cache = false
-} = options;
+} = Object(options);
 
 // Support delayed execution when a numeric delay is provided.  
 if($.isNumeric(delay)) {
@@ -3238,7 +3240,7 @@ if(!$.isNumeric(n)) $.error(`${n} is not a numeric value at argument 1`);
  */
 $.extend = function (target, ...args) {
 if(!$.isObject(target)) $.error(`${target} is not an object at argument 1`);
-  return Object.assign(target, ...args);   
+return Object.assign(target, ...args);   
 }
 
 
@@ -3259,7 +3261,7 @@ if(!$.isObject(target)) $.error(`${target} is not an object at argument 1`);
  * - $.merge(1, 2, 3) -> [1, 2, 3]
  */
 $.merge = function (target, ...args) {
-  return [].concat(target, ...args);
+ return [].concat(target, ...args);
 }
 
 
@@ -3332,7 +3334,7 @@ str = String(str);
 
 // Find the first occurrence of the match.
 const index = str.indexOf(match);
-console.log(index);
+
 // If the match does not exist, append the value to the end.
 if(index === -1) return str + value;
 
@@ -3425,7 +3427,7 @@ $.isEmail = function (email) {
  * - $.navigate("/profile", "Profile", { replace: true, state: { from: "home" } })
  */
 $.navigate = function (url, title = '', options = {}) {
-  const { replace = false, state = {} } = options;
+  const { replace = false, state = {} } = Object(options);
   
 document.title = title;
 
@@ -3455,7 +3457,7 @@ window.history[method](state, title, url);
  */
 $.isPlainObject = function (input) {
 if(!$.isObject(input)) return false;
-  return input.constructor === Object;
+ return input.constructor === Object;
 }
 
 
@@ -3572,36 +3574,59 @@ return allPromises;
 
 
 /**
- * Creates a deep clone of a value.
+ * Creates a deep clone of the provided value.
  *
- * This helper uses `structuredClone(...)` when available, which is the preferred
- * modern approach for deep-copying many built-in data types.
+ * DOM nodes are cloned using `cloneNode(true)`, arrays are recursively cloned,
+ * plain objects use the native `structuredClone()` API, and class instances
+ * preserve their prototype while recursively cloning their own properties.
  *
- * Fallback behavior:
- * - If `structuredClone` is not available, it falls back to
- *   `JSON.parse(JSON.stringify(input))`.
- *
- * Notes:
- * - The JSON fallback only works well for JSON-safe data.
- * - It will lose or alter values such as:
- *   - functions
- *   - `undefined`
- *   - `Symbol`
- *   - `Date` objects
- *   - `Map` / `Set`
- *   - circular references
- * - `structuredClone` is more capable, but still cannot clone everything
- *   (for example, functions are not cloneable).
- *
- * Example:
- * - $.clone({ a: 1, b: { c: 2 } })
+ * @param {*} value - The value to clone.
+ * @returns {*} A deep clone of the provided value.
  */
-$.clone = function (input) {
- if(window.structuredClone) {  
-  return structuredClone(input);
- } else {
-  return JSON.parse(JSON.stringify(input));
- }
+$.clone = function (value) {
+     // Clone DOM nodes together with their descendants.
+    if (value instanceof Node && !(value instanceof Document)) {
+        return value.cloneNode(true);
+    }
+
+    // Recursively clone each array element.
+    if (Array.isArray(value)) {
+        return value.map(item => $.clone(item));
+    }
+
+    // Clone plain objects and class instances.
+    if (value && typeof value === 'object') {
+        try {
+
+// Use the native clone algorithm for plain objects.        
+  if (value.constructor === Object) {
+    return structuredClone(value);
+  }
+
+// Preserve the prototype when cloning class instances.
+const copy = Object.create(Object.getPrototypeOf(value));
+
+// Recursively clone each own property.
+for (const key in value) {
+    copy[key] = $.clone(value[key]);
+}
+
+return copy;
+        } catch {
+        
+    // Fallback recursive clone when the native API is unavailable.    
+            const result = {};
+
+            for (const key in value) {
+                result[key] = $.clone(value[key]);
+            }
+
+            return result;
+        }
+    }
+
+// Primitive values are immutable and returned directly.
+    return value;
 }
 
 
@@ -3683,51 +3708,31 @@ return Object.is(a, b);
 
 
 /**
- * Returns a new array containing only unique items from the provided arguments.
+ * Returns a new array containing only unique values from the provided arguments.
  *
- * This helper separates values into two broad groups:
- * - Primitive-like values, which are checked using `includes(...)`
- * - Reference values, which are checked using a JSON-string comparison approach
+ * Uniqueness is determined using `$.equals()`, allowing deep comparison of
+ * primitives, arrays, objects, and other supported values.
  *
- * Important behavior notes:
- * - All arguments are collected into a new result array.
- * - Primitive values are deduplicated with `Array.prototype.includes`.
- * - Reference values are deduplicated by comparing serialized forms.
- *
- * Limitations:
- * - The reference-value check is not a true deep-equality comparison.
- * - `JSON.stringify(referenceValues).includes(JSON.stringify(item))` can produce
- *   false positives because it searches inside a stringified array rather than
- *   comparing objects structurally.
- * - Property order affects `JSON.stringify(...)`.
- * - Circular references are not supported.
- * - `Node` instances are treated like primitive-like values by this logic path.
- *
- * Example:
- * - `$.unique(1, 2, 2, "a", "a")` -> `[1, 2, "a"]`
- * - `$.unique({ a: 1 }, { a: 1 })` -> may treat them as duplicates depending on
- *   serialization details
- *
- * @param {...any} args - Values to deduplicate.
- * @returns {Array} A new array containing unique values.
+ * @param {...*} args - Values to filter for uniqueness.
+ * @returns {Array<*>} A new array containing unique values.
  */
 $.unique = function (...args) {
-const result = [];
-const referenceValues = [];
+    const result = [];
 
-args.forEach(item => {
-// Treat non-object values and Node instances as direct values.   
-if(typeof item !== 'object' || item instanceof Node) {
-if(!result.includes(item)) result.push(item); 
-} else {
-// Compare reference values using serialized content.    
-if(!JSON.stringify(referenceValues).includes(JSON.stringify(item))) {
-referenceValues.push(item);
-result.push(item);
-}
-}
-}); 
-return result;
+// Skip values that already exist in the result.
+    outer:
+    for (const item of args) {
+        for (const existing of result) {
+            if ($.equals(item, existing)) {
+                continue outer;
+            }
+        }
+
+// Store the value if no duplicate was found.
+        result.push(item);
+    }
+
+    return result;
 }
 
 
@@ -3873,7 +3878,7 @@ return history.length;
    * @throws Will throw if `memory` is not one of the supported values.
    */
 obj.config = function (options = {}) {
-const { memory } = options;
+const { memory } = Object(options);
 if(!['storage', 'session'].includes(memory)) {
   $.error(`"${memory}" is not a valid memory value, expects ["storage", "session"]`);
 }
@@ -4456,7 +4461,7 @@ return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * @returns {string} The converted string.
  */
 $.toCamelCase = function (value, options = {}) {
-let { step = Infinity, separator = ['-', '_'], pascal = false } = options;
+let { step = Infinity, separator = ['-', '_'], pascal = false } = Object(options);
 
 let limit = 0;
 
@@ -4491,7 +4496,7 @@ return pascal ? result.slice(0, 1).toUpperCase() + result.slice(1) : result;
  * @returns {string} The converted string.
  */
 $.toKebabCase = function (value, options = {}) {
-let { step = Infinity, separator = ['([A-Z])'], pascal = false } = options;
+let { step = Infinity, separator = ['([A-Z])'], pascal = false } = Object(options);
 
 let limit = 0;
 
@@ -4702,16 +4707,12 @@ obj.add = {
 // Add values using deep comparison for object-like items  
  deep(...values) {
 const arr = [];
-const referenceValues = [];
 
 values.forEach(item => {
 if(typeof item !== 'object') {
 arr.push(item);
 } else {
-if(!JSON.stringify(referenceValues).includes(JSON.stringify(item))) {
-referenceValues.push(item);
-arr.push(item);
-}
+arr.push(...$.unique(...arr, item));
 }
 });
 arr.forEach(item => unique.add(item));
@@ -4729,7 +4730,10 @@ return this;
 obj.delete = {
 // Delete values using deep comparison for object-like items  
  deep(...values) {
-const items = Array.from(unique).filter(item => !JSON.stringify(values).includes(JSON.stringify(item)))
+const items = Array.from(unique).filter(item => {
+return values.some(v => !$.equals(v, item)); 
+});
+
 unique = new Set(items);
 return this;
  },
@@ -4748,7 +4752,7 @@ obj.has = {
 if(typeof value !== 'object') {
 return unique.has(value);      
 } else {
-return Array.from(unique).some(item => JSON.stringify(item) === JSON.stringify(value));
+return Array.from(unique).some(item => $.equals(item, value));
 } 
  },
  
@@ -4791,7 +4795,7 @@ return this;
  
 // Remove values that match a predicate function   
  where(fn) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function at argument 1`);
+if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 1`);
 
 const filtered = Array.from(unique).filter((...args) => {
   if(!fn(...args)) return true;
@@ -4831,7 +4835,7 @@ return obj;
  * @returns {Object} Timer controller object.
  */
 $.elapsed = function (callback, options = {}) {
-let { mode = 'timeout', period = Infinity } = options; 
+let { mode = 'timeout', period = Infinity } = Object(options); 
 
 // Validate the selected mode.
 if(!['timeout', 'interval'].includes(mode)) $.error(`${mode} is not a valid mode expects [timeout, interval]`);
@@ -5314,7 +5318,7 @@ obj.format = function (input = 'YYYY-MM-DD') {
 
 
 // Return a cloned Date object so external code cannot mutate the internal state.
-obj.toDate = function () {
+obj.value = function () {
  return new Date(now.getTime());
 }
 
@@ -5490,7 +5494,7 @@ step = 1,
 interval = 1000, 
 onTick = () => {}, 
 onComplete = () => {} 
-} = options; 
+} = Object(options); 
 
 // Validate callback arguments before starting the timer.
 if(typeof onTick !== 'function' || typeof onComplete !== 'function') $.error(`Either onTick or onComplete is not a function`);
@@ -5524,7 +5528,6 @@ onTick(from);
 if(from === to) onComplete();
 }, interval);
 }
-
 
 
 
@@ -5579,7 +5582,7 @@ const {
 modal = {}, 
 backdrop = {}, 
 content = {} 
-} = options;
+} = Object(options);
 
 // Validate that style groups are plain objects.   
 if(!$.isObject(modal) || !$.isObject(backdrop) || !$.isObject(content)) {
@@ -5715,7 +5718,7 @@ type = 'text',
 timeout, 
 closeOnBackdrop = true, 
 style = {}
-} = options;
+} = Object(options);
 
 // Choose the DOM property used to render content and button text.  
 let prop = 'textContent';     
@@ -5826,7 +5829,7 @@ const {
   timeout, 
   closeOnBackdrop = true,  
   style = {} 
-} = options;
+} = Object(options);
 
 let prop = 'textContent';     
 if(type === 'html') prop = 'innerHTML';
@@ -5939,7 +5942,7 @@ const {
   timeout,
   closeOnBackdrop = true, 
   style = {} 
-} = options;
+} = Object(options);
 
 let prop = 'textContent';     
 if(type === 'html') prop = 'innerHTML';
@@ -6075,7 +6078,7 @@ const {
   success = () => {},
   error = () => {},
   complete = () => {}
-} = options;
+} = Object(options);
 
 // If options.body is a function use it return value otherwise use as-is
  // Normalize body (supports function-based transformation)
@@ -6262,6 +6265,18 @@ for(const key of Object.keys($)){
 Object.defineProperty($, key, {
    writable: false,
    configurable: false,
-   enumerable: true
+   enumerable: true,
 });   
 }
+
+
+
+$ = new Proxy($, {
+  set(target, key, value) {
+   if(Object.keys(target).includes(key)) {
+    $.error(`Cannot overwrite existing property "${key}".`);
+   }
+   target[key] = value;
+   return true;
+  }
+});
