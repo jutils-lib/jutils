@@ -1807,9 +1807,9 @@ return this;
 
 
 
-jUtils.define = function (name, value) {
-if(Object.keys(jUtils.fn).includes(name)) {
-$.error(`Cannot define "${name}": method already exists.`);
+jUtils.define = function (key, value) {
+if(Object.keys(jUtils.fn).includes(key)) {
+$.error(`Cannot define "${key}": method already exists.`);
 }
 
 jUtils.fn[name] = value;
@@ -1824,3 +1824,15 @@ Object.defineProperty(jUtils.fn, key, {
    enumerable: true
 });   
 }
+
+
+
+jUtils.fn = new Proxy(jUtils.fn, {
+  set(target, key, value) {
+   if(Object.keys(target).includes(key)) {
+    $.error(`Cannot overwrite existing property "${key}".`);
+   }
+   target[key] = value;
+   return true;   
+  }
+});
