@@ -136,6 +136,11 @@ throw new type(normalized);
 const stack = String(err.stack).split('at').filter(item => item.includes('http'));
 
 const config = (input) => {
+
+if(input.includes('Object.set') || input.includes('jUtils.define')) {
+ return { hideErrorInfo: true };
+}
+
 // Break the selected stack frame into colon-separated parts.
 const part = String(input).split(':');
 
@@ -154,13 +159,14 @@ const errorInfo = config(stack[stack.length - 2]);
 
 const callerInfo = config(stack[stack.length - 1]);
 
-
 // Build a more informative error message with source location details.
 const errDetails = (() => {
 
 let errorLocation = `\nError at line ${errorInfo.line}, column ${errorInfo.column} in ${errorInfo.url}\n`;
 
-if(stack.length <= 2) errorLocation = '';
+if(stack.length <= 2 || 'hideErrorInfo' in errorInfo) {
+ errorLocation = '';
+}
 
 return `${err.message}
 ${errorLocation}
