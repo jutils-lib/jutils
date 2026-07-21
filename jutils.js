@@ -5530,20 +5530,23 @@ return new jUtils(result);
 
 
 /**
- * Checks whether any matched element satisfies the given selector, callback, or collection.
+ * Tests whether the matched elements satisfy a selector, predicate, or membership check.
  *
  * Behavior:
- * - If `input` is a string, tests elements with `el.matches(...)`.
- * - If `input` is a function, uses the callback result for each element.
- * - Otherwise, treats `input` as a jQuery-like/jUtils-like collection and checks whether
- *   any matched element exists in that collection.
+ * - If `input` is a string, supports special pseudo-selectors:
+ *   - `:visible`
+ *   - `:hidden`
+ *   - `:removed`
+ *   - `:checked`
+ *   - `:enabled`
+ *   - `:disabled`
+ *   - `:selected`
+ * - Otherwise, falls back to `el.matches(input)` for standard selectors.
+ * - If `input` is a function, calls it with `(el, index, arr)`.
+ * - For any other supported input, checks whether the element exists in the resolved collection.
  *
- * Notes:
- * - The check is performed using `this.get(..., 'some')`, so the result is truthy if at least one element matches.
- * - This method does not modify the matched elements.
- *
- * @param {string|Function|*} input - Selector, predicate, or collection to test against.
- * @returns {boolean} `true` if any element matches; otherwise `false`.
+ * @param {string|Function|*} input - Selector, predicate, or collection-like input.
+ * @returns {boolean} True if at least one matched element satisfies the condition.
  */
 jUtils.fn.is = function (input) {
 return this.get((el, index, arr) => {
@@ -5595,7 +5598,9 @@ return $(input).elements.some(item => item === el);
  * @returns {jUtils} A new `jUtils` instance containing the mapped result.
  */
 jUtils.fn.map = function (callback) {
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
+if(typeof callback !== 'function') {
+ $.error(`${callback} is not a function at argument 1`);
+}
 
 // Map the collection and wrap the result in a new instance.
 const result = this.elements.map(callback);
@@ -5604,6 +5609,20 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the child elements of each matched element, or filters them by input.
+ *
+ * Behavior:
+ * - With no arguments, returns all direct child elements.
+ * - With a number, returns the child at that index.
+ * - Supports negative indexes via `$.pos(...).loose(...)`.
+ * - With a string selector, returns children matching the selector.
+ * - With a function, filters children through the predicate.
+ * - With any other supported input, returns children that are included in the resolved set.
+ *
+ * @param {string|number|Function|*} [input] - Optional filter, index, or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.child = function (input) {
 const result = this.get(el => {
 const children = Array.from(el.children);   
@@ -5611,7 +5630,7 @@ const children = Array.from(el.children);
 if(arguments.length === 0) return children;
 
 if(typeof input === 'number') {
-// Support negative index 
+// Support negative index. 
 const len = $.pos(children.length).loose(input);
 return children[len];
 }
@@ -5628,6 +5647,18 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the parent element of each matched element, or filters it by input.
+ *
+ * Behavior:
+ * - With no arguments, returns the direct parent element.
+ * - With a string selector, returns the parent only if it matches the selector.
+ * - With a function, filters the parent through the predicate.
+ * - With any other supported input, returns the parent if it matches the resolved elements.
+ *
+ * @param {string|Function|*} [input] - Optional filter or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.parent = function (input) {
 const result = this.get(el => {
 const parent = el.parentElement;    
@@ -5645,8 +5676,18 @@ return new jUtils(result);
 }
 
 
-
-// Find a child element inside a parent 
+ 
+/**
+ * Finds descendant elements matching the given selector or input.
+ *
+ * Behavior:
+ * - If `selector` is a string, returns all descendant elements matching it.
+ * - Otherwise, resolves `selector` through `$()` and returns the resolved nodes
+ *   that are contained within each matched element.
+ *
+ * @param {string|*} selector - CSS selector or supported jUtils input.
+ * @returns {jUtils} A new jUtils instance containing the matched descendants.
+ */
 jUtils.fn.find = function (selector) {
 const result = this.get(el => {
 if(typeof selector === 'string') {
@@ -5663,7 +5704,18 @@ return new jUtils(result);
 
 
 
-// If parent/target has children, replace/return the parent/target 
+/**
+ * Filters the matched elements to those that contain the given selector or input.
+ *
+ * Behavior:
+ * - If `selector` is a string, keeps elements that contain at least one descendant
+ *   matching that selector.
+ * - Otherwise, resolves `selector` through `$()` and keeps elements that contain
+ *   at least one of the resolved nodes.
+ *
+ * @param {string|*} selector - CSS selector or supported jUtils input.
+ * @returns {jUtils} A new jUtils instance containing only matching elements.
+ */
 jUtils.fn.has = function (selector) {
 const result = this.get(el => {
 if(typeof selector === 'string') {
@@ -5680,11 +5732,23 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the closest ancestor element that matches the given selector or input.
+ *
+ * Behavior:
+ * - Traverses upward through the DOM tree from each matched element.
+ * - If `selector` is a string, returns the first ancestor that matches it.
+ * - Otherwise, resolves `selector` through `$()` and checks for identity match.
+ * - Stops at the first match for each element.
+ *
+ * @param {string|*} selector - CSS selector or supported jUtils input.
+ * @returns {jUtils} A new jUtils instance containing the matched ancestors.
+ */
 jUtils.fn.closest = function (selector) {
 const result = [];
 
 this.set(el => {
-// Traverse upward through DOM tree  
+// Traverse upward through DOM tree.
 while(el) { 
 
 if (typeof selector === 'string') {
@@ -5701,7 +5765,7 @@ break;
 } 
 }
 
-// Move to parent element       
+// Move to parent element. 
 el = el.parentElement;    
 }    
 }); 
@@ -5711,15 +5775,39 @@ return new jUtils(result);
 
 
 
+/**
+ * Iterates over each matched element and executes a callback.
+ *
+ * Behavior:
+ * - Validates that `callback` is a function.
+ * - Calls `forEach` on the internal element collection.
+ * - Returns a new jUtils instance wrapping the result.
+ *
+ * @param {Function} callback - Function invoked for each element.
+ * @returns {jUtils} A new jUtils instance.
+ */
 jUtils.fn.each = function (callback) {
 if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
 
-const result = this.elements.forEach(callback);
-return new jUtils(result);    
+this.elements.forEach(callback);
+return this;    
 }
 
 
 
+/**
+ * Adds the matched elements from the provided selectors/inputs to the current collection.
+ *
+ * Behavior:
+ * - Accepts multiple arguments.
+ * - If an argument is a string, it is treated as a CSS selector.
+ * - Otherwise, it is resolved through `$()` and its elements are added.
+ * - Includes the current collection in the final result.
+ * - Removes duplicate elements before returning.
+ *
+ * @param {...*} args - Selectors or supported jUtils inputs to add.
+ * @returns {jUtils} A new jUtils instance containing the merged unique elements.
+ */
 jUtils.fn.add = function (...args) {
 let result = [];
 
@@ -5732,10 +5820,10 @@ result.push(...$(selector).elements);
 }  
 });
 
-// Add the current element in jUtils to the collection 
+// Add the current elements in jUtils to the collection.
 result.push(...this.elements);
 
-// Prevent duplicate, like an element appearing multiple times
+// Prevent duplicates, like an element appearing multiple times.
 result = $.unique(...result);
 
 return new jUtils(result);
@@ -5743,6 +5831,18 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the next sibling element of the first matched element, or filters it by input.
+ *
+ * Behavior:
+ * - With no arguments, returns the next element sibling.
+ * - With a string selector, returns the next sibling only if it matches the selector.
+ * - With a function, filters the next sibling through the predicate.
+ * - With any other supported input, returns the next sibling if it matches the resolved elements.
+ *
+ * @param {string|Function|*} [input] - Optional filter or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.next = function (input) {
 const result = this.get((el, index, arr) => {
 const sibling = el.nextElementSibling;
@@ -5761,6 +5861,18 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the previous sibling element of the first matched element, or filters it by input.
+ *
+ * Behavior:
+ * - With no arguments, returns the previous element sibling.
+ * - With a string selector, returns the previous sibling only if it matches the selector.
+ * - With a function, filters the previous sibling through the predicate.
+ * - With any other supported input, returns the previous sibling if it matches the resolved elements.
+ *
+ * @param {string|Function|*} [input] - Optional filter or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.prev = function (input) {
 const result = this.get((el, index, arr) => {
 const sibling = el.previousElementSibling;
@@ -5779,6 +5891,18 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the first child element of the first matched element, or filters it by input.
+ *
+ * Behavior:
+ * - With no arguments, returns the first element child.
+ * - With a string selector, returns the first child only if it matches the selector.
+ * - With a function, filters the first child through the predicate.
+ * - With any other supported input, returns the first child if it matches the resolved elements.
+ *
+ * @param {string|Function|*} [input] - Optional filter or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.first = function (input) {
 const result = this.get((el, index, arr) => {
 const child = el.firstElementChild;
@@ -5797,6 +5921,18 @@ return new jUtils(result);
 
 
 
+/**
+ * Gets the last child element of the first matched element, or filters it by input.
+ *
+ * Behavior:
+ * - With no arguments, returns the last element child.
+ * - With a string selector, returns the last child only if it matches the selector.
+ * - With a function, filters the last child through the predicate.
+ * - With any other supported input, returns the last child if it matches the resolved elements.
+ *
+ * @param {string|Function|*} [input] - Optional filter or selector.
+ * @returns {jUtils} A new jUtils instance containing the result.
+ */
 jUtils.fn.last = function (input) {
 const result = this.get((el, index, arr) => {
 const child = el.lastElementChild;
@@ -5815,6 +5951,16 @@ return new jUtils(result);
 
 
 
+/**
+ * Inserts HTML content immediately before each matched element.
+ *
+ * Behavior:
+ * - Uses `insertAdjacentHTML('beforebegin', ...)` to place content before the element.
+ * - Expects `input` to be an HTML string.
+ *
+ * @param {string} input - HTML to insert before the matched elements.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.before = function (input) {
 this.set(el => el.insertAdjacentHTML('beforebegin', input));
 return this;   
@@ -5822,6 +5968,16 @@ return this;
 
 
 
+/**
+ * Inserts HTML content immediately after each matched element.
+ *
+ * Behavior:
+ * - Uses `insertAdjacentHTML('afterend', ...)` to place content after the element.
+ * - Expects `input` to be an HTML string.
+ *
+ * @param {string} input - HTML to insert after the matched elements.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.after = function (input) {
 this.set(el => el.insertAdjacentHTML('afterend', input));
 return this;       
@@ -5829,6 +5985,14 @@ return this;
 
 
 
+/**
+ * Removes the matched elements from the DOM.
+ *
+ * Behavior:
+ * - Calls `remove()` on each matched element.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.remove = function () {
 this.set(el => el.remove());
 return this;  
@@ -5836,8 +6000,20 @@ return this;
 
 
 
+/**
+ * Gets or sets the outer HTML of the matched elements.
+ *
+ * Behavior:
+ * - When called with no arguments, returns the stored outerHTML if available,
+ *   otherwise returns the element's current `outerHTML`.
+ * - When called with a Node, replaces the element with that Node and stores
+ *   the Node's `outerHTML`.
+ * - When called with a string, sets `outerHTML` directly and stores the string.
+ *
+ * @param {Node|string} [input] - Replacement content or omitted to read outerHTML.
+ * @returns {jUtils|string} The current instance when setting, or the outerHTML value when getting.
+ */
 jUtils.fn.outerHTML = function (input) {
-
 if(arguments.length === 0) {
  return this.get(el => {
 return el.$jUtils_outerHTML ?? el.outerHTML;
@@ -5859,6 +6035,17 @@ return this;
 
 
 
+/**
+ * Detaches the matched elements from the DOM and stores their original position.
+ *
+ * Behavior:
+ * - Prevents detaching `<html>` and `<body>`.
+ * - Stores each element's parent and next sibling for later restoration.
+ * - Removes the element from the DOM.
+ * - Saves the detached elements metadata in `storedElements`.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.detach = function () {
 const result = [];
 this.set(el => {
@@ -5878,6 +6065,17 @@ return this;
 
 
 
+/**
+ * Restores previously removed elements to their original positions.
+ *
+ * Behavior:
+ * - Uses `storedElements` to track original parent/sibling relationships.
+ * - If the original sibling still exists in the same parent, inserts the element
+ *   before that sibling.
+ * - Leaves the element in place if restoration is no longer possible.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.restore = function () {
 if(this.storedElements) {
  this.storedElements.forEach(item => {  
@@ -5891,12 +6089,24 @@ return this;
 
 
 
+/**
+ * Moves the matched elements into a new parent element.
+ *
+ * Behavior:
+ * - Resolves `selector` through `$()` so it can accept any supported selector/input type.
+ * - Uses only the first matched target element as the new parent.
+ * - Appends each stored matched element into that parent.
+ *
+ * @param {*} selector - Target selector, element, or supported jUtils input.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.moveTo = function (selector) {
-const newParent = $(selector).elements[0];
+// Resolve the target and use the first matched element only.
+const newParent = $(selector).get(item => item);
 
 if(this.storedElements) {
 this.storedElements.forEach(item => {
-newParent.append(item.target);  
+if(newParent) newParent.append(item.target);  
 });    
 }
 return this;
@@ -5904,6 +6114,12 @@ return this;
 
 
 
+/**
+ * Appends one or more nodes or strings to each matched element.
+ *
+ * @param {...Node|string} args - Content to append.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.append = function (...args) {
 this.set(el => el.append(...args));
 return this; 
@@ -5911,6 +6127,12 @@ return this;
 
 
 
+/**
+ * Prepends one or more nodes or strings to each matched element.
+ *
+ * @param {...Node|string} args - Content to prepend.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.prepend = function (...args) {
 this.set(el => el.prepend(...args));
 return this;     
@@ -5918,8 +6140,20 @@ return this;
 
 
 
+/**
+ * Appends the matched elements into the target element.
+ *
+ * Behavior:
+ * - Resolves `input` through `$()` so it can accept any supported selector/input type.
+ * - Uses only the first matched target element.
+ * - Appends each matched element into that target.
+ *
+ * @param {*} input - Target selector, element, or supported jUtils input.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.appendTo = function (input) {
 this.set(el => {
+// Resolve the target and use the first matched element only.
 const target = $(input).get(item => item);
 if(target) target.append(el);
 });
@@ -5928,8 +6162,20 @@ return this;
 
 
 
+/**
+ * Prepends the matched elements into the target element.
+ *
+ * Behavior:
+ * - Resolves `input` through `$()` so it can accept any supported selector/input type.
+ * - Uses only the first matched target element.
+ * - Prepends each matched element into that target.
+ *
+ * @param {*} input - Target selector, element, or supported jUtils input.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.prependTo = function (input) {
 this.set(el => {
+// Resolve the target and use the first matched element only.
 const target = $(input).get(item => item);
 if(target) target.prepend(el);
 });
@@ -5938,17 +6184,32 @@ return this;
 
 
 
+/**
+ * Hides the matched elements and stores their previous display value.
+ *
+ * Behavior:
+ * - If the element is currently visible, saves its computed display value.
+ * - If the element is already hidden, creates a temporary element of the same tag
+ *   to infer the browser's default display value.
+ * - Sets `display: none` on the element.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.hide = function () {
 this.set(el => {
+// Save the current display value if the element is visible.
 if(el.offsetParent !== null) {
 el.$jUtils_display = getComputedStyle(el).display;  
 } else {
+// Infer the default display value for hidden elements using a temporary element.
 const tag = el.tagName.toLowerCase();
 const element = document.createElement(tag);
 document.body.append(element);
 el.$jUtils_display = getComputedStyle(element).display;
 element.remove();
 }
+
+// Hide the element.
 el.style.display = 'none';   
 });
 return this; 
@@ -5956,9 +6217,22 @@ return this;
 
 
 
+/**
+ * Shows the matched elements by restoring their display style.
+ *
+ * Behavior:
+ * - If the element has a stored display value, it is restored.
+ * - If no stored display value exists, the current logic calls `hide()`
+ *   before applying the display value, which appears to be unintended.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.show = function () {
 this.set(el => {
+// If no previous display value is stored, hide the element first.
 if(!el.$jUtils_display) $(el).hide();
+
+// Restore the saved display value.
 el.style.display = el.$jUtils_display;
 });
 return this; 
@@ -5966,8 +6240,19 @@ return this;
 
 
 
+/**
+ * Toggles the visibility of the matched elements.
+ *
+ * Behavior:
+ * - If an element is currently hidden, it is shown again.
+ * - If an element is currently visible, it is hidden.
+ * - Restores the previous display value when available.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.toggle = function () {
 this.set(el => {
+// If the element is hidden, show it; otherwise hide it.
 if(el.offsetParent === null) {
 if(!el.$jUtils_display) $(el).show();
 else el.style.display = el.$jUtils_display;
@@ -5980,7 +6265,21 @@ return this;
 
 
 
+/**
+ * Disables text selection on the matched elements.
+ *
+ * Behavior:
+ * - Injects a shared stylesheet once per document.
+ * - Adds an internal class that disables user selection.
+ * - Prevents `selectstart` and `contextmenu` interactions.
+ * - Optionally calls a callback on the first blocked interaction.
+ * - Stores internal references for later cleanup via `selectable()`.
+ *
+ * @param {Function} [callback] - Optional callback invoked on the first blocked selection attempt.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.noSelect = function (callback) {
+// Reuse a single shared style element for all no-select instances.
 let style = document.getElementById("jUtils_noSelectStyle");
 
 if(!style) {
@@ -5999,6 +6298,7 @@ style.id = 'jUtils_noSelectStyle';
     document.head.append(style);  
 }
 
+// Toggle flag used to limit callback execution behavior.
 let flag = false;
 
 this.set(el => {
@@ -6006,7 +6306,8 @@ el.classList.add("_jUtils-noSelect");
 
 const fn = (e) => {
 e.preventDefault();
- 
+
+// Call the callback only on the first blocked interaction. 
 if(typeof callback === 'function' && !flag){
 callback(e.target);
 }
@@ -6014,9 +6315,11 @@ callback(e.target);
 flag = !flag;
 }
 
+// Block selection and context menu interactions.
 el.addEventListener("selectstart", fn);
 el.addEventListener("contextmenu", fn);
 
+// Store internal references for cleanup.
 el.$jUtils_onSelectAttempt = fn;
 el.$jUtils_noSelectStyle = style;
 });
@@ -6025,15 +6328,29 @@ return this;
 
 
 
+/**
+ * Re-enables text selection on the matched elements.
+ *
+ * Behavior:
+ * - Removes the internal no-select class.
+ * - Detaches the stored `selectstart` and `contextmenu` handlers.
+ * - Removes any injected no-select style element.
+ * - Cleans up internal properties used by `noSelect()`.
+ *
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.selectable = function () {
 this.set(el => {
+// Remove the no-select marker class.
 el.classList.remove("_jUtils-noSelect");
 
+// Remove the stored selection-blocking event handler.
 const fn = el.$jUtils_onSelectAttempt;
 el.removeEventListener("selectstart", fn);  
 el.removeEventListener("contextmenu", fn);  
 delete el.$jUtils_onSelectAttempt;
 
+// Remove the injected style element if it exists.
 if(el.$jUtils_noSelectStyle) {
 el.$jUtils_noSelectStyle.remove();  
 delete el.$jUtils_noSelectStyle;
@@ -6044,6 +6361,23 @@ return this;
 
 
 
+/**
+ * Detects a long press on the matched elements.
+ *
+ * Behavior:
+ * - Starts a timer on `touchstart`.
+ * - Calls the callback if the press lasts for the configured duration.
+ * - Cancels the timer on `touchend`.
+ * - Optionally disables the context menu behavior during the press.
+ * - Optionally registers the listeners with `{ once: true }`.
+ *
+ * @param {Function} callback - Function called when the long press is detected.
+ * @param {Object} [options={}] - Long-press configuration.
+ * @param {number} [options.duration] - Press duration in milliseconds before triggering.
+ * @param {boolean} [options.contextMenu=false] - Whether to allow the context menu behavior.
+ * @param {boolean} [options.once=false] - Whether the listeners should run only once.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.longPress = function (callback, options = {}) {
 const { duration, contextMenu = false, once = false } = options;
 
@@ -6070,6 +6404,20 @@ return this;
 
 
 
+/**
+ * Limits the text length of matched elements.
+ *
+ * Behavior:
+ * - Validates that `max` is numeric.
+ * - Uses `value` for `<input>` and `<textarea>` elements.
+ * - Uses `textContent` for all other elements.
+ * - Truncates content when it exceeds the maximum length.
+ * - Calls the optional callback after truncation.
+ *
+ * @param {number} max - Maximum allowed character length.
+ * @param {Function} [callback] - Optional callback invoked after truncation.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.textLimit = function (max, callback) {
 if(!$.isNumeric(max)) $.error(`"${max}" is not a numeric value`);   
 
@@ -6090,6 +6438,24 @@ return this;
 
 
 
+/**
+ * Creates a horizontal divider with optional centered text.
+ *
+ * Behavior:
+ * - Clears the element content.
+ * - Converts the element into a flex container.
+ * - Adds left and right line segments with a centered text label.
+ * - Allows styling the container, both lines, each side independently, and the text.
+ *
+ * @param {string} [value=''] - Text to display in the center of the divider.
+ * @param {Object} [options={}] - Styling options for the divider.
+ * @param {Object} [options.lineStyle={}] - Shared styles applied to both line segments.
+ * @param {Object} [options.leftLineStyle={}] - Styles applied only to the left line.
+ * @param {Object} [options.rightLineStyle={}] - Styles applied only to the right line.
+ * @param {Object} [options.textStyle={}] - Styles applied to the center text.
+ * @param {string} [options.gap='10px'] - Gap between the line segments and the text.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.divider = function (value = '', options = {}) {
 const {
 lineStyle = {},
@@ -6099,12 +6465,13 @@ textStyle = {}
 } = options;
 
 this.set(el => {
-
+// Create the left line, right line, and center text nodes.
 const left = document.createElement('div');
 const right = document.createElement('div');
 const text = document.createElement('span');
 text.textContent = value;
 
+// Turn the host element into a centered flex container.
 Object.assign(el.style, {
      display: 'flex',
      alignItems: 'center',
@@ -6114,18 +6481,22 @@ Object.assign(el.style, {
      width: '100%',
     });
 
+// Base line styles shared by both sides.
 const hrStyles = {      
   'border-radius': '2px', 
   border: '2px solid blue',
-  'flex-grow': 1 /* Works only inside flex container */
+  'flex-grow': 1 /* Works only inside a flex container */
 }  
 
+// Apply shared and side-specific styles.
 Object.assign(left.style, hrStyles, leftLineStyle);
 Object.assign(right.style, hrStyles, rightLineStyle); 
 Object.assign(text.style, textStyle);
 
+// Apply any container-level line styles to both sides.
 [left, right].forEach(e => Object.assign(e.style, lineStyle));
 
+// Replace existing content with the divider structure.
 el.innerHTML = '';
 el.append(left, text, right);    
 });
@@ -6134,10 +6505,30 @@ return this;
 
 
 
+/**
+ * Internal event registry used to track listeners attached through `on()`.
+ *
+ * This array stores metadata for later removal via `off()`.
+ */
 jUtils.fn.$jUtils_event = [];
 
+/**
+ * Attaches event listeners to the matched elements.
+ *
+ * Behavior:
+ * - Supports object form: `{ eventName: handler }`
+ * - Supports delegated events when `selector` is a string
+ * - Supports direct events when `selector` is a function
+ * - Stores listener metadata in `$jUtils_event` for later removal
+ *
+ * @param {string|Object} type - Event type, space-separated event names, or an event map.
+ * @param {string|Function} selector - Delegated selector or event callback.
+ * @param {Function|Object} [callback] - Callback function or event options in direct mode.
+ * @param {Object} [options={}] - Listener options passed to `addEventListener`.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.on = function (type, selector, callback, options = {}) {
-
+// Support object form: { eventName: handler, ... }
 if($.isObject(type)) {
 Object.entries(type).forEach(([key, value]) => { 
  if(typeof selector === 'string') {
@@ -6149,22 +6540,26 @@ Object.entries(type).forEach(([key, value]) => {
 return this;
 }
 
+// Normalize event names from a space-separated string.
 type = String(type).match(/\S+/g) ?? [];
 
 this.set(el => {
-
 const handler = (e) => {
 if(typeof selector === 'string') {
+// Delegated event: find matching descendant and run the callback.
 const parent = e.target.closest(selector);
 if (parent && el.contains(parent)) callback(e);
 } else {
+// Direct event: selector is the callback.
 selector(e);
 options = callback;
 }    
 }
 
+// Attach the handler for each event name.
 type.forEach(evt => el.addEventListener(evt, handler, options));  
 
+// Store listener metadata for later removal.
 this.$jUtils_event.push({ 
  handler, 
  type, 
@@ -6178,8 +6573,24 @@ return this;
 
 
 
+/**
+ * Removes event listeners from the matched elements.
+ *
+ * Behavior:
+ * - Supports removing listeners by event type, selector, callback, or an object map.
+ * - If `type` is an object, treats it as a map of event names to handlers/selectors.
+ * - If `selector` is a string, removes the matching delegated listener.
+ * - If `selector` is not a string, treats it as the callback/handler reference.
+ * - Uses the stored internal event registry (`this.$jUtils_event`) to find handlers.
+ *
+ * @param {string|Object} type - Event type, space-separated event names, or an event map.
+ * @param {string|Function} [selector] - Delegated selector or callback reference.
+ * @param {Function|Object} [callback] - Callback reference or event options.
+ * @param {Object} [options={}] - Options passed to `removeEventListener`.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.off = function (type, selector, callback, options = {}) {
-
+// Support object form: { eventName: handler, ... }
 if($.isObject(type)) {
 Object.entries(type).forEach(([key, value]) => { 
  if(typeof selector === 'string') {
@@ -6191,21 +6602,22 @@ Object.entries(type).forEach(([key, value]) => {
 return this;
 }
 
+// Normalize event type input into an array of event names.
 const eventType = (input) => {
 return type !== undefined ? String(type).match(/\S+/g) ?? [] : input;
 }
 
 this.set(el => {
-
 if(typeof selector === 'string') {
+// Find the delegated listener for the given selector.
 const item = this.$jUtils_event.filter(item => item.selector === selector).shift();
 
 if(callback && item?.listener !== callback) return this;
 
 eventType(item.type).forEach(evt => el.removeEventListener(evt, item.handler, options)); 
 } else {
+// Remove listeners by callback reference or by stored event records.
 this.$jUtils_event.forEach(item => {
-
 if(selector && item?.listener !== selector) return this;
 
 eventType(item.type).forEach(evt => el.removeEventListener(evt, item.handler, options));   
@@ -6217,15 +6629,29 @@ return this;
 
 
 
+/**
+ * Dispatches one or more events on each matched element.
+ *
+ * Behavior:
+ * - Accepts a single event name or a whitespace-separated list of event names.
+ * - If `options` is not an object, it is treated as `detail` for a custom event.
+ * - Uses `Event` by default, or `CustomEvent` when a second argument is provided.
+ *
+ * @param {string} type - Event name or space-separated event names.
+ * @param {Object|*} [options={}] - Event options or custom event detail value.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.trigger = function (type, options = {}) {
-
+// Convert non-object input into a CustomEvent detail payload.
 if(!$.isObject(options)) options = { detail: options };
 
+// Split the event string into individual event names.
 type = String(type).match(/\S+/g) ?? [];
 
 this.set(el => {
 let mode = 'Event';
 
+// If a second argument was provided, dispatch a CustomEvent.
 if(arguments.length >= 2) mode = 'CustomEvent';
 
 type.forEach(evt => {
@@ -6237,8 +6663,21 @@ return this;
 
 
 
+/**
+ * Gets or sets CSS properties on the matched elements.
+ *
+ * Behavior:
+ * - If `key` is an object, treats it as a map of CSS properties and values.
+ * - If both `key` and `value` are provided, sets the style property on each element.
+ * - If only `key` is provided, returns the computed style value for that property.
+ * - If neither is provided, returns the current instance unchanged.
+ *
+ * @param {string|Object} key - CSS property name or an object of property/value pairs.
+ * @param {*} [value] - Value to set for the given CSS property.
+ * @returns {jUtils|*} The current instance when setting values, or the computed value when getting.
+ */
 jUtils.fn.css = function (key, value) {
-
+// Support object form: { prop: value, ... }
 if($.isObject(key)) {
  for(const [k, v] of Object.entries(key)){
   this.css(k, v);
@@ -6246,6 +6685,7 @@ if($.isObject(key)) {
  return this;
 }
 
+// Setter: apply a computed value to each matched element.
 if(key !== undefined && value !== undefined) {
 this.set((el, index) => {
    el.style[key] = $.compute(value, getComputedStyle(el)[key], index, el);
@@ -6253,21 +6693,40 @@ this.set((el, index) => {
 return this; 
 }
 
+// Getter: return the computed style value from the first matched element.
 if(key !== undefined && value === undefined) {
 return this.get(el => getComputedStyle(el)[key]);  
 } 
 
+// No-op fallback.
 return this;
 }
 
 
 
+/**
+ * Injects scoped CSS and tags matched elements with a unique data attribute.
+ *
+ * Behavior:
+ * - Generates a unique token and scope key.
+ * - Replaces `&` in the CSS with a generated attribute selector.
+ * - Allows optional alias elements via `options`, each receiving the same token.
+ * - Appends a new <style> element to <head>.
+ * - Marks the current matched elements with the generated data attribute.
+ *
+ * @param {string} input - CSS text to scope and inject.
+ * @param {Object} [options={}] - Optional alias map of elements to scope targets.
+ * @returns {jUtils} The current instance for chaining.
+ */
 jUtils.fn.styles = function (input, options = {}) {
+ // Generate a unique token and scope key for this style block.
 const token = $.randToken(9);
 const key = $.randToken(7).toLowerCase();
 
+// Replace `&` with the generated scope selector.
 let scopedCSS = String(input).replace(/&/g, `[data-${key}="${token}"]`);
 
+// Apply aliases: each provided element gets the same data attribute.
 for(let [key, value] of Object.entries(options)){
  if(value && value.nodeType !== 1) {
   $.error(`styles(): alias "${key}" must reference a DOM element.`);
@@ -6277,13 +6736,16 @@ value.dataset[key.toLowerCase()] = token;
 scopedCSS = scopedCSS.replace(key, `[data-${key}="${token}"]`); 
 }
 
+// Inject the scoped stylesheet into the document head.
 const style = document.createElement('style');
 style.textContent = scopedCSS;
 document.head.append(style);
 
+// Tag all matched elements with the generated scope token.
 this.set(el => el.dataset[key] = token);
 return this;
 }
+
 /**
  * Locks all existing methods on `jUtils.fn` so they cannot be overwritten or reconfigured.
  *
