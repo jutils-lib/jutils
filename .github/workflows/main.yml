@@ -9,6 +9,7 @@ on:
       - "util.js"
       - "dom.js"
       - "anim.js"
+      - "guard.js"
 
 permissions:
   contents: write
@@ -37,10 +38,11 @@ jobs:
           test -f util.js
           test -f dom.js
           test -f anim.js
+          test -f guard.js
 
       - name: Build jutils.js
         run: |
-          cat core.js util.js dom.js anim.js > jutils.js
+          cat core.js util.js dom.js anim.js guard.js > jutils.js
 
       - name: Build jutils.min.js
         run: |
