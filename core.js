@@ -1,92 +1,83 @@
 
-
 /**
- * jUtils utility wrapper for selecting, creating, and normalizing DOM elements.
+ * Factory function that creates a new `jUtils` instance.
  *
- * This utility accepts:
- * - CSS selectors
- * - HTML strings
- * - tag shorthand strings prefixed with ":"
- * - DOM elements
- * - arrays / array-like collections of elements
- * - existing jUtils instances
- *
- * The goal is to normalize different input forms into a consistent internal
- * `elements` array and a `length` value representing matched DOM elements.
- *
- * @param {string|Element|Array|NodeList|jUtils} selector - Input used to build the wrapper.
- * @returns {jUtils} A new jUtils instance wrapping the matched or created elements.
+ * @param {*} input - A selector, element, collection, HTML string, or special shorthand input.
+ * @returns {jUtils} A new `jUtils` instance wrapping the provided input.
  */
-function $(selector) { 
- return new jUtils(selector);
+function $(input) { 
+return new jUtils(input);
 }
 
 
 
+/**
+ * Lightweight DOM utility wrapper.
+ *
+ * Supports:
+ * - CSS selectors
+ * - HTML strings
+ * - shorthand element creation using `$tag`
+ * - DOM elements
+ * - array-like collections
+ * - existing `jUtils` instances
+ */
 class jUtils {
 /**
-   * Create a new jUtils wrapper around the provided selector or element input.
+   * Creates a new `jUtils` instance from the given input.
    *
-   * Behavior:
-   * - HTML-like strings such as "<div>" are treated as element creation input
-   * - Strings starting with ":" are treated as tag shorthand, e.g. ":div"
-   * - Other strings are treated as CSS selectors
-   * - Non-string values are normalized into an array of DOM elements when possible
-   *
-   * @param {*} selector - Input used to resolve DOM elements.
+   * @param {*} input - Selector, HTML string, element, collection, or `jUtils` instance.
    */
-constructor(selector) {
- // Handle HTML string input like "<div>" by creating a temporary container
- // and reading the generated element from its     
- if(typeof selector === 'string' && selector.trim().startsWith('<') && selector.trim().endsWith('>') && selector.trim().length >= 3) { 
-const el = document.createElement('div');
-el.innerHTML = selector;
-return new jUtils(el);
+constructor(input) {  
+// Handle string input: selector, HTML string, or shorthand element creation.
+if(typeof input === 'string') { 
+ input = input.trim();  
 
-// Handle shorthand tag creation like "$div" by creating a real DOM element.   
-} else if(typeof selector === 'string' && selector.trim().startsWith('$')) {
-const tag = selector.trim().slice(1);
-const el = document.createElement(tag);
-return new jUtils(el); 
-
-// Handle normal CSS selector strings by querying the document.         
-} else if(typeof selector === 'string') {
- try {
-const elements = Array.from(document.querySelectorAll(selector));
-
- // If matches are found, store them; otherwise preserve the original string
- // so the wrapper still retains the input value.       
-this.elements = elements.length > 0 ? elements : [selector];
-this.length = elements.length;
- } catch {
- // If the selector is invalid, store the raw input and mark length as 0.      
-this.elements = [selector];
-this.length = 0;
+// If the string looks like HTML, create a temporary container and parse it. 
+ if(input.startsWith('<') && input.endsWith('>') && input.length >= 3) { 
+  const element = document.createElement('div');
+  element.innerHTML = input;
+  return new jUtils(element);
  }
- 
-// Handle DOM nodes, arrays, NodeLists, jUtils instances, and other inputs.    
+
+// Support shorthand element creation like `$div`, `$span`, etc.
+ if(input.startsWith('$')) {
+  const element = document.createElement(input.slice(1));
+  return new jUtils(element); 
+ }
+    
+ try {
+ // Try to resolve the string as a CSS selector.
+  const elements = Array.from(document.querySelectorAll(input));
+  this.elements = elements.length > 0 ? elements : [input];
+  this.length = elements.length;
+ } catch { 
+ // If the selector is invalid, store the raw input as a fallback value.
+  this.elements = [input];
+  this.length = 0;
+ }
+    
 } else {
-const elements = [];
-[].concat(selector).forEach(item => {
-// If the item is already a jUtils instance, reuse its internal elements.      
+ const result = [];
+
+// Normalize all input into a flat array of values/elements.
+ [].concat(input).forEach(item => {     
   if(item instanceof jUtils) {
-   elements.push(...item.elements);
+   result.push(...item.elements);
   } else if(item && Array.from(item).some(el => el && el.nodeType === 1)) {
-// If the item is iterable and contains DOM elements.
-   elements.push(...Array.from(item));
-  } else {
-// Otherwise keep the item as-is.      
-   elements.push(item);
+   result.push(Array.from(item));
+  } else { 
+   result.push(item);
   }
 });
  
-this.elements = elements; 
-
-// Count only actual DOM elements after filtering invalid values.      
-this.length = elements.filter(el => el && el.nodeType === 1).length;
+this.elements = result;     
+this.length = result.filter(el => el && el.nodeType === 1).length;
   }
  }
 }
 
-// Create a shorthand reference to the prototype for easier access and method extension.
+/**
+ * Alias for the `jUtils` prototype, used for extending instance methods.
+ */
 jUtils.fn = jUtils.prototype;

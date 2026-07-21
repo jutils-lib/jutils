@@ -822,13 +822,21 @@ return this;
 jUtils.fn.maskEach = function (symbol = '*', callback) {
   if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 2`);
   
-this.set(el => {
+this.set((el, index) => {
 const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
 
 // Build the masked value character by character, then store the original content once. 
 const value = Array.from(String(el[prop])).map((char, i, text) => {
-  if(callback(char, i, el[prop], el)) return symbol;
-  else return char;
+const options = {
+ char, 
+ charIndex: i,
+ text: el[prop], 
+ element: el, 
+ elementIndex: index
+}
+
+if(callback(options)) return symbol;
+return char;
 }).join(''); 
 
 if(!el.$jUtils_maskValue) {
@@ -1059,33 +1067,6 @@ return new jUtils(result);
 
 
 
-jUtils.fn._matches = function (selector) {
- return this.get(el => {
-   try {
-    return el.matches(selector);
-   } catch {
-    switch(selector) {
-      case ':visible':
-        return el.offsetParent !== null;
-      case ':hidden':
-        return el.offsetParent === null;     
-      case ':removed':      
-        return !el;
-      case ':checked':
-        return el.checked;
-      case ':enabled':
-        return !el.disabled;
-      case ':disabled':
-        return el.disabled;
-      case ':selected':     
-        return el.selected;    
-    }
-   }
- });
-}
-
-
-
 /**
  * Checks whether any matched element satisfies the given selector, callback, or collection.
  *
@@ -1105,7 +1086,26 @@ jUtils.fn._matches = function (selector) {
 jUtils.fn.is = function (input) {
 return this.get((el, index, arr) => {
 // Test by selector, callback, or membership in another collection.
-if(typeof input === 'string') return el.matches(input);
+if(typeof input === 'string') {
+ switch (input) {          
+      case ':visible':
+        return el.offsetParent !== null;
+      case ':hidden':
+        return el.offsetParent === null;     
+      case ':removed':      
+        return !el;
+      case ':checked':
+        return el.checked;
+      case ':enabled':
+        return !el.disabled;
+      case ':disabled':
+        return el.disabled;
+      case ':selected':     
+        return el.selected;   
+      default:
+        return el.matches(input);      
+ }     
+}
 
 if(typeof input === 'function') return input(el, index, arr); 
 
@@ -1168,7 +1168,7 @@ return new jUtils(result);
 
 jUtils.fn.parent = function (input) {
 const result = this.get(el => {
-const parent = el.parentNode ?? el.parentElement;    
+const parent = el.parentElement;    
 
 if(arguments.length === 0) return parent;
 
@@ -1411,7 +1411,6 @@ if(el === document.body || el === document.documentElement) $.error("Detaching t
 }, 'map');
 
 this.storedElements = result;
-
 return this;
 }
 
@@ -1424,8 +1423,7 @@ if(item.sibling && item.sibling.parentNode === item.parent) {
  item.parent.insertBefore(item.target, item.sibling);    
 } 
  });
- }
- 
+ } 
 return this;
 }
 
@@ -1439,21 +1437,20 @@ this.storedElements.forEach(item => {
 newParent.append(item.target);  
 });    
 }
-
 return this;
 }
 
 
 
-jUtils.fn.append = function (input) {
-this.set(el => el.append(input));
+jUtils.fn.append = function (...args) {
+this.set(el => el.append(...args));
 return this; 
 }
 
 
 
-jUtils.fn.prepend = function (input) {
-this.set(el => el.prepend(input));
+jUtils.fn.prepend = function (...args) {
+this.set(el => el.prepend(...args));
 return this;     
 }
 
@@ -1461,7 +1458,7 @@ return this;
 
 jUtils.fn.appendTo = function (input) {
 this.set(el => {
-const target = $(input).unwrap(0);
+const target = $(input).get(item => item);
 if(target) target.append(el);
 });
 return this; 
@@ -1471,7 +1468,7 @@ return this;
 
 jUtils.fn.prependTo = function (input) {
 this.set(el => {
-const target = $(input).unwrap(0);
+const target = $(input).get(item => item);
 if(target) target.prepend(el);
 });
 return this; 
@@ -1481,7 +1478,6 @@ return this;
 
 jUtils.fn.hide = function () {
 this.set(el => {
-
 if(el.offsetParent !== null) {
 el.$jUtils_display = getComputedStyle(el).display;  
 } else {
@@ -1491,7 +1487,6 @@ document.body.append(element);
 el.$jUtils_display = getComputedStyle(element).display;
 element.remove();
 }
-
 el.style.display = 'none';   
 });
 return this; 
@@ -1502,7 +1497,6 @@ return this;
 jUtils.fn.show = function () {
 this.set(el => {
 if(!el.$jUtils_display) $(el).hide();
-console.log(el.$jUtils_display);
 el.style.display = el.$jUtils_display;
 });
 return this; 
@@ -1627,7 +1621,6 @@ if(value.length > max) {
  e.target[prop] = value.slice(0, max);
 if(typeof callback === 'function') callback(e.target);
 }
-
 });  
 });
 return this;
@@ -1807,32 +1800,25 @@ return this;
 
 
 
-jUtils.define = function (key, value) {
-if(Object.keys(jUtils.fn).includes(key)) {
-$.error(`Cannot define "${key}": method already exists.`);
+jUtils.fn.styles = function (input, options = {}) {
+const token = $.randToken(9);
+const key = $.randToken(7).toLowerCase();
+
+let scopedCSS = String(input).replace(/&/g, `[data-${key}="${token}"]`);
+
+for(let [key, value] of Object.entries(options)){
+ if(value && value.nodeType !== 1) {
+  $.error(`styles(): alias "${key}" must reference a DOM element.`);
+ }
+
+value.dataset[key.toLowerCase()] = token;
+scopedCSS = scopedCSS.replace(key, `[data-${key}="${token}"]`); 
 }
 
-jUtils.fn[name] = value;
+const style = document.createElement('style');
+style.textContent = scopedCSS;
+document.head.append(style);
+
+this.set(el => el.dataset[key] = token);
+return this;
 }
-
-
-
-for(const key of Object.keys(jUtils.fn)){
-Object.defineProperty(jUtils.fn, key, {
-   writable: false,
-   configurable: false,
-   enumerable: true
-});   
-}
-
-
-
-jUtils.fn = new Proxy(jUtils.fn, {
-  set(target, key, value) {
-   if(Object.keys(target).includes(key)) {
-    $.error(`Cannot overwrite existing property "${key}".`);
-   }
-   target[key] = value;
-   return true;   
-  }
-});
