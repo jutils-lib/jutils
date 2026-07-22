@@ -4080,7 +4080,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     inputEl.style.cssText = `
       outline: none;
       border: none;
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'};
       width: 100%;
       padding: 5px 0;
       background-color: ${style.inputBackground ?? 'transparent'};
