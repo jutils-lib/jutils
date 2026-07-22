@@ -764,7 +764,7 @@ $.chunk = function (input, size, callback) {
 if(!Array.isArray(input) && typeof input !== 'string') $.error(`${input} is not an array or a string at argument 1`);
 
 // Chunk size must be a numeric value of at least 1.
-if(!$.isNumeric(size) || size < 1) $.error(`${size} is not a number or it's less than 1 at argument 2`);
+if(!$.isNumeric(size) || size < 1) $.error(`${size} is not a number or it's less than 1, at argument 2`);
 
 let isString = false;
 
@@ -1336,7 +1336,7 @@ if(!$.isNumeric(n)) $.error(`${n} is not a numeric value at argument 1`);
  * - $.extend({}, { a: 1 }, { b: 2 }) -> { a: 1, b: 2 }
  * - $.extend(obj, { name: "Alice" })
  */
-$.extend = function (target, ...args) {
+$.extend = function (target = {}, ...args) {
 if(!$.isObject(target)) $.error(`${target} is not an object at argument 1`);
 return Object.assign(target, ...args);   
 }
@@ -1358,8 +1358,8 @@ return Object.assign(target, ...args);
  * - $.merge([1, 2], [3, 4]) -> [1, 2, 3, 4]
  * - $.merge(1, 2, 3) -> [1, 2, 3]
  */
-$.merge = function (target, ...args) {
- return [].concat(target, ...args);
+$.merge = function (...args) {
+ return [].concat(...args);
 }
 
 
@@ -1953,10 +1953,15 @@ return !Number.isInteger(Number(value));
  * @param {string} key - The storage key used to persist the collection.
  * @returns {Object} A chainable data store API.
  */
-$.dataStore = function (key) {
-let store = localStorage;
-let history = JSON.parse(store.getItem(key)) || []; 
+$.dataStore = function (key, options = {}) {
+const { memory = 'storage' } = Object(options);
 
+if(!['storage', 'session'].includes(memory)) {
+$.error(`"${memory}" is not a valid memory value, expects ["storage", "session"]`);
+}
+
+let store = memory === 'storage' ? localStorage : sessionStorage;
+let history = JSON.parse(store.getItem(key)) || []; 
 
 const obj = {
  // Returns the number of items currently stored.
@@ -1965,25 +1970,6 @@ const obj = {
 return history.length;
  }
 };
-
-
-/**
-   * Configures which storage backend to use.
-   *
-   * @param {Object} [options={}] - Configuration options.
-   * @param {"storage"|"session"} [options.memory] - Selects localStorage or sessionStorage.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if `memory` is not one of the supported values.
-   */
-obj.config = function (options = {}) {
-const { memory } = Object(options);
-if(!['storage', 'session'].includes(memory)) {
-  $.error(`"${memory}" is not a valid memory value, expects ["storage", "session"]`);
-}
-store = memory === 'storage' ? localStorage : sessionStorage;
-history = JSON.parse(store.getItem(key)) || []; 
-return this;  
-}
 
 
 /**
@@ -3416,7 +3402,7 @@ obj.format = function (input = 'YYYY-MM-DD') {
 
 
 // Return a cloned Date object so external code cannot mutate the internal state.
-obj.value = function () {
+obj.toDate = function () {
  return new Date(now.getTime());
 }
 
@@ -3492,49 +3478,40 @@ if(typeof callback !== 'function') $.error(`${callback} is not a function at arg
 // Stores object values for custom multi-argument done/fail callbacks.
 let result;
 
-// Tracks whether the promise was settled through the native wrapper path.
-let isCustomSettled = false;
-
-// Tracks whether the custom config.resolve/config.reject path was used.
-let hasCustomResult = false;
-
 const promise = new Promise((resolve, reject) => {
-const err1 = new TypeError(`Resolver input is not an object`);
-const err2 = new TypeError(`Reject input is not an object`);
- const config = {
- // Resolve using an object only, then store its values for later unpacking.     
-   resolve: (input) => {  
- if(!$.isObject(input)) $.error(err1);
-    resolve(input);
-    result = Object.values(input);
-    hasCustomResult = true;
-   },
-   
- // Reject using an object only, then store its values for later unpacking.        
-   reject: (input) => {  
- if(!$.isObject(input)) $.error(err2); 
-    reject(input);     
-    result = Object.values(input);      
-    hasCustomResult = true;
-   }
- }
 
-// Native-style resolve/reject wrappers passed into the executor.
-const fn = (value, state) => {
-if(state === 'resolve') resolve(value);
-else reject(value);
-if(!hasCustomResult) isCustomSettled = true;
+const resolverInputError = new TypeError('Resolver input is not an object');
+const rejectInputError = new TypeError('Reject input is not an object');
+
+const config = {
+// Resolve using an object only, then store its values for later unpacking.     
+ resolve: (input) => {  
+  if(!$.isObject(input)) {
+   $.error(resolverInputError);
+  }
+  resolve(input);
+  result = Object.values(input);
+ },
+   
+// Reject using an object only, then store its values for later unpacking.      
+ reject: (input) => {  
+  if(!$.isObject(input)) {
+   $.error(rejectInputError); 
+  }  
+  reject(input);     
+  result = Object.values(input);      
+ }
 }
 
 // Execute the user callback with resolve, reject, and config helpers.   
-callback(v => fn(v, 'resolve'), (v) => fn(v, 'reject'), config); 
+callback(resolve, reject, config); 
 });
 
 
 // Success handler: unpack object values when custom config.resolve/config.reject was used.
 promise.done = function (callback) {
 promise.then(value => {
-if(Array.isArray(result) && !isCustomSettled) {
+if(Array.isArray(result)) {
  callback(...result);
 } else {
  callback(value);
@@ -3547,7 +3524,7 @@ return this;
 // Failure handler: unpack object values when custom config.resolve/config.reject was used.
 promise.fail = function (callback) {
 promise.catch(value => {
-if(Array.isArray(result) && !isCustomSettled) {
+if(Array.isArray(result)) {
  callback(...result);
 } else {
  callback(value);
@@ -3812,15 +3789,18 @@ $.alertId = 0;
 
 $.alert = function (content = '', btnText = 'OK', options = {}) {
 const { 
-type = 'text',
+contentHTML = false,
+buttonHTML = true,
 timeout, 
 closeOnBackdrop = true, 
 style = {}
 } = Object(options);
 
 // Choose the DOM property used to render content and button text.  
-let prop = 'textContent';     
-if(type === 'html') prop = 'innerHTML';
+const prop = (mode) => {
+if(mode) return 'innerHTML';
+return 'textContent';     
+}
 
 // Validate the style object before applying overrides. 
 if(!$.isObject(style)) $.error(`${style} is not an object`);
@@ -3867,7 +3847,7 @@ return $.promise(resolve => {
       flex-grow: 1;
       overflow-y: auto;          
     `;     
-  contentRoot[prop] = content;
+  contentRoot[prop(contentHTML)] = content;
 
 // Create the button wrapper.    
    const btnRoot = document.createElement('button-526773239h');
@@ -3879,7 +3859,7 @@ return $.promise(resolve => {
 
 // Create the confirmation button.        
    const btn = document.createElement('btn-432899936438k');
-   btn[prop] = btnText;
+   btn[prop(buttonHTML)] = btnText;
     btn.style.cssText = `        
     font-weight: bold;
     margin-right: 10px;    
@@ -3923,14 +3903,17 @@ $.confirmId = 0;
 
 $.confirm = (content = '', cancelText = 'CANCEL', okText = 'OK', options = {}) => {
 const {
-  type = 'text',
+  contentHTML = false,
+  buttonHTML = true,
   timeout, 
   closeOnBackdrop = true,  
   style = {} 
 } = Object(options);
 
-let prop = 'textContent';     
-if(type === 'html') prop = 'innerHTML';
+const prop = (mode) => {
+if(mode) return 'innerHTML';
+return 'textContent';     
+}
 
 if(!$.isObject(style)) $.error(`${style} is not an object`);
 
@@ -3973,7 +3956,7 @@ if(!$.isObject(style)) $.error(`${style} is not an object`);
       flex-grow: 1;
       overflow-y: auto;          
     `;     
-  contentRoot[prop] = content;
+  contentRoot[prop(contentHTML)] = content;
   
  
    const btnRoot = document.createElement('button-526773239h');
@@ -3984,7 +3967,7 @@ if(!$.isObject(style)) $.error(`${style} is not an object`);
     `;
  
    const cancelBtn = document.createElement('cancel-427950252d');
-    cancelBtn[prop] = cancelText;
+    cancelBtn[prop(buttonHTML)] = cancelText;
     cancelBtn.style.cssText = `    
     font-weight: bold;     
     margin-right: 30px;
@@ -3996,7 +3979,7 @@ if(!$.isObject(style)) $.error(`${style} is not an object`);
     };
  
    const okBtn = document.createElement('ok-5274935327495j');
-    okBtn[prop] = okText;
+    okBtn[prop(buttonHTML)] = okText;
     okBtn.style.cssText = `       
     font-weight: bold; 
     margin-right: 10px;    
@@ -4036,14 +4019,17 @@ $.promptId = 0;
 $.prompt = (content = '', cancelText = 'CANCEL', okText = 'OK', options = {}) => {
 
 const {
-  type = 'text',
+  contentHTML = false,
+  buttonHTML = true,
   timeout,
   closeOnBackdrop = true, 
   style = {} 
 } = Object(options);
 
-let prop = 'textContent';     
-if(type === 'html') prop = 'innerHTML';
+const prop = (mode) => {
+if(mode) return 'innerHTML';
+return 'textContent';     
+}
 
 if(!$.isObject(style)) $.error(`${style} is not an object`);
 
@@ -4087,7 +4073,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
       flex-grow: 1;
       overflow-y: auto;          
     `;     
-  contentRoot[prop] = content;
+  contentRoot[prop(contentHTML)] = content;
 
     const inputEl = document.createElement('input');    
     inputEl.type = 'text';
@@ -4110,7 +4096,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     `;
  
    const cancelBtn = document.createElement('cancel-427950252d');
-    cancelBtn[prop] = cancelText;
+    cancelBtn[prop(buttonHTML)] = cancelText;
     cancelBtn.style.cssText = `    
     font-weight: bold; 
     margin-left: 10px;
@@ -4122,7 +4108,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     };
  
    const okBtn = document.createElement('ok-5274935327495j');
-    okBtn[prop] = okText;
+    okBtn[prop(buttonHTML)] = okText;
     okBtn.style.cssText = `    
     font-weight: bold; 
     margin-right: 10px;
@@ -4356,25 +4342,3 @@ promise.abort = function () {
 
 return promise;
 }
-
-
-
-for(const key of Object.keys($)){
-Object.defineProperty($, key, {
-   writable: false,
-   configurable: false,
-   enumerable: true,
-});   
-}
-
-
-
-$ = new Proxy($, {
-  set(target, key, value) {
-   if(Object.keys(target).includes(key)) {
-    $.error(`Cannot overwrite existing property "${key}".`);
-   }
-   target[key] = value;
-   return true;
-  }
-});
