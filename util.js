@@ -4083,8 +4083,8 @@ const backdropEl = document.createElement('backdrop-5262419z');
       border-bottom: 1px solid black;
       width: 100%;
       padding: 5px 0;
-      background-color: transparent;
-      color: black;
+      background-color: ${style.inputBackground ?? 'transparent'};
+      color: ${style.inputColor ?? 'black'};
     `;
  
     const btnRoot = document.createElement('button-526773239h');
