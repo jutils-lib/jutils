@@ -3702,91 +3702,34 @@ if(from === to) onComplete();
  */
 $.modalId = 0;
 
-$.modal = function () {
-const obj = {};
+$.modal = function (options = {}) {
+const {
+ html = '',
+ text = '',
+ timeout = null,
+ closeOnBackdrop = true,
+ render = () => {},
+ styles = {  
+  modal: {},
+  content: {},
+  backdrop: {}
+ }
+} = Object(options);
 
 // Create the modal DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
 const modalEl = document.createElement('modal-4833194063f');
 const contentEl = document.createElement('content-17921003y');
 
-
-// Store user-provided style overrides and behavior options.
-let opts = {};
-
-
-// Set modal content as HTML.
-obj.html = function (input) { 
-// If input is a function, use its return value; otherwise use the input directly.  
-input = $.compute(input); 
-contentEl.innerHTML = input; 
-return this;
+if(options.html !== undefined) {
+ contentEl.innerHTML = $.compute(html);
+} else if(options.text !== undefined) {
+ contentEl.textContent = $.compute(text);
 }
 
-
-// Set modal content as plain text.
-obj.text = function (input) {
-// If input is a function, use its return value; otherwise use the input directly. 
-input = $.compute(input);  
-contentEl.textContent = input;     
-return this;
-}
-
-
-// Configure modal, backdrop, and content styles plus behavior options. 
-obj.styles = function (options = {}) {
-const {
-modal = {}, 
-backdrop = {}, 
-content = {} 
-} = Object(options);
-
-// Validate that style groups are plain objects.   
-if(!$.isObject(modal) || !$.isObject(backdrop) || !$.isObject(content)) {
-$.error(`Either backdrop, modal or content is not an object`);   
-}
-
-// Merge defaults with user options.   
-Object.assign(opts, {
-   timeout: null,
-   closeOnBackdrop: true,
-   ...options
-});
-return this;
-}
-
-
-// Open the modal and return a promise for the result.
-obj.open = function (callback) {
-if(typeof callback !== 'function') $.error(`${callback} is not a function`);
-
-// Use the custom promise utility so the result supports .then(), .done(), and similar methods.
 return $.promise(resolve => {
 const currentId = $.modalId++;
 
-// Build and mount the modal using the current configuration.    
- config(currentId, resolve);
-
-// Expose a scoped query helper for modal content.      
- const root = {
-   find: (s) => contentEl.querySelector(s),
-   findAll: (s) => {
-    const nodes = contentEl.querySelectorAll(s);
-    return Array.from(nodes);
-   }
- }
-
-// Let the caller wire events and resolve the modal manually.     
- callback(root, (input) => {
-   resolve(input);   
-   backdropEl.remove();
- });  
-});
-}
-
-
-// Apply default styles, user styles, and DOM mounting logic.
-function config(currentId, resolve) { 
 // Base backdrop styling.        
     backdropEl.style.cssText = `
       position: fixed;
@@ -3817,9 +3760,9 @@ function config(currentId, resolve) {
     `;   
 
 // Apply user-defined style overrides.   
-Object.assign(backdropEl.style, opts.backdrop);
-Object.assign(modalEl.style, opts.modal);
-Object.assign(contentEl.style, opts.content);
+Object.assign(backdropEl.style, styles.backdrop);
+Object.assign(modalEl.style, styles.modal);
+Object.assign(contentEl.style, styles.content);
 
 // Mount the modal into the document.        
 modalEl.append(contentEl);
@@ -3828,7 +3771,7 @@ document.body.append(backdropEl);
 
 // Close the modal when the backdrop is clicked, if enabled.     
 backdropEl.addEventListener('click', (event) => {
- if (event.target === backdropEl && opts.closeOnBackdrop) {  
+ if (event.target === backdropEl && closeOnBackdrop) {  
     resolve({ ok: false, reason: 'backdrop' });
     backdropEl.remove();      
  }  
@@ -3836,15 +3779,28 @@ backdropEl.addEventListener('click', (event) => {
 
 
 // Auto-close the modal after the configured timeout, if provided.  
-if($.isNumeric(opts.timeout)) {
+if($.isNumeric(timeout)) {
 setTimeout(() => {
 resolve({ ok: false, reason: 'timeout' });
 backdropEl.remove();
-}, opts.timeout);    
-}
-}
+}, timeout);    
+}    
 
-return obj;   
+// Expose a scoped query helper for modal content.      
+ const root = {
+   find: (s) => contentEl.querySelector(s),
+   findAll: (s) => {
+    const nodes = contentEl.querySelectorAll(s);
+    return Array.from(nodes);
+   }
+ }
+ 
+// Let the caller wire events and resolve the modal manually.     
+ render(root, (input) => {
+   resolve(input);   
+   backdropEl.remove();
+ }); 
+});
 }
 
 
