@@ -93,7 +93,7 @@ return obj;
  * Creates a formatted error object with a cleaner, more readable message.
  *
  * This helper is designed to standardize error handling across the library.
- * It accepts a message an error constructor, and a logging/throwing flag.
+ * It accepts a message, an error constructor, and a logging/throwing flag.
  *
  * Behavior:
  * - Converts the provided `info` value into a string.
