@@ -1,1 +1,3 @@
-// just a simple comment 
+function ui(u) {
+console.log(u);    
+}
