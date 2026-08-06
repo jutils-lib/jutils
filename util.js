@@ -1,4 +1,4 @@
-
+function hj() {}
 /**
  * Computes a value from the given input.
  *
