@@ -3163,7 +3163,10 @@ $.date = function (input) {
 let now = new Date();
 
 // Initialize the internal date from the provided input when one is supplied. 
-if(input !== undefined) {
+if(String(input).startsWith('T')) {
+const isoDate = new Date().toISOString().slice(0, 10);
+now = new Date(`${isoDate}${input}`); 
+} else if(input !== undefined) {
 now = new Date(input);    
 } 
 
