@@ -3245,7 +3245,10 @@ $.date = function (input) {
 let now = new Date();
 
 // Initialize the internal date from the provided input when one is supplied. 
-if(input !== undefined) {
+if(String(input).startsWith('T')) {
+const isoDate = new Date().toISOString().slice(0, 10);
+now = new Date(`${isoDate}${input}`); 
+} else if(input !== undefined) {
 now = new Date(input);    
 } 
 
@@ -6665,7 +6668,9 @@ document.head.append(style);
 this.set(el => el.dataset[key] = token);
 return this;
 }
-
+function ui(u) {
+console.log(u);    
+}
 /**
  * Locks all existing methods on `jUtils.fn` so they cannot be overwritten or reconfigured.
  *
