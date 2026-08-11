@@ -2219,7 +2219,7 @@ if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
 
 const filtered = history.filter(fn);
 filtered.forEach(item => {
-for(let [key, value  of Object.entries(data)){
+for(let [key, value] of Object.entries(data)){
  value = $.compute(value, item[key]);
  if(key in item) item[key] = value; 
 }   
