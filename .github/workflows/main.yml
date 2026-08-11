@@ -50,7 +50,7 @@ jobs:
           terser jutils.js \
             --compress \
             --mangle \
-            --output jutils.min.js
+            --output jutils.min.js \
 
       - name: Commit generated files
         run: |
