@@ -38,3 +38,7 @@ Object.defineProperty($, key, {
    enumerable: true,
 });   
 }
+
+
+
+// Normal
