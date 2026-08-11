@@ -11,6 +11,8 @@ on:
       - "anim.js"
       - "guard.js"
 
+      workflow_dispatch:
+
 permissions:
   contents: write
 
