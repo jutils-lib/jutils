@@ -2027,280 +2027,374 @@ return !Number.isInteger(Number(value));
 
 
 /**
- * Creates a lightweight data store wrapper around localStorage or sessionStorage.
+ * Create a storage-backed data API.
  *
- * The store keeps an array of objects under the provided key and exposes
- * chainable methods for adding, updating, removing, selecting, and reordering items.
+ * Supports three memory modes:
+ * - "storage"   -> localStorage
+ * - "session"   -> sessionStorage
+ * - "indexedDB" -> IndexedDB
  *
- * @param {string} key - The storage key used to persist the collection.
- * @returns {Object} A chainable data store API.
+ * The returned object exposes methods for adding, updating, upserting,
+ * removing, clearing, checking, and reading records.
+ *
+ * @param {string} db_name - Storage namespace / database name.
+ * @param {Object} [options={}] - Configuration object.
+ * @param {string} options.memory - Storage backend: "storage", "session", or "indexedDB".
+ * @returns {Object} API object with CRUD-like methods.
  */
-$.dataStore = function (key, options = {}) {
-const { memory = 'storage' } = Object(options);
+$.dataStore = function (db_name, options = {}) {
+const { memory } = Object(options);
 
-if(!['storage', 'session'].includes(memory)) {
-$.error(`"${memory}" is not a valid memory value, expects ["storage", "session"]`);
+if(!memory) $.error('The "memory" option is required.');
+
+if(!['session', 'storage', 'indexedDB'].includes(memory)) {
+$.error(`"${memory}" is not a valid memory value, expects "storage", "session" or "indexedDB".`);
 }
 
-let store = memory === 'storage' ? localStorage : sessionStorage;
-let history = JSON.parse(store.getItem(key)) || []; 
-
-const obj = {
- // Returns the number of items currently stored.
- // returns {number}
- get length() {
-return history.length;
- }
-};
+// Route to the IndexedDB implementation when requested.
+if(memory === 'indexedDB') {
+return initIndexedDB('Fhs54_hsFY8_0dBl_KHRSO');
+} else return initStorage(memory);
 
 
 /**
-   * Adds one or more objects to the store.
+   * Initialize the IndexedDB-backed API.
    *
-   * If the last argument is numeric, it is treated as a target index and the
-   * added items are moved there after insertion.
-   *
-   * @param {...Object|number} data - One or more objects, optionally followed by a numeric index.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if any item except the optional last index is not an object.
+   * @param {string} tableName - Object store name.
+   * @returns {Object} API object.
    */
+function initIndexedDB(tableName) {
+const request = indexedDB.open(db_name, 1);  
+const primaryKey = 'xDe_o5w9_6wvD_HKk1C';
+let db;
+
+// Create the object store on first version upgrade.
+request.onupgradeneeded = (e) => {
+ db = e.target.result;
+ db.createObjectStore(tableName, {
+   keyPath: primaryKey,
+   autoIncrement: true
+ });    
+}
+
+// Keep a reference to the opened database. 
+request.onsuccess = (e) => {
+db = e.target.result;   
+}; 
+
+const obj = {};
+
+
+// Add one or more records to the object store.
 obj.add = function (...data) {
 data = [].concat(...data);
-
-const lastItem = data[data.length - 1];
-let index;
-if($.isNumeric(lastItem)) {
-index = lastItem;
-data.pop();
+if(data.some(x => typeof x !== 'object' || Array.isArray(x))) { 
+$.error(`"${data}" contains invalid type, expects all items to be an object.`);
 }
 
-if(data.some(item => !$.isObject(item))) {
- $.error(`"${data}" contains invalid type, expects all items to be an object apart from the last which could be a numeric value for toIndex`);
+function fn() {
+const tx = db.transaction(tableName, 'readwrite'); 
+const store = tx.objectStore(tableName);
+data.forEach(item => store.add(item));
+};
+
+try { fn(); } catch {
+request.addEventListener('success', fn);
 }
 
-history.push(...data); 
-store.setItem(key, JSON.stringify(history));
-
-if(index !== undefined) moveTo(data, index);
-
-return this;   
+return this;
 }
 
 
-// Returns a deep clone of all stored items.
-// returns {Array<Object>}
-obj.all = function () {
-  return $.clone(history);
+// Shared helper used by methods that need to find a matching record first.
+const config = (fn, callback) => {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+function func() {
+const tx1 = db.transaction(tableName, 'readwrite'); 
+
+// After the transaction is ready, open a cursor to inspect records.
+tx1.oncomplete = () => {
+const tx2 = db.transaction(tableName, "readwrite");
+const store = tx2.objectStore(tableName);
+const req = store.openCursor();
+
+  req.onsuccess = (event) => {
+   const cursor = event.target.result;         
+   if(cursor) {
+    const current = cursor.value;      
+    const result = [current].find(fn);    
+    if(result) callback(result, cursor);
+    cursor.continue();
+   }
+  }    
+ }
+}
+
+try { func(); } catch {
+request.addEventListener('success', func);
+}
 }
 
 
- /**
-   * Updates matching items, but only for fields that already exist on each item.
-   *
-   * Values may be computed using `$.compute(value, currentValue, item)`.
-   *
-   * @param {Function} fn - Predicate used to select items to update.
-   * @param {Object} [data={}] - Fields and values to apply to matching items.
-   * @param {number} [toIndex] - Optional index to move the updated items to.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if `fn` is not a function or `data` is not an object.
-   */
-obj.update = function (fn, data = {}, toIndex) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
-
-if(!$.isObject(data)) $.error(`"${data}" is not an object`);
-
-const filtered = history.filter(fn);
-filtered.forEach(item => {
-Object.entries(data).forEach(([k, v]) => {
-
-// If the v is a function pass the `item[k]` and `item` to the v parameter and execute the v function.
-// else return the value as it is.
-  v = $.compute(v, item[k], item);
-  
-   if(k in item) item[k] = v;
- });
+// Update matching record fields.
+obj.update = function (fn, data = {}) {
+config(fn, (item, cursor) => {
+for(const key of Object.keys(item)){
+ if(key !== primaryKey && key in data) {
+  const value = $.compute(data[key], item[key]);
+  item[key] = value;
+ } 
+}
+cursor.update(item);
 });
-
-store.setItem(key, JSON.stringify(history));
-if($.isNumeric(toIndex)) moveTo(filtered, toIndex);
-
 return this;
 }
 
 
-/**
-   * Updates matching items and creates fields if they do not already exist.
-   *
-   * Values may be computed using `$.compute(value, currentValue, item)`.
-   *
-   * @param {Function} fn - Predicate used to select items to update.
-   * @param {Object} [data={}] - Fields and values to apply to matching items.
-   * @param {number} [toIndex] - Optional index to move the updated items to.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if `fn` is not a function or `data` is not an object.
-   */
-obj.upsert = function (fn, data = {}, toIndex) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
-
-if(!$.isObject(data)) $.error(`"${data}" is not an object`);
-
-const filtered = history.filter(fn);
-filtered.forEach(item => {
-Object.entries(data).forEach(([k, v]) => {
-
-// If the v is a function pass the `item[k]` and `item` to the v parameter and execute the v function.
-// else return the value as it is.
-  v = $.compute(v, item[k], item);
-  
-   item[k] = v;
- });
+// Upsert fields into the matching record.
+obj.upsert = function (fn, data = {}) {
+config(fn, (item, cursor) => {
+for(let [key, value] of Object.entries(data)){
+ value = $.compute(value, item[key]);
+ if(key !== primaryKey) item[key] = value;
+}
+cursor.update(item);
 });
-
-store.setItem(key, JSON.stringify(history));
-if($.isNumeric(toIndex)) moveTo(filtered, toIndex);
-
-return this;
-}
-
-
-/**
-   * Removes matching items or deletes selected fields from matching items.
-   *
-   * If `fields` is provided, only those fields are removed from the matched items.
-   * Otherwise, the matched items are removed from the collection entirely.
-   *
-   * @param {Function} fn - Predicate used to select items to remove or modify.
-   * @param {string|string[]} [fields=[]] - Field name or field names to delete from matched items.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if `fn` is not a function.
-   */
-obj.remove = function (fn, fields = []) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
-
-const filtered = history.filter(fn);
-fields = [].concat(fields);
-if(fields.length > 0) {
-filtered.forEach(item => {
-fields.forEach(k => delete item[k]);
-}); 
-
-// Filter out empty objects "{}" from the history array
-history = $.filterify(history, { array: true });
-} else {
-history = history.filter(item => !filtered.includes(item));
-}  
-store.setItem(key, JSON.stringify(history));
-return this;
-}
-
-
- // Clears all stored data for the current key.
- // returns {Object} The current API instance for chaining.
-obj.clear = function () {
-store.removeItem(key);
-history.length = 0;
 return this;    
 }
 
 
-/**
-   * Reorders matching items by moving them to the specified index.
-   *
-   * @param {Function} fn - Predicate used to select items to move.
-   * @param {number} toIndex - Destination index.
-   * @returns {Object} The current API instance for chaining.
-   * @throws Will throw if `fn` is not a function or `toIndex` is not numeric.
-   */
-obj.reorder = function (fn, toIndex) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
+// Remove selected fields or delete the whole record.
+obj.remove = function (fn, fields = []) {
+fields = [].concat(fields);
+config(fn, (item, cursor) => {
+for(const key of fields){
+ if(key !== primaryKey) delete item[key];
+}  
 
-if(!$.isNumeric(toIndex)) $.error(`"${toIndex}" is not a numeric value`); 
-
-const filtered = history.filter(fn); 
-moveTo(filtered, toIndex);
+if(fields.length === 0) cursor.delete();
+else cursor.update(item);
+});   
 return this;
 }
 
 
-// Check whether the store contains at least one item that has any of the specified fields.
-obj.contains = function (fields) {
-fields = [].concat(fields);
-return history.some(item => {
-return fields.some(k => (k in item));
-});  
+// Clear the entire object store.
+obj.clear = function () {
+function fn() {
+const tx = db.transaction(tableName, "readwrite");
+const store = tx.objectStore(tableName);    
+store.clear();
+}
+
+try { fn(); } catch {
+request.addEventListener('success', fn);
+}
+
+return this;
 }
 
 
-/*
-  Select matching items from history
-  - Returns a query object
-  - Provides helpers for reading matched values
-*/
-obj.select = function (fn) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
+// Check whether any record contains the given field name.
+obj.contains = function (field) {
+function fn() {
+const tx = db.transaction(tableName, "readwrite");
+const store = tx.objectStore(tableName);  
 
-const filtered = $.clone(history).filter(fn);
+return new Promise(resolve => {
+store.getAll().onsuccess = (e) => {    
+const items = e.target.result;
 
-const query = {
-  get length() {
-     return filtered.length;
-  }
-};
-
-// Get the first matching field value
-query.get = function (field) {
-const result = [];
-filtered.forEach(item => {
-if(field in item) result.push(item[field]);
-});  
-return result.shift();
+for(const item of items){
+const result = Object.keys(item).some(key => key !== primaryKey && field === key);
+resolve(result);    
+}
+}
+});
 }
 
-// Get all matching field values
-query.getAll = function (field) {
-const result = [];
-filtered.forEach(item => {
-if(field in item) result.push(item[field]);
-});  
-return result;    
+try { return fn(); } catch {
+  return new Promise(resolve => {
+   request.addEventListener('success', () => {
+   resolve(fn());
+  });
+ });
+}
 }
 
-// Check whether any matched item has a field
-query.has = function (field) {
-return filtered.some(item => (field in item));
+
+// Get one matching record or a single field from it.
+obj.get = function (fn, field) {
+return new Promise(resolve => {
+config(fn, (item) => {
+ delete item[primaryKey];
+ if(field !== undefined) resolve(item[field]); 
+ else resolve(item);
+});
+});
 }
 
-// Limit the number of returned matched items
-query.limit = function (max) {
-return filtered.splice(0, max); 
+
+// Get all matching records or selected fields.
+obj.getAll = function (fn, field, count = Infinity) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+function func() {
+const tx = db.transaction(tableName, "readonly");    
+const store = tx.objectStore(tableName); 
+return new Promise(resolve => {
+ store.getAll().onsuccess = (e) => {
+  const result = e.target.result;
+  const items = result.filter(fn).map(item => {
+   delete item[primaryKey];
+   if(field === undefined) return item;   
+   return item[field];
+ });
+  resolve(items.slice(0, count));   
+ }
+});
 }
 
-// Return all matched items
-query.all = (index) => {
-return filtered;
-};
+try { return func(); } catch {
+  return new Promise(resolve => {
+   request.addEventListener('success', () => {
+   resolve(func());
+  });
+ });
+}
+}
 
-return query;
+return obj;
 }
 
 
 /**
-   * Moves the given items to a new index within the history array.
+   * Initialize the Web Storage-backed API.
    *
-   * @param {Array<Object>} items - Items to move.
-   * @param {number} index - Destination index.
-   * @private
+   * @param {"storage"|"session"} memory - Storage backend name.
+   * @returns {Object} API object.
    */
-function moveTo(items, index) {
-const data = history.filter(x => items.includes(x)); 
-history = history.filter(x => !items.includes(x));
-history.splice(index, 0, ...data);
-store.setItem(key, JSON.stringify(history));    
-}  
+function initStorage(memory) {
+let store = memory === 'storage' ? localStorage : sessionStorage;
+let history = JSON.parse(store.getItem(db_name)) || [];  
+
+const obj = {};
+
+
+// Add one or more records into the in-memory history and persist them.
+obj.add = function (...data) {
+data = [].concat(...data);
+if(data.some(x => typeof x !== 'object' || Array.isArray(x))) { 
+$.error(`"${data}" contains invalid type, expects all items to be an object.`);
+}
+
+history.push(...data); 
+store.setItem(db_name, JSON.stringify(history));
+return this; 
+}
+
+
+// Update matching records in the persisted history.
+obj.update = function (fn, data = {}) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+const filtered = history.filter(fn);
+filtered.forEach(item => {
+for(let [key, value] of Object.entries(data)){
+ value = $.compute(value, item[key]);
+ if(key in item) item[key] = value; 
+}   
+});
+store.setItem(db_name, JSON.stringify(history));
+return this;
+}
+
+
+// Merge new values into matching records.
+obj.upsert = function (fn, data = {}) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+const filtered = history.filter(fn);
+filtered.forEach(item => {
+for(let [key, value] of Object.entries(data)){
+ value = $.compute(value, item[key]);
+ item[key] = value;  
+}
+});
+store.setItem(db_name, JSON.stringify(history));
+return this;   
+}
+
+
+// Remove selected fields or delete matching records entirely.
+obj.remove = function (fn, fields = []) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+fields = [].concat(fields);
+const filtered = history.filter(fn);    
+if(fields.length > 0) {
+filtered.forEach(item => {
+fields.forEach(key => delete item[key]);  
+});
+
+// Filter out empty objects "{}" from the history array.
+history = $.filterify(history, { array: true });
+} else {
+history = history.filter(item => !filtered.includes(item));
+}
+
+store.setItem(db_name, JSON.stringify(history));
+return this;   
+}
+
+
+// Clear all stored history.
+obj.clear = function () {
+store.removeItem(db_name);
+history.length = 0;
+return this;        
+}
+
+
+// Check whether any record contains the given field.
+obj.contains = function (field) {
+const result = history.some(item => field in item);  
+return Promise.resolve(result);  
+}
+
+
+// Get the first matching record or a field value from it.
+obj.get = function (fn, field) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+const filtered = history.filter(fn);
+return new Promise(resolve => {
+filtered.forEach(item => {
+if(field === undefined) resolve(item);
+else resolve(item[field]); 
+}); 
+});
+}
+
+
+// Get all matching records or selected field values.
+obj.getAll = function (fn, field, count = Infinity) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+const filtered = history.filter(fn);
+return new Promise(resolve => {
+const result = filtered.map(item => {
+if(field === undefined) return item;
+return item[field];
+});
+resolve(result.slice(0, count));
+});    
+}
 
 return obj;
-}
+}  
+}    
 
 
 
@@ -6710,3 +6804,7 @@ Object.defineProperty($, key, {
    enumerable: true,
 });   
 }
+
+
+
+// Normal
