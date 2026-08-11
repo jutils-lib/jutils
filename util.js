@@ -1975,7 +1975,6 @@ return initIndexedDB('Fhs54_hsFY8_0dBl_KHRSO');
 } else return initStorage(memory);
 
 
-
 /**
    * Initialize the IndexedDB-backed API.
    *
@@ -2025,7 +2024,6 @@ return this;
 }
 
 
-
 // Shared helper used by methods that need to find a matching record first.
 const config = (fn, callback) => {
 if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
@@ -2057,7 +2055,6 @@ request.addEventListener('success', func);
 }
 
 
-
 // Update matching record fields.
 obj.update = function (fn, data = {}) {
 config(fn, (item, cursor) => {
@@ -2086,7 +2083,6 @@ return this;
 }
 
 
-
 // Remove selected fields or delete the whole record.
 obj.remove = function (fn, fields = []) {
 fields = [].concat(fields);
@@ -2100,7 +2096,6 @@ else cursor.update(item);
 });   
 return this;
 }
-
 
 
 // Clear the entire object store.
@@ -2117,7 +2112,6 @@ request.addEventListener('success', fn);
 
 return this;
 }
-
 
 
 // Check whether any record contains the given field name.
@@ -2148,7 +2142,6 @@ try { return fn(); } catch {
 }
 
 
-
 // Get one matching record or a single field from it.
 obj.get = function (fn, field) {
 return new Promise(resolve => {
@@ -2159,7 +2152,6 @@ config(fn, (item) => {
 });
 });
 }
-
 
 
 // Get all matching records or selected fields.
@@ -2195,7 +2187,6 @@ return obj;
 }
 
 
-
 /**
    * Initialize the Web Storage-backed API.
    *
@@ -2222,7 +2213,6 @@ return this;
 }
 
 
-
 // Update matching records in the persisted history.
 obj.update = function (fn, data = {}) {
 if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
@@ -2239,7 +2229,6 @@ return this;
 }
 
 
-
 // Merge new values into matching records.
 obj.upsert = function (fn, data = {}) {
 if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
@@ -2254,7 +2243,6 @@ for(let [key, value] of Object.entries(data)){
 store.setItem(db_name, JSON.stringify(history));
 return this;   
 }
-
 
 
 // Remove selected fields or delete matching records entirely.
@@ -2279,7 +2267,6 @@ return this;
 }
 
 
-
 // Clear all stored history.
 obj.clear = function () {
 store.removeItem(db_name);
@@ -2288,13 +2275,11 @@ return this;
 }
 
 
-
 // Check whether any record contains the given field.
 obj.contains = function (field) {
 const result = history.some(item => field in item);  
 return Promise.resolve(result);  
 }
-
 
 
 // Get the first matching record or a field value from it.
@@ -2309,7 +2294,6 @@ else resolve(item[field]);
 }); 
 });
 }
-
 
 
 // Get all matching records or selected field values.
