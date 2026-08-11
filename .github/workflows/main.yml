@@ -10,8 +10,7 @@ on:
       - "dom.js"
       - "anim.js"
       - "guard.js"
-
-      workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
   contents: write
