@@ -1,5 +1,5 @@
 
-/**
+/**.
  * Computes a value from the given input.
  *
  * If `input` is a function, this method calls it with the provided arguments
