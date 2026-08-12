@@ -1688,6 +1688,8 @@ $.filterify = function (input, options = {}) {
 // Validate that the input is an array before processing.  
 if(!Array.isArray(input)) $.error(`${input} is not an array at argument 1`);
 
+options = Object(options);
+  
 // Filter items according to the enabled removal rules.
 return input.filter(item => {
 // Remove empty arrays when array filtering is enabled.  
@@ -1699,6 +1701,9 @@ return item.length > 0;
 if(options.object && $.isObject(item)) {
 return Object.keys(item).length > 0; 
 }   
+
+// Remove nullish item when null filtering is enabled.   
+if(options.null && item == null) return false;
 
 // Keep all values that do not match a removal rule.  
 return true;
