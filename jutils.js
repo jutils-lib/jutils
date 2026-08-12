@@ -405,15 +405,15 @@ return value != null;
  * - The order of checks matters, because arrays are also objects in JavaScript.
  *
  * Example:
- * - $.empty(null)      -> true
- * - $.empty(undefined) -> true
- * - $.empty({})        -> true
- * - $.empty("   ")     -> true
- * - $.empty([])        -> true
- * - $.empty(0)         -> false
- * - $.empty(false)     -> false
+ * - $.isEmpty(null)      -> true
+ * - $.isEmpty(undefined) -> true
+ * - $.isEmpty({})        -> true
+ * - $.isEmpty("   ")     -> true
+ * - $.isEmpty([])        -> true
+ * - $.isEmpty(0)         -> false
+ * - $.isEmpty(false)     -> false
  */
-$.empty = function (value) {
+$.isEmpty = function (value) {
   return (
     value === null ||
     value === undefined ||
