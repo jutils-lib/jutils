@@ -632,6 +632,9 @@ return Number(value).toFixed(length);
  * - For non-string values, sorting uses numeric comparison.
  *
  * Important:
+  * - This function sorts the original array in place because it uses
+ *   `Array.prototype.sort()`.
+ * - If you need to preserve the original array, make a copy before sorting.
  * - The comparison logic assumes the selector returns either strings or values
  *   that can be compared numerically.
  *
@@ -650,7 +653,7 @@ if(!Array.isArray(input)) $.error(`${input} is not an array at argument 1`);
 if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 2`);
 
 // Sort the array by comparing the values returned from the selector.    
-return [...input].sort((a, b) => {
+return input.sort((a, b) => {
 const x = fn(a ?? {});
 const y = fn(b ?? {});
 
