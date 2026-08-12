@@ -733,8 +733,8 @@ if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 2`);
 
 // Sort the array by comparing the values returned from the selector.    
 return [...input].sort((a, b) => {
-const x = fn(a);
-const y = fn(b);
+const x = fn(a ?? {});
+const y = fn(b ?? {});
 
 // Use locale-aware comparison for strings.     
 if(typeof x === 'string' && typeof y === 'string') {
