@@ -3709,16 +3709,16 @@ if(from === to) onComplete();
 
 
 /**
- * Creates a modal instance with HTML/text content support, configurable styles,
+ * Creates a dialog instance with HTML/text content support, configurable styles,
  * and promise-based open/close behavior.
  *
- * The modal supports:
+ * The dialog supports:
  * - setting content as HTML or plain text
  * - applying styles to modal, backdrop, and content
  * - querying content-scoped elements
  * - resolving with a value or dismissing on backdrop click / timeout
  *
- * @returns {Object} Modal API with html, text, styles, and open methods.
+ * @returns {Object} Dialog API with html, text, styles, and open methods.
  */
 $.dialogId = 0;
 
