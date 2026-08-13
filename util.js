@@ -3945,7 +3945,7 @@ backdropEl.remove();
 
 $.confirmId = 0;
 
-$.confirm = function (content = '', btnCancel, btnOk, options = {}) {
+$.confirm = function (content = '', btnCancel = 'CANCEL, btnOk = 'OK, options = {}) {
 const {
  parseHTML = false,
  autoClose = null,
