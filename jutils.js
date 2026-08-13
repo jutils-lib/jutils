@@ -4016,7 +4016,7 @@ backdropEl.addEventListener('click', (event) => {
 // Auto-close the alert after the configured duration.
 if($.isNumeric(autoClose)) {
 setTimeout(() => {
-resolve({ ok: false, reason: 'timeout' });
+resolve({ ok: false, reason: 'autoClose' });
 backdropEl.remove();
 }, autoClose);
 }   
