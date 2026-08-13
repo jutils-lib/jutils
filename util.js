@@ -3720,35 +3720,32 @@ if(from === to) onComplete();
  *
  * @returns {Object} Modal API with html, text, styles, and open methods.
  */
-$.modalId = 0;
+$.dialogId = 0;
 
-$.modal = function (options = {}) {
+$.dialog = function (options = {}) {
 const {
- html = '',
- text = '',
- timeout = null,
- closeOnBackdrop = true,
- render = () => {},
- styles = {  
-  modal: {},
-  content: {},
-  backdrop: {}
- }
+  content = '',
+  autoClose = null,
+  closeOnBackdrop = true,
+  parseHTML = false,
+  render = () => {},
+  styles = {}
 } = Object(options);
 
-// Create the modal DOM structure.
+if(!$.isObject(styles)) $.error(`${styles} is not an object.`);
+
+// Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
-const modalEl = document.createElement('modal-4833194063f');
+const dialogEl = document.createElement('modal-4833194063f');
 const contentEl = document.createElement('content-17921003y');
 
-if(options.html !== undefined) {
- contentEl.innerHTML = $.compute(html);
-} else if(options.text !== undefined) {
- contentEl.textContent = $.compute(text);
+if(content !== undefined) {
+const prop = parseHTML ? 'innerHTML' : 'textContent';
+contentEl[prop] = $.compute(content);
 }
 
-return $.promise(resolve => {
-const currentId = $.modalId++;
+return new Promise(resolve => {
+const currentId = $.dialogId++;
 
 // Base backdrop styling.        
     backdropEl.style.cssText = `
@@ -3762,8 +3759,8 @@ const currentId = $.modalId++;
       z-index: ${currentId};         
     `; 
 
-// Base modal styling.         
-    modalEl.style.cssText = `
+// Base dialog styling.         
+    dialogEl.style.cssText = `
       background-color: #fff;
       border: 1px solid #ddd;
       border-radius: 5px;
@@ -3777,45 +3774,44 @@ const currentId = $.modalId++;
       padding: 10px;
       z-index: ${currentId};  
       position: fixed;  
-    `;   
-
+    `;  
+    
 // Apply user-defined style overrides.   
 Object.assign(backdropEl.style, styles.backdrop);
-Object.assign(modalEl.style, styles.modal);
-Object.assign(contentEl.style, styles.content);
+Object.assign(dialogEl.style, styles.dialog);
+Object.assign(contentEl.style, styles.content);     
 
-// Mount the modal into the document.        
-modalEl.append(contentEl);
-backdropEl.append(modalEl);
+// Mount the dialog into the document.        
+dialogEl.append(contentEl);
+backdropEl.append(dialogEl);
 document.body.append(backdropEl); 
 
-// Close the modal when the backdrop is clicked, if enabled.     
+// Close the dialog when the backdrop is clicked, if enabled.     
 backdropEl.addEventListener('click', (event) => {
  if (event.target === backdropEl && closeOnBackdrop) {  
-    resolve({ ok: false, reason: 'backdrop' });
-    backdropEl.remove();      
+  resolve({ ok: false, reason: 'backdrop' });
+  backdropEl.remove();      
  }  
 });
 
-
-// Auto-close the modal after the configured timeout, if provided.  
-if($.isNumeric(timeout)) {
+// Auto-close the dialog after the configured timeout, if provided.  
+if($.isNumeric(autoClose)) {
 setTimeout(() => {
-resolve({ ok: false, reason: 'timeout' });
+resolve({ ok: false, reason: 'autoClose' });
 backdropEl.remove();
-}, timeout);    
+}, autoClose);    
 }    
 
-// Expose a scoped query helper for modal content.      
- const root = {
-   find: (s) => contentEl.querySelector(s),
-   findAll: (s) => {
-    const nodes = contentEl.querySelectorAll(s);
-    return Array.from(nodes);
-   }
+// Expose a scoped query helper for dialog content.      
+const root = {
+ find: (s) => contentEl.querySelector(s),
+ findAll: (s) => {
+  const nodes = contentEl.querySelectorAll(s);
+  return Array.from(nodes);
  }
+}
  
-// Let the caller wire events and resolve the modal manually.     
+// Let the caller wire events and resolve the dialog manually.     
  render(root, (input) => {
    resolve(input);   
    backdropEl.remove();
