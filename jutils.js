@@ -3818,7 +3818,7 @@ if(!$.isObject(styles)) $.error(`${styles} is not an object.`);
 
 // Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
-const dialogEl = document.createElement('modal-4833194063f');
+const dialogEl = document.createElement('dialog-4833194063f');
 const contentEl = document.createElement('content-17921003y');
 
 if(content !== undefined) {
@@ -3923,27 +3923,18 @@ const root = {
  */
 $.alertId = 0;
 
-$.alert = function (content = '', btnText = 'OK', options = {}) {
-const { 
-contentHTML = false,
-buttonHTML = true,
-timeout, 
-closeOnBackdrop = true, 
+$.alert = function (content = '', btnContent = 'OK', options = {}) {
+const {
+parseHTML = false,
+closeOnBackdrop = true,
+autoClose = null, 
 style = {}
 } = Object(options);
 
-// Choose the DOM property used to render content and button text.  
-const prop = (mode) => {
-if(mode) return 'innerHTML';
-return 'textContent';     
-}
+if(!$.isObject(style)) $.error(`${style} is not an object.`);
 
-// Validate the style object before applying overrides. 
-if(!$.isObject(style)) $.error(`${style} is not an object`);
-
-// Use the custom promise utility so the result supports .then(), .done(), and similar methods.  
-return $.promise(resolve => {
- const currentId = $.alertId++;  
+return new Promise(resolve => {
+const currentId = $.alertId++;  
 
 // Create the backdrop element that covers the viewport.     
  const backdropEl = document.createElement('backdrop-5262419z');    
@@ -3959,7 +3950,7 @@ return $.promise(resolve => {
     `; 
 
 // Create the modal container.       
- const modalEl = document.createElement('modal-4432796329v');
+ const dialogEl = document.createElement('dialog-4432796329v');
     modalEl.style.cssText = `
       background-color: #fff;
       border: 1px solid #ddd;
@@ -3975,15 +3966,16 @@ return $.promise(resolve => {
       z-index: ${currentId};
       position: fixed;
     `;
- Object.assign(modalEl.style, style);
+Object.assign(dialogEl.style, style);    
 
 // Create the content area.     
-   const contentRoot = document.createElement('root-42678934327g');
+   const contentRoot = document.createElement('content-42678934327g');
    contentRoot.style.cssText = `
       flex-grow: 1;
       overflow-y: auto;          
-    `;     
-  contentRoot[prop(contentHTML)] = content;
+    `;  
+  let prop = parseHTML ? 'innerHTML' : 'textContent';
+  contentRoot[prop] = $.compute(content);
 
 // Create the button wrapper.    
    const btnRoot = document.createElement('button-526773239h');
@@ -3995,26 +3987,25 @@ return $.promise(resolve => {
 
 // Create the confirmation button.        
    const btn = document.createElement('btn-432899936438k');
-   btn[prop(buttonHTML)] = btnText;
+   btn.innerHTML = btnContent;
     btn.style.cssText = `        
     font-weight: bold;
     margin-right: 10px;    
     `;  
-
+    
 // Resolve the alert when the button is clicked.      
    btn.onclick = () => {
       resolve({ ok: true, reason: 'confirm' });
       backdropEl.remove();
     }; 
-
-
-// Mount the modal structure into the document.        
+    
+// Mount the dialog structure into the document.        
 btnRoot.append(btn);
 modalEl.append(contentRoot, btnRoot);
-backdropEl.append(modalEl);
+backdropEl.append(dialogEl);
 document.body.append(backdropEl);
 
-// Close the alert when clicking outside the modal, if enabled.     
+// Close the alert when clicking outside the dialog, if enabled.     
 backdropEl.addEventListener('click', (event) => {
  if (event.target === backdropEl && closeOnBackdrop) {
    resolve({ ok: false, reason: 'backdrop' });
@@ -4022,15 +4013,14 @@ backdropEl.addEventListener('click', (event) => {
  }
 });   
 
- 
-// Auto-close the alert after the configured timeout.    
-if($.isNumeric(timeout)) {
+// Auto-close the alert after the configured duration.
+if($.isNumeric(autoClose)) {
 setTimeout(() => {
 resolve({ ok: false, reason: 'timeout' });
 backdropEl.remove();
-}, timeout);
+}, autoClose);
 }   
-}); 
+});
 }
 
 
