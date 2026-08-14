@@ -1150,7 +1150,6 @@ $.timerHandles.forEach(util => {
  * - `url`: Request URL. Defaults to a CoinGecko Bitcoin price endpoint.
  * - `dataType`: Response type / parser name, such as `json`.
  * - `timeout`: Maximum time in milliseconds before the request is aborted.
- * - `delay`: Delay in milliseconds before the request starts.
  * - `cache`: When `true`, allows cached responses; otherwise disables cache.
  *
  * Callback result:
