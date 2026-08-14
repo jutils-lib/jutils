@@ -996,7 +996,7 @@ if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
 const timeoutId = setTimeout(callback, delay);
 
 // Optionally store the timeout handle under a custom identifier. 
-if(id != null) $.timeoutIds[id] = timeoutId;
+if(id !== undefined) $.timeoutIds[id] = timeoutId;
 
 // Provide a cancel method for clearing the timeout and cleaning up storage. 
 return { 
@@ -1042,7 +1042,7 @@ if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
 const intervalId = setInterval(callback, delay);
 
 // Optionally store the interval handle under a custom identifier.
-if(id != null) $.intervalIds[id] = intervalId;
+if(id !== undefined) $.intervalIds[id] = intervalId;
 
 // Provide a cancel method for clearing the interval and cleaning up storage. 
 return { 
@@ -1081,7 +1081,7 @@ if(typeof callback !== 'function') $.error(`${callback} is not a function at arg
 const rafId = requestAnimationFrame(callback);   
 
 // Optionally store the frame handle under a custom identifier.
-if(id != null) $.rafIds[id] = rafId;
+if(id !== undefined) $.rafIds[id] = rafId;
 
 // Provide a cancel method for clearing the frame and cleaning up storage.
 return { 
@@ -4027,7 +4027,7 @@ backdropEl.remove();
 
 $.confirmId = 0;
 
-$.confirm = function (content = '', btnCancel, btnOk, options = {}) {
+$.confirm = function (content = '', btnCancel = 'CANCEL', btnOk = 'OK', options = {}) {
 const {
  parseHTML = false,
  autoClose = null,
@@ -4137,26 +4137,18 @@ backdropEl.remove();
 
 $.promptId = 0;
 
-$.prompt = (content = '', cancelText = 'CANCEL', okText = 'OK', options = {}) => {
-
+$.prompt = function (content = '', btnCancel = 'CANCEL', btnOk = 'OK', options = {}) {
 const {
-  contentHTML = false,
-  buttonHTML = true,
-  timeout,
-  closeOnBackdrop = true, 
-  style = {} 
+ closeOnBackdrop = true,
+ parseHTML = false,
+ autoClose = null,
+ style = {}
 } = Object(options);
 
-const prop = (mode) => {
-if(mode) return 'innerHTML';
-return 'textContent';     
-}
+if(!$.isObject(style)) $.error(`${style} is not an object.`);
 
-if(!$.isObject(style)) $.error(`${style} is not an object`);
-
-// Use the custom promise utility so the result supports .then(), .done(), and similar methods.
-  return $.promise(resolve => {
-    const currentId = $.promptId++;
+return new Promise(resolve => {
+const currentId = $.promptId++;
 
 const backdropEl = document.createElement('backdrop-5262419z');    
     backdropEl.style.cssText = `
@@ -4170,7 +4162,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
       z-index: ${currentId};
     `;
  
- const modalEl = document.createElement('modal-4432796329v');    
+ const dialogEl = document.createElement('dialog-4432796329v');    
     modalEl.style.cssText = `
       background: #fff;
       border: 1px solid #ddd;
@@ -4186,15 +4178,15 @@ const backdropEl = document.createElement('backdrop-5262419z');
       z-index: ${currentId};
       position: fixed;
     `;
- Object.assign(modalEl.style, style);
+ Object.assign(dialogEl.style, style);
 
-
-    const contentRoot = document.createElement('root-42678934327g');
+ const contentRoot = document.createElement('root-42678934327g');
    contentRoot.style.cssText = `
       flex-grow: 1;
       overflow-y: auto;          
-    `;     
-  contentRoot[prop(contentHTML)] = content;
+    `;  
+  const prop = parseHTML ? 'innerHTML' : 'textContent';
+  contentRoot[prop] = $.compute(content);
 
     const inputEl = document.createElement('input');    
     inputEl.type = 'text';
@@ -4207,7 +4199,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
       background-color: ${style.inputBackground ?? 'transparent'};
       color: ${style.inputColor ?? 'black'};
     `;
- 
+    
     const btnRoot = document.createElement('button-526773239h');
     btnRoot.style.cssText = `
       display: flex;
@@ -4217,7 +4209,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     `;
  
    const cancelBtn = document.createElement('cancel-427950252d');
-    cancelBtn[prop(buttonHTML)] = cancelText;
+    cancelBtn.innerHTML = btnCancel;
     cancelBtn.style.cssText = `    
     font-weight: bold; 
     margin-left: 10px;
@@ -4229,7 +4221,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     };
  
    const okBtn = document.createElement('ok-5274935327495j');
-    okBtn[prop(buttonHTML)] = okText;
+    okBtn.innerHTML = btnOk;
     okBtn.style.cssText = `    
     font-weight: bold; 
     margin-right: 10px;
@@ -4239,11 +4231,12 @@ const backdropEl = document.createElement('backdrop-5262419z');
  resolve({ ok: true, reason: 'confirm', value: inputEl.value });
       backdropEl.remove();
     };
- 
+    
 btnRoot.append(cancelBtn, okBtn);
 modalEl.append(contentRoot, inputEl, btnRoot);
-backdropEl.append(modalEl);
+backdropEl.append(dialogEl);
 document.body.append(backdropEl);
+
 
 backdropEl.addEventListener('click', (event) => {
  if (event.target === backdropEl && closeOnBackdrop) {
@@ -4252,15 +4245,14 @@ backdropEl.addEventListener('click', (event) => {
  }
 });    
 
-  
-if($.isNumeric(timeout)) {
+if($.isNumeric(autoClose)) {
 setTimeout(() => {
-resolve({ ok: false, reason: 'timeout' });
+resolve({ ok: false, reason: 'autoClose' });
 backdropEl.remove();
-}, timeout);
-}     
+}, autoClose);
+}             
 });
-};
+}
 
 
 
