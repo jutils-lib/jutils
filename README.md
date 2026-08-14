@@ -31,7 +31,7 @@ jUtils is designed to reduce boilerplate while keeping your code readable, consi
 ### CDN
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/utilitiescode/jutils@latest/jutils.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/jutils-lib/jutils@latest/jutils.js"></script>
 ```
 
 ### Download
