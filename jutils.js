@@ -1178,9 +1178,11 @@ const {
  cache = false
 } = Object(options);
 
+// Prefer fetch when available.  
 if(window.fetch) {
 const controller = new AbortController();
 
+// Abort the request if a numeric timeout is configured.  
 if($.isNumeric(timeout)) {
 setTimeout(() => controller.abort(), timeout);  
 }
