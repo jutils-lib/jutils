@@ -1089,6 +1089,10 @@ $.timerHandles.forEach(util => {
  * - $.request(result => console.log(result), { url: "/api/data", timeout: 3000 })
  */
 $.request = async function (callback, options = {}) {
+
+// Validate the callback before making any network request. 
+if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
+  
 const {
  url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
  dataType = 'json',
