@@ -1170,39 +1170,22 @@ $.timerHandles.forEach(util => {
  * - $.request(result => console.log(result))
  * - $.request(result => console.log(result), { url: "/api/data", timeout: 3000 })
  */
-$.request = function (callback, options = {}) {
-// Validate the callback before making any network request. 
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
-
-// Read request options with defaults. 
+$.request = async function (callback, options = {}) {
 const {
- url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', 
- dataType = 'json', 
- timeout, 
- delay, 
+ url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+ dataType = 'json',
+ timeout = null,
  cache = false
 } = Object(options);
 
-// Support delayed execution when a numeric delay is provided.  
-if($.isNumeric(delay)) {
- setTimeout(config, delay);
- } else {
- config();  
- } 
-
-
-// Internal request configuration and execution. 
-async function config() {
+if(window.fetch) {
 const controller = new AbortController();
 
-// Abort the request if a numeric timeout is configured.   
- if($.isNumeric(timeout)) {
-  setTimeout(() => controller.abort(), timeout);  
- }
+if($.isNumeric(timeout)) {
+setTimeout(() => controller.abort(), timeout);  
+}
 
-// Prefer fetch when available.  
- if(window.fetch) {
-  try {
+try {
    const response = await fetch(url, {
    cache: cache ? 'force-cache' : 'no-store',
    method: 'GET',
@@ -1214,11 +1197,11 @@ const controller = new AbortController();
    
    callback({ ok: true, status: 'success' });
   } catch(err) {
-  let status = err.name === 'AbortError' ? 'timeout' : 'error';
+  const status = err.name === 'AbortError' ? 'timeout' : 'error';
    callback({ ok: false, status });
-  }
- } else {
-   // Fallback for older browsers using XMLHttpRequest.      
+  }    
+} else {
+// Fallback for older browsers using XMLHttpRequest.      
 const xhr = new XMLHttpRequest();
 xhr.open('GET', cache ? url : `${url}ts=${Date.now()}`, true);
 xhr.responseType = dataType;
@@ -1237,9 +1220,8 @@ if($.isNumeric(timeout)) xhr.timeout = timeout;
 
 xhr.ontimeout = () => callback({ ok: false, status: 'timeout' });
 
-xhr.send();
- }     
-}
+xhr.send();    
+} 
 }
 
 
