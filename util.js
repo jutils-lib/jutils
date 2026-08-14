@@ -914,7 +914,7 @@ if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
 const timeoutId = setTimeout(callback, delay);
 
 // Optionally store the timeout handle under a custom identifier. 
-if(id != null) $.timeoutIds[id] = timeoutId;
+if(id !== undefined) $.timeoutIds[id] = timeoutId;
 
 // Provide a cancel method for clearing the timeout and cleaning up storage. 
 return { 
@@ -960,7 +960,7 @@ if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
 const intervalId = setInterval(callback, delay);
 
 // Optionally store the interval handle under a custom identifier.
-if(id != null) $.intervalIds[id] = intervalId;
+if(id !== undefined) $.intervalIds[id] = intervalId;
 
 // Provide a cancel method for clearing the interval and cleaning up storage. 
 return { 
@@ -999,7 +999,7 @@ if(typeof callback !== 'function') $.error(`${callback} is not a function at arg
 const rafId = requestAnimationFrame(callback);   
 
 // Optionally store the frame handle under a custom identifier.
-if(id != null) $.rafIds[id] = rafId;
+if(id !== undefined) $.rafIds[id] = rafId;
 
 // Provide a cancel method for clearing the frame and cleaning up storage.
 return { 
