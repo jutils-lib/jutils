@@ -460,40 +460,20 @@ return input[Math.floor(Math.random() * input.length)];
 
 
 /**
- * Generates a random token string of the requested length.
+ * Generates a random token string.
  *
- * This helper builds a character pool from one or more predefined charset
- * groups, optionally adds custom characters, and then randomly picks
- * characters until the requested token length is reached.
- *
- * Supported charset groups:
- * - `letters`: uppercase + lowercase letters
- * - `lower`: lowercase letters only
- * - `upper`: uppercase letters only
- * - `numbers`: digits 0–9
- * - `symbols`: common punctuation and symbol characters
- * - `mixed`: letters, numbers, and symbols combined
- *
- * Options:
- * - `custom`: extra characters to append to the pool
- * - `merge`: when `true`, combine all selected charset groups into one pool
- * - `include`: array of charset group names to use
- *
- * Notes:
- * - Invalid charset names throw an error.
- * - The output is random but not cryptographically secure.
- * - If the final character pool is empty, the function will not be able to
- *   generate a meaningful token.
- *
- * Example:
- * - $.randToken(8)
- * - $.randToken(12, { include: ['numbers'] })
- * - $.randToken(16, { include: ['lower', 'numbers'], custom: '-' })
- * - $.randToken(5, { merge: false, custom: '✅😊🦜' })
+ * @param {number} [length=8] - The desired token length.
+ * @param {Object} [options] - Character set options.
+ * @param {boolean} [options.letters=true] - Include both lowercase and uppercase letters.
+ * @param {boolean} [options.lower=false] - Include lowercase letters.
+ * @param {boolean} [options.upper=false] - Include uppercase letters.
+ * @param {boolean} [options.numbers=false] - Include numeric characters.
+ * @param {boolean} [options.symbols=false] - Include symbol characters.
+ * @param {string} [options.custom] - Additional custom characters to include.
+ * @returns {string} A randomly generated token.
  */
-$.randToken = function (length = 8, options = {}) {
-// Read token settings with defaults.
-  const { custom = "", merge = true, include = ['letters'] } = Object(options);
+$.randToken = function (length = 8, options) {
+let str = '';
 
 // Predefined character sets that can be combined to build the token pool.  
 const charset = {
@@ -501,31 +481,31 @@ const charset = {
  lower: 'abcdefghijklmnopqrstuvwxyz',
  upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
  numbers: '0123456789',
- symbols: '!@#$%^&*()-_=+[]{}|\\:;"\'<>,.?/',
- mixed: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|\\:;"\'<>,.?/'  
+ symbols: '!@#$%^&*()-_=+[]{}|\\:;"\'<>,.?/' 
 } 
 
-// Build the final character pool from the requested charset groups.  
-const result = [].concat(include).reduce((acc, c) => {
-
-// Validate charset type before using it.
-if(!charset[c]) {
-$.error(`"${c}" is not a valid charset type, expects [upper, lower, letters, numbers, mixed, symbols]`);
-}  
- 
-return merge ? (acc + charset[c]) : '';
-}, '') + custom;
+// Build the character set from the specified options, defaulting to letters.
+if(!$.isObject(options)) {
+ str += charset['letters'];
+} else {
+ if(options.letters) str += charset['letters'];
+ if(options.lower) str += charset['lower'];
+ if(options.upper) str += charset['upper'];
+ if(options.numbers) str += charset['numbers'];
+ if(options.symbols) str += charset['symbols'];   
+ if(options.custom) str += options.custom;
+}
 
 // Convert the pool into an array of characters for random selection. 
-let str = '';
-let char = Array.from(result);
+let result = '';
+let char = Array.from(str);
 
 // Randomly pick characters until the requested length is reached. 
 for(let i = 0; i < length; i++) {
-str += char[Math.floor(Math.random() * char.length)];   
+result += char[Math.floor(Math.random() * char.length)];   
 }
 
-return str;
+return result;
 }
 
 
