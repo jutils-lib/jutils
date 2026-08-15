@@ -1434,82 +1434,36 @@ $.merge = function (...args) {
 
 
 /**
- * Inserts a value into a string at the specified index.
+ * Inserts a value into a string at a given position.
  *
- * The insertion happens before the character at `index`.
- * For example:
- * $.insertAt("Samuel", 2, "✅") // "Sa✅muel"
- *
- * @param {string} str - The source string.
- * @param {number} index - The insertion position.
+ * @param {string} input - The source string.
+ * @param {number|string} position - The insert index, or a substring to insert before.
  * @param {string} value - The value to insert.
- * @returns {string} The resulting string after insertion.
+ * @returns {string} The updated string with the value inserted.
  */
-$.insertAt = function (str, index, value) {
+$.insertStr = function (input, position, value) {
+  if (typeof position !== "number" && typeof position !== "string") {
+    $.error(`${position} must be a number or a string at argument 2`);
+  }
 
-// Ensure the index is numeric before using it as a string position.  
-if(!$.isNumeric(index)) $.error(`${index} is not a numeric value at argument 2`);
+  let index = position;
+  input = String(input);
 
-// Convert the input to a string so slice() can be safely used.
-str = String(str);
+  if (typeof position === "string") index = input.indexOf(position);
 
-// Split the string at the index and insert the new value in between.
-return str.slice(0, index) + value + str.slice(index);
-}
+  if (position < 0) {
+    const p = $.pos(input.length).loose(position);
 
+    // Insert from the end when the position is negative.
+    const result = input.replace(/./g, (m, i) => {
+      if (i === p) return m + value;
+      return m;
+    });
 
+    return input.length < Math.abs(position) ? value + input : result;
+  }
 
-/**
- * Inserts a value before the first occurrence of a match in a string.
- *
- * If the match is not found, the value is appended to the end of the string.
- *
- * @param {string} str - The source string.
- * @param {string} match - The substring to insert before.
- * @param {string} value - The value to insert.
- * @returns {string} The resulting string after insertion.
- */
-$.insertBefore = function (str, match, value) {
-// Convert the input to a string so string methods can be used safely.
-str = String(str);
-
-// Find the first occurrence of the match.
-const index = str.indexOf(match);
-
-// If the match does not exist, append the value to the end.
-if(index === -1) return str + value;
-
-// Insert the value before the matched substring.
-return str.slice(0, index) + value + str.slice(index); 
-}
-
-
-
-/**
- * Inserts a value after the first occurrence of a match in a string.
- *
- * If the match is not found, the value is appended to the end of the string.
- *
- * @param {string} str - The source string.
- * @param {string} match - The substring to insert after.
- * @param {string} value - The value to insert.
- * @returns {string} The resulting string after insertion.
- */
-$.insertAfter = function (str, match, value) {
-// Convert the input to a string so string methods can be used safely.
-str = String(str);
-
-// Find the first occurrence of the match.
-const index = str.indexOf(match);
-
-// If the match does not exist, append the value to the end.
-if(index === -1) return str + value;
-
-// Calculate the position immediately after the matched substring.
-const len = index + String(match).length;
-
-// Insert the value after the matched substring.
-return str.slice(0, len) + value + str.slice(len); 
+  return input.slice(0, index) + value + input.slice(index);
 }
 
 
