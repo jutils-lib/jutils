@@ -2041,7 +2041,7 @@ return this;
 
 
 // Check whether any record contains the given field name.
-obj.contains = function (field) {
+obj.has = function (field) {
 function fn() {
 const tx = db.transaction(tableName, "readwrite");
 const store = tx.objectStore(tableName);  
@@ -2202,7 +2202,7 @@ return this;
 
 
 // Check whether any record contains the given field.
-obj.contains = function (field) {
+obj.has = function (field) {
 const result = history.some(item => field in item);  
 return Promise.resolve(result);  
 }
