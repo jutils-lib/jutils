@@ -2133,7 +2133,7 @@ store.getAll().onsuccess = (e) => {
 const items = e.target.result;
 
 const result = items.some(item => {
-const hasKey = key in item;
+const hasKey = primaryKey !== key && key in item;
 if(value !== undefined) {
 return hasKey && item[key] === value;
 } 
