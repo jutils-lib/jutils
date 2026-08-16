@@ -2123,7 +2123,7 @@ return this;
 
 
 // Check whether any record contains the given field name.
-obj.has = function (field) {
+obj.has = function (key, value) {
 function fn() {
 const tx = db.transaction(tableName, "readwrite");
 const store = tx.objectStore(tableName);  
@@ -2132,10 +2132,14 @@ return new Promise(resolve => {
 store.getAll().onsuccess = (e) => {    
 const items = e.target.result;
 
-for(const item of items){
-const result = Object.keys(item).some(key => key !== primaryKey && field === key);
-resolve(result);    
-}
+const result = items.some(item => {
+const hasKey = key in item;
+if(value !== undefined) {
+return hasKey && item[key] === value;
+} 
+return hasKey;
+});
+resolve(result);
 }
 });
 }
@@ -2284,8 +2288,14 @@ return this;
 
 
 // Check whether any record contains the given field.
-obj.has = function (field) {
-const result = history.some(item => field in item);  
+obj.has = function (key, value) {
+const result = history.some(item => {
+const hasKey = key in item;
+if(value !== undefined) {
+return hasKey && item[key] === value;
+} 
+return hasKey;  
+});  
 return Promise.resolve(result);  
 }
 
