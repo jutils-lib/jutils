@@ -2081,7 +2081,7 @@ config(fn, (item) => {
 
 
 // Get all matching records or selected fields.
-obj.getAll = function (fn, field, count = Infinity) {
+obj.getAll = function (fn = x => x, field, count = Infinity) {
 if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
 
 function func() {
@@ -2223,7 +2223,7 @@ else resolve(item[field]);
 
 
 // Get all matching records or selected field values.
-obj.getAll = function (fn, field, count = Infinity) {
+obj.getAll = function (fn = x => x, field, count = Infinity) {
 if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
 
 const filtered = history.filter(fn);
