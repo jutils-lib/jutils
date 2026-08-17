@@ -1786,7 +1786,7 @@ $.url = {
  * @param {*} b - Second value to compare.
  * @returns {boolean} `true` if both values are considered equal, otherwise `false`.
  */
-$.equal = function (a, b) {
+$.equals = function (a, b) {
 // Compare object-like values by structure and nested content.  
 if(typeof a === 'object' && typeof b === 'object') {
 // Different number of keys means the objects cannot be equal.    
