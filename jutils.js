@@ -1786,11 +1786,16 @@ $.url = {
  * @param {*} b - Second value to compare.
  * @returns {boolean} `true` if both values are considered equal, otherwise `false`.
  */
-$.equals = function (a, b) {
+$.equal = function (a, b) {
 // Compare object-like values by structure and nested content.  
 if(typeof a === 'object' && typeof b === 'object') {
 // Different number of keys means the objects cannot be equal.    
 if(Object.keys(a).length !== Object.keys(b).length) return false;
+
+// If it's Node compare it directly.
+if(a instanceof Node && b instanceof Node) {
+ return a === b;
+}
 
 // Ensure every key in `a` exists in `b` with an equal value.    
 return Object.keys(a).every(key => {
@@ -1799,7 +1804,9 @@ const bValue = b[key];
 
 // Recursively compare nested object-like values when both sides match in size.     
 if(typeof aValue === 'object' && typeof bValue === 'object' && Object.keys(aValue).length === Object.keys(bValue).length) {
-return $.equals(aValue, bValue);    
+// If it's Node compare it directly otherwise recurse the function 
+ if(aValue instanceof Node && bValue instanceof Node) return aValue === bValue;
+ else return $.equals(aValue, bValue);    
 } else {
 // Fall back to strict equality for primitive or non-matching nested values.     
 return aValue === bValue;   
