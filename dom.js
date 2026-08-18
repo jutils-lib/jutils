@@ -2044,69 +2044,101 @@ return this;
 
 
 /**
- * Internal event registry used to track listeners attached through `on()`.
+ * Attach one or more event listeners to the selected elements.
  *
- * This array stores metadata for later removal via `off()`.
+ * Supports direct events, delegated events, multiple event names,
+ * event maps, and native addEventListener() options.
+ *
+ * @param {string|Object} type
+ *   Event name(s) or an event map:
+ *   { click: handler, mouseenter: handler }
+ *
+ * @param {string|Function} selector
+ *   CSS selector for delegated events, or the callback for direct events.
+ *
+ * @param {Function|Object} callback
+ *   Event callback for delegated events, or options for direct events.
+ *
+ * @param {AddEventListenerOptions|boolean} [options={}]
+ *   Native event listener options such as `once`, `capture`, and `passive`.
+ *
+ * @returns {jUtils}
+ *   The current jUtils collection for method chaining.
+ *
+ * @example
+ * // Direct event
+ * $("button").on("click", handler);
+ *
+ * @example
+ * // Delegated event
+ * $("#parent").on("click", ".child", handler);
+ *
+ * @example
+ * // Multiple events
+ * $("button").on("click mouseenter", handler);
+ *
+ * @example
+ * // Event map
+ * $("button").on({
+ *     click: clickHandler,
+ *     mouseenter: enterHandler
+ * });
+ *
+ * @example
+ * // Event map with selector and options
+ * $("#parent").on({
+ *     click: clickHandler,
+ *     mouseenter: enterHandler
+ * }, ".child", {
+ *     once: true
+ * });
  */
-jUtils.fn.$jUtils_event = [];
+$.jUtilsEvents = [];
 
-/**
- * Attaches event listeners to the matched elements.
- *
- * Behavior:
- * - Supports object form: `{ eventName: handler }`
- * - Supports delegated events when `selector` is a string
- * - Supports direct events when `selector` is a function
- * - Stores listener metadata in `$jUtils_event` for later removal
- *
- * @param {string|Object} type - Event type, space-separated event names, or an event map.
- * @param {string|Function} selector - Delegated selector or event callback.
- * @param {Function|Object} [callback] - Callback function or event options in direct mode.
- * @param {Object} [options={}] - Listener options passed to `addEventListener`.
- * @returns {jUtils} The current instance for chaining.
- */
 jUtils.fn.on = function (type, selector, callback, options = {}) {
 // Support object form: { eventName: handler, ... }
 if($.isObject(type)) {
-Object.entries(type).forEach(([key, value]) => { 
- if(typeof selector === 'string') {
-  this.on(key, selector, value, options);    
- } else {
-  this.on(key, value, options);
- }
-});
-return this;
+ for(const [name, fn] of Object.entries(type)){
+// An event map can optionally use delegated selectors.
+  if(typeof selector === 'string') {  
+   this.on(name, selector, fn, callback);  
+  } else {  
+// Without a selector, the second argument is the options object. 
+   this.on(name, fn, selector);        
+  }   
+ }  
+ return this; 
 }
 
-// Normalize event names from a space-separated string.
+// Normalize space-separated event names into individual event types.
 type = String(type).match(/\S+/g) ?? [];
 
 this.set(el => {
 const handler = (e) => {
 if(typeof selector === 'string') {
-// Delegated event: find matching descendant and run the callback.
+// Delegated event: locate the closest matching descendant.
 const parent = e.target.closest(selector);
+
+// Ensure the matched element belongs to the current collection element.
 if (parent && el.contains(parent)) callback(e);
 } else {
 // Direct event: selector is the callback.
 selector(e);
-options = callback;
 }    
 }
 
-// Attach the handler for each event name.
-type.forEach(evt => el.addEventListener(evt, handler, options));  
+// Use the third argument as options for direct events; otherwise use the explicit options argument.
+type.forEach(evt => el.addEventListener(evt, handler, typeof callback !== 'function' ? callback : options));  
 
-// Store listener metadata for later removal.
-this.$jUtils_event.push({ 
- handler, 
- type, 
- selector: typeof selector === 'string' ? selector : '', 
- listener: typeof callback === 'function' ? callback : selector
+// Store registration details so the listener can be identified later by .offs().
+$.jUtilsEvents.push({
+  type,
+  handler,
+  listener: typeof callback === 'function' ? callback : selector,
+  selector: String(selector).replace(/\s+/g, '')
 });
- 
 });
-return this;
+return this;   
 }
 
 
