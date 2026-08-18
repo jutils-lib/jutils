@@ -2144,57 +2144,93 @@ return this;
 
 
 /**
- * Removes event listeners from the matched elements.
+ * Remove event listeners previously registered with `.on()`.
  *
- * Behavior:
- * - Supports removing listeners by event type, selector, callback, or an object map.
- * - If `type` is an object, treats it as a map of event names to handlers/selectors.
- * - If `selector` is a string, removes the matching delegated listener.
- * - If `selector` is not a string, treats it as the callback/handler reference.
- * - Uses the stored internal event registry (`this.$jUtils_event`) to find handlers.
+ * Supports direct events, delegated events, multiple event names,
+ * event maps, and selective removal by callback or selector.
  *
- * @param {string|Object} type - Event type, space-separated event names, or an event map.
- * @param {string|Function} [selector] - Delegated selector or callback reference.
- * @param {Function|Object} [callback] - Callback reference or event options.
- * @param {Object} [options={}] - Options passed to `removeEventListener`.
- * @returns {jUtils} The current instance for chaining.
+ * @param {string|Object} [type]
+ *   Event name(s) or an event map:
+ *   { click: handler, mouseenter: handler }.
+ *   When omitted, all registered event types are considered.
+ *
+ * @param {string|Function} [selector]
+ *   CSS selector for delegated events, or the callback for direct events.
+ *
+ * @param {Function|Object} [callback]
+ *   Event callback used to identify the listener, or options for direct events.
+ *
+ * @param {AddEventListenerOptions|boolean} [options={}]
+ *   Native event listener options such as `capture`, `once`, and `passive`.
+ *
+ * @returns {jUtils}
+ *   The current jUtils collection for method chaining.
+ *
+ * @example
+ * // Remove a direct event
+ * $("button").off("click", handler);
+ *
+ * @example
+ * // Remove a delegated event
+ * $("#parent").off("click", ".child", handler);
+ *
+ * @example
+ * // Remove multiple event types
+ * $("button").off("click mouseenter", handler);
+ *
+ * @example
+ * // Event map
+ * $("button").off({
+ *     click: clickHandler,
+ *     mouseenter: enterHandler
+ * });
+ *
+ * @example
+ * // Remove all registered events
+ * $("button").off();
  */
 jUtils.fn.off = function (type, selector, callback, options = {}) {
 // Support object form: { eventName: handler, ... }
 if($.isObject(type)) {
-Object.entries(type).forEach(([key, value]) => { 
- if(typeof selector === 'string') {
-  this.off(key, selector, value, options);    
- } else {
-  this.off(key, value, options);
- }
-});
-return this;
+ for(const [name, fn] of Object.entries(type)){
+// An event map can optionally use delegated selectors.
+  if(typeof selector === 'string') {  
+   this.off(name, selector, fn, callback);  
+  } else {   
+// Without a selector, the second argument is the options object.
+   this.off(name, fn, selector);        
+  }   
+ }  
+ return this; 
 }
 
-// Normalize event type input into an array of event names.
-const eventType = (input) => {
-return type !== undefined ? String(type).match(/\S+/g) ?? [] : input;
+// Resolve requested event types, falling back to the types stored in each registration.
+const resolveType = (fields) => {
+return (type ?? '').match(/\S+/g) ?? fields;
 }
 
 this.set(el => {
+$.jUtilsEvents.forEach(item => {
+resolveType(item.type).forEach(evt => {
+
 if(typeof selector === 'string') {
-// Find the delegated listener for the given selector.
-const item = this.$jUtils_event.filter(item => item.selector === selector).shift();
+// Delegated event: match the exact selector used during registration.
+if(String(selector).replace(/\s+/g, '') !== item.selector) return this;
 
-if(callback && item?.listener !== callback) return this;
+// If a callback is provided, only remove the matching listener.
+if(callback && item.listener !== callback) return this;
 
-eventType(item.type).forEach(evt => el.removeEventListener(evt, item.handler, options)); 
+el.removeEventListener(evt, item.handler, options);
 } else {
-// Remove listeners by callback reference or by stored event records.
-this.$jUtils_event.forEach(item => {
-if(selector && item?.listener !== selector) return this;
+// Direct event: match the registered callback when one is provided.
+if(selector && item.listener !== selector) return this;
 
-eventType(item.type).forEach(evt => el.removeEventListener(evt, item.handler, options));   
-});   
+el.removeEventListener(evt, item.handler, options);
 }
+});    
+});  
 });
-return this;
+return this; 
 }
 
 
