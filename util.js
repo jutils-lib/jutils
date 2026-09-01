@@ -3813,7 +3813,7 @@ const currentId = $.alertId++;
 
 // Create the modal container.       
  const dialogEl = document.createElement('dialog-4432796329v');
-    modalEl.style.cssText = `
+    dialogEl.style.cssText = `
       background-color: #fff;
       border: 1px solid #ddd;
       border-radius: 5px;
@@ -3863,7 +3863,7 @@ Object.assign(dialogEl.style, style);
     
 // Mount the dialog structure into the document.        
 btnRoot.append(btn);
-modalEl.append(contentRoot, btnRoot);
+dialogEl.append(contentRoot, btnRoot);
 backdropEl.append(dialogEl);
 document.body.append(backdropEl);
 
@@ -3916,7 +3916,7 @@ const currentId = $.confirmId++;
     `;
   
  const dialogEl = document.createElement('dialog-4432796329v');    
-    modalEl.style.cssText = `
+    dialogEl.style.cssText = `
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 5px;
@@ -3973,7 +3973,7 @@ const contentRoot = document.createElement('root-42678934327g');
     }; 
     
 btnRoot.append(cancelBtn, okBtn);
-modalEl.append(contentRoot, btnRoot);
+dialogEl.append(contentRoot, btnRoot);
 backdropEl.append(dialogEl);
 document.body.append(backdropEl);
 
@@ -4025,7 +4025,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     `;
  
  const dialogEl = document.createElement('dialog-4432796329v');    
-    modalEl.style.cssText = `
+    dialogEl.style.cssText = `
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 5px;
@@ -4095,7 +4095,7 @@ const backdropEl = document.createElement('backdrop-5262419z');
     };
     
 btnRoot.append(cancelBtn, okBtn);
-modalEl.append(contentRoot, inputEl, btnRoot);
+dialogEl.append(contentRoot, inputEl, btnRoot);
 backdropEl.append(dialogEl);
 document.body.append(backdropEl);
 
