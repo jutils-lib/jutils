@@ -3573,6 +3573,13 @@ isSettled = true;
 obj.resolve(input);
 }
 
+// Pauses execution for the specified duration.
+obj.sleep = function (ms) {
+return new Promise(resolve => {
+setTimeout(resolve, ms);
+});
+}  
+
 return obj;   
 }
 
