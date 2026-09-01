@@ -2308,33 +2308,27 @@ return Promise.resolve(result);
 
 
 // Get the first matching record or a field value from it.
-obj.get = function (fn, field) {
-if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+obj.get = function (fn = x => x, field) {
+if(typeof fn !== 'function') error(`${fn} is not a function.`);
 
-const filtered = history.filter(fn);
-return new Promise(resolve => {
-filtered.forEach(item => {
-if(field === undefined) resolve(item);
-else resolve(item[field]); 
-}); 
-});
+const filtered = history.find(fn);
+const item = !filtered || field === undefined ? filtered : filtered[field];
+
+return Promise.resolve(item);
 }
 
 
 // Get all matching records or selected field values.
 obj.getAll = function (fn = x => x, field, count = Infinity) {
-if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+if(typeof fn !== 'function') error(`${fn} is not a function.`);
 
-const filtered = history.filter(fn);
-return new Promise(resolve => {
-const result = filtered.map(item => {
+const result = history.filter(fn).map(item => {
 if(field === undefined) return item;
 return item[field];
 });
-resolve(result.slice(0, count));
-});    
-}
-
+return Promise.resolve(result.slice(0, count));
+}  
+  
 return obj;
 }  
 }    
