@@ -1991,6 +1991,7 @@ request.addEventListener('success', func);
 // Update matching record fields.
 obj.update = function (fn, data = {}) {
 config(fn, (item, cursor) => {
+if(!item) return;
 for(const key of Object.keys(item)){
  if(key !== primaryKey && key in data) {
   const value = $.compute(data[key], item[key]);
@@ -2006,6 +2007,7 @@ return this;
 // Upsert fields into the matching record.
 obj.upsert = function (fn, data = {}) {
 config(fn, (item, cursor) => {
+if(!item) return;
 for(let [key, value] of Object.entries(data)){
  value = $.compute(value, item[key]);
  if(key !== primaryKey) item[key] = value;
@@ -2020,6 +2022,7 @@ return this;
 obj.remove = function (fn, fields = []) {
 fields = [].concat(fields);
 config(fn, (item, cursor) => {
+if(!item) return;
 for(const key of fields){
  if(key !== primaryKey) delete item[key];
 }  
@@ -2195,7 +2198,7 @@ fields.forEach(key => delete item[key]);
 });
 
 // Filter out empty objects "{}" from the history array.
-history = $.filterify(history, { array: true });
+history = $.filterify(history, { object: true });
 } else {
 history = history.filter(item => !filtered.includes(item));
 }
