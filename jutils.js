@@ -3540,6 +3540,7 @@ return obj;
  * - `wait()` to pause until the gate is resolved
  * - `resolve()` to release the current waiting promise
  * - `resolveAll()` to mark the gate as settled and release waiting code
+ *- `sleep()` to pause execution for the specified duration
  *
  * @returns {Object} A gate controller object.
  */
