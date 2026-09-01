@@ -2206,6 +2206,15 @@ try { return func(); } catch {
 }
 }
 
+
+// Checks whether at least one item in the stored data matches the callback condition.
+obj.some = async function (fn) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+
+const result = await obj.getAll();
+return Promise.resolve(result.some(fn));
+}  
+
 return obj;
 }
 
