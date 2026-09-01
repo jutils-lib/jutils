@@ -2162,12 +2162,13 @@ try { return fn(); } catch {
 
 
 // Get one matching record or a single field from it.
-obj.get = function (fn, field) {
+obj.get = function (fn = x => x, field) {
 return new Promise(resolve => {
-config(fn, (item) => {
- delete item[primaryKey];
- if(field !== undefined) resolve(item[field]); 
- else resolve(item);
+config(fn, (item) => { 
+const result = !item || field === undefined ? item : item[field];
+ 
+if(result) delete result[primaryKey];
+resolve(result);
 });
 });
 }
