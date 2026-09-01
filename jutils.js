@@ -2313,7 +2313,7 @@ return Promise.resolve(result);
 
 // Get the first matching record or a field value from it.
 obj.get = function (fn = x => x, field) {
-if(typeof fn !== 'function') error(`${fn} is not a function.`);
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
 
 const filtered = history.find(fn);
 const item = !filtered || field === undefined ? filtered : filtered[field];
@@ -2324,13 +2324,21 @@ return Promise.resolve(item);
 
 // Get all matching records or selected field values.
 obj.getAll = function (fn = x => x, field, count = Infinity) {
-if(typeof fn !== 'function') error(`${fn} is not a function.`);
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
 
 const result = history.filter(fn).map(item => {
 if(field === undefined) return item;
 return item[field];
 });
 return Promise.resolve(result.slice(0, count));
+}  
+
+
+// Checks whether at least one history item passes the callback condition and returns the result as a Promise.
+obj.some = function (fn) {
+if(typeof fn !== 'function') $.error(`${fn} is not a function.`);
+const result = history.some(fn);  
+return Promise.resolve(result);
 }  
   
 return obj;
