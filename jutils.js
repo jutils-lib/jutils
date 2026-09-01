@@ -2133,36 +2133,19 @@ return this;
 
 
 // Check whether any record contains the given field name.
-obj.has = function (key, value) {
-function fn() {
-const tx = db.transaction(tableName, "readwrite");
-const store = tx.objectStore(tableName);  
-
-return new Promise(resolve => {
-store.getAll().onsuccess = (e) => {    
-const items = e.target.result;
+obj.has = async function (key, value) {
+const items = await obj.getAll();
 
 const result = items.some(item => {
 const hasKey = primaryKey !== key && key in item;
 if(value !== undefined) {
 return hasKey && item[key] === value;
-} 
+}
 return hasKey;
 });
-resolve(result);
+return Promise.resolve(result);
 }
-});
-}
-
-try { return fn(); } catch {
-  return new Promise(resolve => {
-   request.addEventListener('success', () => {
-   resolve(fn());
-  });
- });
-}
-}
-
+    
 
 // Get one matching record or a single field from it.
 obj.get = function (fn = x => x, field) {
