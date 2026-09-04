@@ -4119,16 +4119,24 @@ backdropEl.remove();
 
 
 /**
- * Provides an interface for storing and managing data
- * using the browser Cache Storage API.
+ * Provides a simple interface for interacting with the browser
+ * Cache Storage API.
  *
  * @namespace $.cache
  */
 $.cache = (() => {
-const obj = {};  
+const obj = {};
 
-// Stores a value in the specified cache.
+// Stores one or multiple values in the specified cache.
 obj.set = async function (name, value) {
+
+if($.isObject(name)) {
+for(const [key, value] of Object.entries(name)){
+await this.set(key, value);   
+}
+return this;
+}
+
 if(value === undefined) $.error('Cache value cannot be undefined');
 
 const cache = await caches.open(name);
@@ -4137,48 +4145,31 @@ if(!(value instanceof Response)) {
 value = new Response(value);
 }
 
-await cache.put(`/${name}`, value);
+await cache.put(name, value);    
 }
 
 
-// Retrieves a cached value and optionally converts it to the specified type.
+// Retrieves a cached response and optionally converts it to the specified type.
 obj.get = async function (name, type) {
-const response = await caches.match(`/${name}`);
+const response = await caches.match(name);
 if(!type || !response) return response; 
 try {
 return response[type]();
 } catch {
 $.error(`Failed to convert cached response to ${type}`);
-}
+}    
 }
 
 
-// Checks whether the specified cache exists.
+// Checks whether a cache with the specified name exists.
 obj.has = async function (name) {
-return await caches.has(name); 
+return await caches.has(name);  
 }
 
 
 // Removes the specified cache.
 obj.remove = async function (name) {
-await caches.delete(name);  
-}
-
-
-// Fetches and stores the specified resources in their respective caches.
-obj.add = async function (names = []) {
-names = [].concat(names);
-for(const name of names) {
-const cache = await caches.open(name);
-const request = await fetch(name);
-await cache.put(`/${name}`, request);
-};
-}
-
-
-// Returns the names of all existing caches.
-obj.keys = async function () {
-return await caches.keys();  
+await caches.delete(name)   
 }
 
 
@@ -4187,10 +4178,26 @@ obj.clear = async function () {
 const names = await caches.keys();
 for(const name of names) {
 await caches.delete(name);
-}
+}    
 }
 
-return obj;
+
+// Returns the names of all existing caches.
+obj.keys = async function () {
+return await caches.keys();
+}
+
+
+// Fetches and caches one or multiple resources.
+obj.add = async function (names = []) {
+names = [].concat(names);
+for(const name of names) {
+const cache = await caches.open(name);
+await cache.add(name);
+};    
+}
+
+return obj;   
 })();
 
 
