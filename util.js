@@ -4156,7 +4156,7 @@ if(!type || !response) return response;
 try {
 return response[type]();
 } catch {
-$.error(`Failed to convert cached response to ${type}`);
+$.error(`Failed to convert cached response to "${type}"`);
 }    
 }
 
