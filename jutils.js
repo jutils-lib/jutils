@@ -3585,62 +3585,61 @@ return obj;
 
 
 /**
- * Creates a promise-like utility with custom resolve/reject helpers and
- * convenience methods for done, fail, and always callbacks.
+ * Creates a Promise with native settlement methods and
+ * custom resolver helpers for unpacking object values
+ * through `.done()` and `.fail()`.
  *
- * The executor receives:
- * - a resolve wrapper
- * - a reject wrapper
- * - a config object with object-only resolve/reject methods
- *
- * If config.resolve or config.reject is used with an object, the object values
- * are stored so done/fail can receive them as separate arguments.
- *
- * @param {Function} callback - Executor function that receives resolve, reject, and config helpers.
- * @returns {Promise} A promise enhanced with done, fail, and always methods.
+ * @param {Function} callback - Executor function receiving
+ * resolve, reject, and custom resolver helpers.
+ * @returns {Promise} A Promise extended with `.done()`,
+ * `.fail()`, and `.always()` methods.
  */
 $.promise = function (callback) {
 // Validate that the executor is a function.
 if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
 
-// Stores object values for custom multi-argument done/fail callbacks.
-let result;
+const meta = {};
 
 const promise = new Promise((resolve, reject) => {
 
 const resolverInputError = new TypeError('Resolver input is not an object');
 const rejectInputError = new TypeError('Reject input is not an object');
 
-const config = {
-// Resolve using an object only, then store its values for later unpacking.     
- resolve: (input) => {  
+// Custom settlement methods for object-value unpacking.
+const config = { 
+ resolve: (input) => { 
   if(!$.isObject(input)) {
    $.error(resolverInputError);
   }
-  resolve(input);
-  result = Object.values(input);
+  meta.settle = 'resolve';
+  resolve(input);  
  },
-   
-// Reject using an object only, then store its values for later unpacking.      
+      
  reject: (input) => {  
   if(!$.isObject(input)) {
    $.error(rejectInputError); 
-  }  
-  reject(input);     
-  result = Object.values(input);      
+  }   
+  meta.settle = 'reject';
+  reject(input);
  }
 }
 
-// Execute the user callback with resolve, reject, and config helpers.   
-callback(resolve, reject, config); 
+// Execute the user callback with native and custom settlement methods.
+callback((input) => {
+ meta.hasResolved = true;
+ resolve(input);
+}, (input) => {
+ meta.hasResolved = true;
+ reject(input);
+}, config); 
 });
 
 
-// Success handler: unpack object values when custom config.resolve/config.reject was used.
+// Unpack object values when custom resolve was used.
 promise.done = function (callback) {
 promise.then(value => {
-if(Array.isArray(result)) {
- callback(...result);
+if(meta.settle === 'resolve' && !meta.hasResolved) {
+ callback(...Object.values(value));
 } else {
  callback(value);
 }
@@ -3649,11 +3648,11 @@ return this;
 }
 
 
-// Failure handler: unpack object values when custom config.resolve/config.reject was used.
+// Unpack object values when custom reject was used.
 promise.fail = function (callback) {
 promise.catch(value => {
-if(Array.isArray(result)) {
- callback(...result);
+if(meta.settle === 'reject' && !meta.hasResolved) {
+ callback(...Object.values(value));
 } else {
  callback(value);
 }
@@ -3662,7 +3661,7 @@ return this;
 }
 
 
-// Always handler: runs after either resolve or reject.
+// Run the callback after either resolution or rejection.
 promise.always = function (callback) {
 promise.finally(callback); 
 return this; 
