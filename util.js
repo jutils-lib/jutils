@@ -2392,37 +2392,38 @@ const obj = {
  // If the first argument is an object, each entry is stored separately.   
 obj.set = function (key, value) {
 if($.isObject(key)) {
-  for(let [k, v] of Object.entries(key)){
-// Allow computed updates based on the current stored value.     
-v = $.compute(v, sessionStorage.getItem(k));
-sessionStorage.setItem(k, serializeValue(v));   
-  } 
- } else {
+for(const [k, v] of Object.entries(key)){
+ this.set(k, v);  
+} 
+return this;
+} 
+ 
+const old = deserializeValue(sessionStorage.getItem(key)); 
+ 
 // Allow computed updates for a single key as well. 
-value = $.compute(value, sessionStorage.getItem(key));
+value = $.compute(value, old);
 sessionStorage.setItem(key, serializeValue(value)); 
- }     
+   
 return this;
 }
 
 
- // Retrieve one key or multiple keys from storage.
- // If an array of keys is provided, returns an object of key/value pairs.   
+// Retrieve one key or multiple keys from storage.
+// If an array of keys is provided, returns an object of key/value pairs.     
 obj.get = function (key) {
  if(Array.isArray(key)) {
  const result = {};
- key.forEach(k => {
- let value = sessionStorage.getItem(k);  
- result[k] = deserializeValue(value);
+ key.forEach(k => { 
+ result[k] = this.get(k);
  });
  return result;
  } else {
- let value = sessionStorage.getItem(key);
+ const value = sessionStorage.getItem(key);
  return deserializeValue(value);   
  }   
-}
-
-
+}  
+  
+   
 // Remove one or more keys from storage. 
 obj.remove = function (fields = []) {
 fields = [].concat(fields);
