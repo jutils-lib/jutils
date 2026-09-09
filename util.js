@@ -2287,32 +2287,33 @@ const obj = {
   // If the key is an object, treat it as a batch update. 
 obj.set = function (key, value) {
 if($.isObject(key)) {
-  for(let [k, v] of Object.entries(key)){
-// Allow computed updates based on the current stored value.        
-v = $.compute(v, localStorage.getItem(k));
-localStorage.setItem(k, serializeValue(v));   
-  } 
- } else {
+for(const [k, v] of Object.entries(key)){
+ this.set(k, v);
+} 
+return this;
+} 
+
+const old = deserializeValue(localStorage.getItem(key)); 
+ 
 // Allow computed updates for a single key as well.    
-value = $.compute(value, localStorage.getItem(key));
+value = $.compute(value, old);
 localStorage.setItem(key, serializeValue(value)); 
- }    
+  
 return this;
 }
-
-
-  // Read one key or multiple keys from localStorage.
-  // If an array of keys is provided, return an object of results.  
+  
+  
+// Read one key or multiple keys from localStorage.
+// If an array of keys is provided, return an object of results.    
 obj.get = function (key) {
  if(Array.isArray(key)) {
  const result = {};
  key.forEach(k => {
- let value = localStorage.getItem(k);  
- result[k] = deserializeValue(value);
+ result[k] = this.get(k);
  });
  return result;
  } else {
- let value = localStorage.getItem(key);
+ const value = localStorage.getItem(key);
  return deserializeValue(value);   
  }   
 }
