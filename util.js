@@ -2488,21 +2488,20 @@ const obj = {
  // If the first argument is an object, each entry is stored separately.   
 obj.set = function (key, value) {
 if($.isObject(key)) {
- for(let [k, v] of Object.entries(key)){
-// Allow computed updates based on the current stored value. 
-v = $.compute(v, $.tempData[k]);;    
-$.tempData[k] = v;
- } 
+for(const [k, v] of Object.entries(key)){
+ this.set(k, v);
+}  
 return this;  
-} else {
+}
+
 // Allow computed updates for a single key as well.   
 value = $.compute(value, $.tempData[key]);
 $.tempData[key] = value; 
-}  
+
 return this; 
 }
 
-
+  
 // Retrieve one key or multiple keys from temporary storage.  
 obj.get = function (key) {
  if(Array.isArray(key)) {
