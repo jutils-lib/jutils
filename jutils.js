@@ -2577,7 +2577,7 @@ return this;
 }
 
 // Allow computed updates for a single key as well.   
-value = $.compute(value, $.tempData[key]);
+value = $.compute(value, $.tempData[key] ?? null);
 $.tempData[key] = value; 
 
 return this; 
