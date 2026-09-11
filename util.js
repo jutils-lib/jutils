@@ -4574,6 +4574,20 @@ return obj;
 
 
 
+// Execute the callback only once for the current browser session.
+$.phase = function (callback, key) {
+// Ensure the supplied callback is callable before attempting execution.
+if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1.`);
+
+// Run the callback when no phase marker exists for the supplied key.
+if(!sessionStorage.getItem(key)) callback();
+
+// Mark the phase as completed for the current browser session.
+sessionStorage.setItem(key, 'Default'); 
+}
+
+
+
 /**
  * jUtils AJAX implementation
  * Supports fetch/xhr transport, timeout, body transformation, and unified response handling
