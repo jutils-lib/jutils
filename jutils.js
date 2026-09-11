@@ -2340,6 +2340,375 @@ return obj;
 
 
 /**
+
+* Creates a lightweight data-store interface backed entirely by IndexedDB.
+
+* 
+
+* Each data store is represented by an IndexedDB database identified by the
+
+* supplied "name". A single internal object store is created automatically
+
+* when the database is initialized for the first time. Records are stored as
+
+* plain objects and are assigned an internal auto-incrementing primary key.
+
+* 
+
+* The returned object provides methods for inserting, retrieving, updating,
+
+* removing, replacing, and clearing records without exposing IndexedDB's
+
+* transaction and cursor APIs directly to the caller.
+
+* 
+
+* Queries can be expressed in two forms:
+
+* 
+
+* 1. Tuple query:
+
+* ['property', value]
+
+* Matches records whose property strictly equals the supplied value.
+
+* 
+
+* A single-item tuple:
+
+* ['property']
+
+* Matches records where the specified property is truthy.
+
+* 
+
+* 2. Predicate query:
+
+* record => record.property === value
+
+* Allows arbitrary custom matching logic.
+
+* 
+
+* The store methods are designed to be chainable where appropriate, while
+
+* retrieval methods return Promises because IndexedDB operations are
+
+* asynchronous.
+
+* 
+
+* @param {string} name
+
+* The unique name of the IndexedDB database used by this data store.
+
+* 
+
+* @returns {Object}
+
+* A data-store object containing the following methods:
+
+* 
+
+* @returns {Function} add
+
+* Adds one or more objects to the data store.
+
+* 
+
+* @returns {Function} update
+
+* Updates matching records while preserving properties that are not included
+
+* in the supplied update object.
+
+* 
+
+* @returns {Function} upsert
+
+* Updates matching records using the supplied values and computed values.
+
+* 
+
+* @returns {Function} remove
+
+* Removes matching records entirely when no fields are supplied, or removes
+
+* only the specified fields when fields are provided.
+
+* 
+
+* @returns {Function} clear
+
+* Removes all records from the data store.
+
+* 
+
+* @returns {Function} get
+
+* Retrieves the first matching record or a specific field from that record.
+
+* 
+
+* @returns {Function} getAll
+
+* Retrieves all matching records, optionally returning only a specific field
+
+* and limiting the number of returned records.
+
+* 
+
+* @returns {Function} some
+
+* Determines whether at least one record satisfies the supplied query.
+
+* 
+
+* @example
+
+* const users = $.dataStore('users');
+
+* 
+
+* users.add(
+
+* { name: 'Sammy', age: 20 },
+
+* { name: 'Alex', age: 25 }
+
+* );
+
+* 
+
+* @example
+
+* const user = await users.get(['name', 'Sammy']);
+
+* 
+
+* @example
+
+* const users = await users.getAll(
+
+* user => user.age >= 18
+
+* );
+
+* 
+
+* @example
+
+* const name = await users.get(['name', 'Sammy'], 'name');
+
+* 
+
+* @example
+
+* users.update(['name', 'Sammy'], {
+
+* age: value => value + 1
+
+* });
+
+* 
+
+* @example
+
+* users.remove(['name', 'Sammy']);
+  */
+$.dataStore = function (name) {
+const request = indexedDB.open(name, 1);   
+const primaryKey = 'xDe_o5w9_6wvD_HKk1C';
+const tableName = 'Fhs54_hsFY8_0dBl_KHRSO';
+let db;
+
+// Create the internal object store during the database's first version upgrade.
+request.onupgradeneeded = (e) => {
+ db = e.target.result;
+ db.createObjectStore(tableName, {
+   keyPath: primaryKey,
+   autoIncrement: true
+ });    
+}
+
+// Keep a reference to the successfully opened database connection.
+request.onsuccess = (e) => {
+db = e.target.result;  
+}
+
+const obj = {};
+
+// Retry the operation after the IndexedDB connection becomes available.
+const tryWithFallback = (callback) => {
+try { callback(); } catch {
+request.addEventListener('success', callback);  
+}
+}
+
+// Convert supported query formats into a predicate function.
+const normalizeQuery = (query) => {
+if(Array.isArray(query)) {
+const [key, value] = query;
+return query.length === 1 ? x => x[key] : x => x[key] === value; 
+} else if(typeof query === 'function') {
+return query;
+} else {
+$.error(`Invalid query: expected [key, value], [key], or a predicate function; received ${typeof query}.`);
+}
+}
+
+// Locate matching records through a read-write transaction and cursor.
+const config = function (query, callback) {
+tryWithFallback(() => {
+const tx1 = db.transaction(tableName, 'readwrite'); 
+
+tx1.oncomplete = () => {
+const tx2 = db.transaction(tableName, "readwrite");
+const store = tx2.objectStore(tableName);
+const req = store.openCursor();  
+
+ req.onsuccess = (event) => {
+ const cursor = event.target.result;          
+  if(cursor) {
+   const current = cursor.value;    
+   
+   const result = [current].find(normalizeQuery(query));    
+   if(result) callback({ result, cursor });
+ 
+   cursor.continue();  
+  } else callback({ missing: true });
+ }
+}      
+});   
+};
+
+
+// Add one or more object records to the data store.
+obj.add = function (...data) {
+data = [].concat(...data);
+
+if(data.some(x => !$.isObject(x))) { 
+$.error(`"${data}" contains invalid type, expects all items to be an object.`);
+}
+
+tryWithFallback(function () {
+const tx = db.transaction(tableName, 'readwrite'); 
+const store = tx.objectStore(tableName);
+data.forEach(item => store.add(item));   
+});
+return this;
+}
+
+
+// Update existing properties on every record matching the supplied query.
+obj.update = function (query, data = {}) {
+if(!$.isObject(data)) $.error(`${data} is not an object`);
+
+config(query, ({ result, cursor, missing }) => {
+if(missing) return;
+for(const key of Object.keys(data)){ 
+ if(key in result) {
+  const value = $.compute(data[key], result[key]);
+  result[key] = value;
+ }  
+}   
+cursor.update(result);
+}); 
+return this;
+}
+
+
+// Update matching records using all supplied properties, including new ones.
+obj.upsert = function (query, data = {}) {
+if(typeof data !== 'object') $.error(`${data} is not an object`);
+
+config(query, ({ result, cursor, missing }) => {
+if(missing) return;
+for(const key of Object.keys(data)){
+const value = $.compute(data[key], result[key]);
+result[key] = value; 
+}   
+cursor.update(result);
+}); 
+return this;    
+}
+
+
+// Delete selected fields or remove the entire matching record when no fields are supplied.
+obj.remove = function (query, fields = []) {
+fields = [].concat(fields);
+config(query, ({ result, cursor, missing }) => {
+if(missing) return;
+for(const key of fields){
+delete result[key];  
+} 
+
+if(fields.length === 0) cursor.delete();
+else cursor.update(result);
+});
+return this;   
+}
+
+
+// Remove every record from the internal object store.
+obj.clear = function () {
+tryWithFallback(() => {
+const tx = db.transaction(tableName, "readwrite");
+const store = tx.objectStore(tableName);    
+store.clear(); 
+});
+return this;  
+}
+
+
+// Retrieve the first matching record or a selected field from that record.
+obj.get = function (query = x => x, field) {
+return new Promise(resolve => {
+config(query, ({ missing, result }) => {
+if(missing) {
+resolve(undefined);
+} else {
+delete result[primaryKey];
+resolve(field === undefined ? result : result[field]);  
+}
+}); 
+});
+}
+
+
+// Retrieve all matching records with optional field selection and result limiting.
+obj.getAll = function (query = x => x, field, limit = Infinity) {
+return new Promise(resolve => {
+let items = [];
+config(query, ({ missing, result }) => {
+if(missing) {
+items = items.map(item => {
+if(field !== undefined) return item[field];
+return item;
+});
+resolve(items.slice(0, limit));
+} else {
+delete result[primaryKey];
+items.push(result);
+}
+});
+});    
+}
+
+
+// Determine whether at least one stored record satisfies the supplied query.
+obj.some = async function (query) {
+const result = await this.getAll();
+return Promise.resolve(result.some(normalizeQuery(query)));
+};
+
+return obj;
+}
+
+
+
+/**
  * Small wrapper around localStorage with helper methods for
  * setting, getting, removing, and listing stored values.
  */
