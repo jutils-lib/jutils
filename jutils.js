@@ -4250,8 +4250,11 @@ return await caches.has(name);
 
 
 // Removes the specified cache.
-obj.remove = async function (name) {
-await caches.delete(name)   
+obj.remove = async function (names = []) {
+names = [].concat(names);
+for(const name of names){
+await caches.delete(name);    
+}  
 }
 
 
