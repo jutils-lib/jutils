@@ -1151,40 +1151,33 @@ return new jUtils(result);
 
 
 /**
- * Gets the child elements of each matched element, or filters them by input.
- *
- * Behavior:
- * - With no arguments, returns all direct child elements.
- * - With a number, returns the child at that index.
- * - Supports negative indexes via `$.pos(...).loose(...)`.
- * - With a string selector, returns children matching the selector.
- * - With a function, filters children through the predicate.
- * - With any other supported input, returns children that are included in the resolved set.
- *
- * @param {string|number|Function|*} [input] - Optional filter, index, or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
- */
+  * Gets the child elements of the current collection.
+  *
+  * @param {number|string|Function|jUtils} [input] - Index, selector,
+  * predicate, or element collection used to filter the children.
+  * @returns {jUtils} A new jUtils instance containing the matched children.
+  */
 jUtils.fn.child = function (input) {
-const result = this.get(el => {
-const children = Array.from(el.children);   
+const children = this.get(el => Array.from(el.children), 'map').flat();
 
-if(arguments.length === 0) return children;
+let result;
 
-if(typeof input === 'number') {
+if(arguments.length === 0) {
+result = children;  
+} else if(typeof input === 'number') {
 // Support negative index. 
 const len = $.pos(children.length).loose(input);
-return children[len];
+result = children[len];    
+} else if(typeof input === 'string') {
+result = children.filter(e => e.matches(input)); 
+} else if(typeof input === 'function') {
+result = children.filter(input);
+} else {
+result = $(input).elements.filter(item => children.includes(item)); 
 }
-
-if(typeof input === 'string') return children.filter(e => e.matches(input));  
-
-if(typeof input === 'function') return children.filter(input);
-
-return $(input).elements.filter(item => children.includes(item));
-}, 'map');
 
 return new jUtils(result);
-}
+}    
 
 
 
