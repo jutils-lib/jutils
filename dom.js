@@ -331,6 +331,9 @@ jUtils.fn.at = function (index = 0) {
 // Collect the current matched elements as a mapped array.
 const elements = this.get(el => el, 'map');
 
+// return if no element was found.
+if(!elements) return this;
+ 
 // Convert negative indexes into a valid positive position.
 const len = $.pos(elements.length).loose(index);
 
