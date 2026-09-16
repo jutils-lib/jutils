@@ -402,6 +402,18 @@ return obj;
 
 
 /**
+ * Checks whether the current elements have the specified attribute.
+ *
+ * @param {string} name - The name of the attribute to check.
+ * @returns {jUtils} A new jUtils instance containing the boolean results.
+ */
+jUtils.fn.hasAttr = function (name) {
+return this.get(el => el.hasAttribute(name));  
+}
+
+
+
+/**
  * Removes one or more attributes from the matched elements.
  *
  * Behavior:
