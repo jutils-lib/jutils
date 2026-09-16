@@ -1210,28 +1210,29 @@ return new jUtils(result);
 }
 
 
- 
+
 /**
- * Finds descendant elements matching the given selector or input.
+ * Finds descendant elements within the current collection.
  *
- * Behavior:
- * - If `selector` is a string, returns all descendant elements matching it.
- * - Otherwise, resolves `selector` through `$()` and returns the resolved nodes
- *   that are contained within each matched element.
- *
- * @param {string|*} selector - CSS selector or supported jUtils input.
+ * @param {string|Function|jUtils|Node} input - CSS selector, filter
+ * function, or element collection used to find matching descendants.
  * @returns {jUtils} A new jUtils instance containing the matched descendants.
  */
-jUtils.fn.find = function (selector) {
+jUtils.fn.find = function (input) {
 const result = this.get(el => {
-if(typeof selector === 'string') {
-return Array.from(el.querySelectorAll(selector)).filter(e => e.matches(selector));  
+// Find descendants using a CSS selector
+if(typeof input === 'string') {
+return Array.from(el.querySelectorAll(input));  
+} else if(typeof input === 'function') {
+// Find descendants using a custom filter function
+return Array.from(el.querySelectorAll('*')).filter(input);    
 } else {
-return $(selector).elements.filter(item => {
+// Find matching descendants from the provided elements
+return $(input).elements.filter(item => {
 if(item !== el && item instanceof Node) return el.contains(item);
 });
 } 
-}, 'map');
+}, 'map').flat();
 
 return new jUtils(result);
 }
