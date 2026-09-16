@@ -1182,29 +1182,33 @@ return new jUtils(result);
 
 
 /**
- * Gets the parent element of each matched element, or filters it by input.
+ * Gets the parent elements of the current collection.
  *
- * Behavior:
- * - With no arguments, returns the direct parent element.
- * - With a string selector, returns the parent only if it matches the selector.
- * - With a function, filters the parent through the predicate.
- * - With any other supported input, returns the parent if it matches the resolved elements.
- *
- * @param {string|Function|*} [input] - Optional filter or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
+ * @param {number|string|Function|jUtils} [input] - Index, selector,
+ * predicate, or element collection used to filter the parent elements.
+ * @returns {jUtils} A new jUtils instance containing the matched parents.
  */
 jUtils.fn.parent = function (input) {
-const result = this.get(el => {
-const parent = el.parentElement;    
+const parent = this.get(el => el.parentElement, 'map').flat();
 
-if(arguments.length === 0) return parent;
+let result;
 
-if(typeof input === 'string' && parent.matches(input)) return parent;
-
-if(typeof input === 'function') return [].concat(parent).filter(input);
-
-return $(input).elements.filter(item => item === parent);
-}, 'map');
+if(arguments.length === 0) {
+result = parent; 
+} else if(typeof input === 'number') { 
+// Support negative index.
+const len = $.pos(parent.length).loose(input);
+result = parent[len]; 
+} else if(typeof input === 'string') {
+// Filter parents using a CSS selector.
+result = parent.filter(el => el && el.matches(input));  
+} else if(typeof input === 'function') {
+// Filter parents using a custom predicate.
+result = parent.filter(input);  
+} else {
+// Match the provided elements against the parent collection.
+result = $(input).elements.filter(item => parent.includes(item));    
+}
 
 return new jUtils(result);
 }
