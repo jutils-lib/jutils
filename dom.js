@@ -1244,23 +1244,23 @@ return new jUtils(result);
 
 
 /**
- * Filters the matched elements to those that contain the given selector or input.
+ * Filters the current collection to elements that contain a matching descendant.
  *
- * Behavior:
- * - If `selector` is a string, keeps elements that contain at least one descendant
- *   matching that selector.
- * - Otherwise, resolves `selector` through `$()` and keeps elements that contain
- *   at least one of the resolved nodes.
- *
- * @param {string|*} selector - CSS selector or supported jUtils input.
- * @returns {jUtils} A new jUtils instance containing only matching elements.
+ * @param {string|Function|jUtils|Node} input - CSS selector, predicate,
+ * or element collection used to check for matching descendants.
+ * @returns {jUtils} A new jUtils instance containing elements that have a match.
  */
-jUtils.fn.has = function (selector) {
+jUtils.fn.has = function (input) {
 const result = this.get(el => {
-if(typeof selector === 'string') {
-return Array.from(el.querySelectorAll(selector)).some(e => e.matches(selector));  
+// Check for a matching descendant using a CSS selector.
+if(typeof input === 'string') {
+if(el.querySelector(input)) return true;
+} else if(typeof input === 'function') {
+// Check descendants using a custom predicate.
+return Array.from(el.querySelectorAll('*')).some(input);
 } else {
-return $(selector).elements.some(item => {
+// Check whether the element contains any of the provided elements.
+return $(input).elements.some(item => {
 if(item !== el && item instanceof Node) return el.contains(item);
 });
 }
