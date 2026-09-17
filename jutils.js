@@ -2197,7 +2197,6 @@ const req = store.openCursor();
  const cursor = event.target.result;          
   if(cursor) {
    const current = cursor.value;   
-   delete current[primaryKey];
    
    const result = [current].find(normalizeQuery(query));    
    if(result) callback({ result, cursor });
@@ -2295,6 +2294,7 @@ config(query, ({ missing, result }) => {
 if(missing) {
 resolve(undefined);
 } else {
+delete result[primaryKey];
 resolve(field === undefined ? result : result[field]);  
 }
 }); 
@@ -2314,6 +2314,7 @@ return item;
 });
 resolve(items.slice(0, limit));
 } else {
+delete result[primaryKey];
 items.push(result);
 }
 });
