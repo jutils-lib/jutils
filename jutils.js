@@ -5425,6 +5425,18 @@ return obj;
 
 
 /**
+ * Checks whether the specified data attribute exists on the target element(s).
+ *
+ * @param {string} name - The camelCase key of the data attribute (e.g., "userId" for "data-user-id").
+ * @returns {boolean|Array<boolean>} True if the data attribute is defined; otherwise false.
+ */
+jUtils.fn.hasData = function (name) {
+return this.get(el => el.dataset[name] !== undefined);
+}
+
+
+
+/**
  * Removes one or more data attributes from the matched elements.
  *
  * Behavior:
