@@ -64,8 +64,8 @@ if(typeof input === 'string') {
  [].concat(input).forEach(item => {     
   if(item instanceof jUtils) {
    result.push(...item.elements);
-  } else if(item && Array.from(item).some(el => el && el.nodeType === 1)) {
-   result.push(Array.from(item));
+  } else if(item && Array.from(item).every(el => el && el.nodeType === 1)) {
+   result.push(...Array.from(item));
   } else { 
    result.push(item);
   }
@@ -81,6 +81,7 @@ this.length = result.filter(el => el && el.nodeType === 1).length;
  * Alias for the `jUtils` prototype, used for extending instance methods.
  */
 jUtils.fn = jUtils.prototype;
+
 /**
  * Computes a value from the given input.
  *
