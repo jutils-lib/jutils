@@ -5865,36 +5865,29 @@ return this;
 
 
 /**
- * Adds the matched elements from the provided selectors/inputs to the current collection.
+ * Adds new elements (matching selectors or wrapped objects) to the current jUtils collection,
+ * merges them with existing elements, removes duplicates, and returns a new jUtils instance.
  *
- * Behavior:
- * - Accepts multiple arguments.
- * - If an argument is a string, it is treated as a CSS selector.
- * - Otherwise, it is resolved through `$()` and its elements are added.
- * - Includes the current collection in the final result.
- * - Removes duplicate elements before returning.
- *
- * @param {...*} args - Selectors or supported jUtils inputs to add.
- * @returns {jUtils} A new jUtils instance containing the merged unique elements.
+ * @param {...(string|HTMLElement|jUtils)} args - One or more CSS selectors, DOM elements, or jUtils objects to add.
+ * @return {jUtils} A new jUtils object containing the combined, unique set of elements.
  */
 jUtils.fn.add = function (...args) {
-let result = [];
 
-args.forEach(selector => {
+// Process all passed arguments and merge them with the current instance's elements
+let result = args.map(selector => {
+// If the argument is a string CSS selector, query the DOM and convert the NodeList to an Array
 if(typeof selector === 'string') {
-const value = Array.from(document.querySelectorAll(selector));  
-result.push(...value);
+return Array.from(document.querySelectorAll(selector));
 } else {
-result.push(...$(selector).elements);
-}  
-});
-
-// Add the current elements in jUtils to the collection.
-result.push(...this.elements);
+// Otherwise, assume it's a jUtils/jQuery-like object and extract its elements array
+return $(selector).elements;   
+}
+}).concat(...this.elements); // Flatten and append the current jUtils instance's elements
 
 // Prevent duplicates, like an element appearing multiple times.
 result = $.unique(...result);
 
+// Return a new jUtils chainable instance with the combined elements
 return new jUtils(result);
 }
 
