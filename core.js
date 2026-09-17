@@ -64,8 +64,8 @@ if(typeof input === 'string') {
  [].concat(input).forEach(item => {     
   if(item instanceof jUtils) {
    result.push(...item.elements);
-  } else if(item && Array.from(item).some(el => el && el.nodeType === 1)) {
-   result.push(Array.from(item));
+  } else if(item && Array.from(item).every(el => el && el.nodeType === 1)) {
+   result.push(...Array.from(item));
   } else { 
    result.push(item);
   }
