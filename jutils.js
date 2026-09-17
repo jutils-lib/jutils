@@ -2141,6 +2141,8 @@ return !Number.isInteger(Number(value));
 * users.remove(['name', 'Sammy']);
   */
 $.dataStore = function (name) {
+if(name === undefined) $.error('Data Store name cannot be empty at argument 1.');
+  
 const request = indexedDB.open(name, 1);   
 const primaryKey = 'xDe_o5w9_6wvD_HKk1C';
 const tableName = 'Fhs54_hsFY8_0dBl_KHRSO';
@@ -2194,7 +2196,8 @@ const req = store.openCursor();
  req.onsuccess = (event) => {
  const cursor = event.target.result;          
   if(cursor) {
-   const current = cursor.value;    
+   const current = cursor.value;   
+   delete current[primaryKey];
    
    const result = [current].find(normalizeQuery(query));    
    if(result) callback({ result, cursor });
@@ -2292,7 +2295,6 @@ config(query, ({ missing, result }) => {
 if(missing) {
 resolve(undefined);
 } else {
-delete result[primaryKey];
 resolve(field === undefined ? result : result[field]);  
 }
 }); 
@@ -2312,7 +2314,6 @@ return item;
 });
 resolve(items.slice(0, limit));
 } else {
-delete result[primaryKey];
 items.push(result);
 }
 });
