@@ -4992,6 +4992,18 @@ return obj;
 
 
 /**
+ * Checks whether the current elements have the specified property.
+ *
+ * @param {string} name - The name of the property to check.
+ * @returns {jUtils} A new jUtils instance containing the boolean results.
+ */
+jUtils.fn.hasProp = function (name) {
+return this.get(el => Object.keys(el).includes(name));
+}
+
+
+
+/**
  * Removes one or more properties from the matched elements.
  *
  * Behavior:
