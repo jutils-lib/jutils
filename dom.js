@@ -975,42 +975,6 @@ return this;
 
 
 /**
- * Gets or sets the inline CSS text of the matched elements.
- *
- * Behavior:
- * - If called with no arguments, returns the `cssText` of the first matched element.
- * - If `styles` is provided, computes the final value through `$.compute(...)`.
- * - When `append` is `true`, appends the computed styles to the existing `cssText`.
- * - When `append` is `false`, replaces the existing `cssText` entirely.
- *
- * Notes:
- * - This method supports both direct values and computed values.
- * - Appended styles are converted with `$.toKebabCase(...)` before being added.
- * - This method is chainable when used as a setter.
- *
- * @param {string} [styles=''] - CSS text to set, or a resolver used by `$.compute(...)`.
- * @param {boolean} [append=false] - Whether to append to the existing `cssText`.
- * @returns {string|Object} The current `cssText` when getting, or the current instance when setting.
- */
-jUtils.fn.cssText = function (styles = '', append = false) {
-if(arguments.length === 0) return this.get(el => el.style.cssText);
-
-this.set((el, index, arr) => {
-// Compute the final CSS text before applying it to the element.
-const result = $.compute(styles, el.style.cssText, index, el);
-if(append) {
-el.style.cssText += $.toKebabCase(result);    
-} else {
-el.style.cssText = result;
-}
-});
-
-return this;
-}
-
-
-
-/**
  * Registers a callback to run when the document or window is ready.
  *
  * Behavior:
