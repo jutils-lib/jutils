@@ -5567,52 +5567,42 @@ return new jUtils(result);
 
 
 /**
- * Tests whether the matched elements satisfy a selector, predicate, or membership check.
+ * Checks whether any element in the current collection matches the given condition.
  *
- * Behavior:
- * - If `input` is a string, supports special pseudo-selectors:
- *   - `:visible`
- *   - `:hidden`
- *   - `:removed`
- *   - `:checked`
- *   - `:enabled`
- *   - `:disabled`
- *   - `:selected`
- * - Otherwise, falls back to `el.matches(input)` for standard selectors.
- * - If `input` is a function, calls it with `(el, index, arr)`.
- * - For any other supported input, checks whether the element exists in the resolved collection.
- *
- * @param {string|Function|*} input - Selector, predicate, or collection-like input.
- * @returns {boolean} True if at least one matched element satisfies the condition.
+ * @param {string|Function|jUtils} input - Selector, pseudo-selector, predicate,
+ * or element collection used to check for a match.
+ * @returns {boolean} Whether at least one element matches the condition.
  */
 jUtils.fn.is = function (input) {
 return this.get((el, index, arr) => {
-// Test by selector, callback, or membership in another collection.
+// Check for a selector or supported pseudo-selector.
 if(typeof input === 'string') {
- switch (input) {          
-      case ':visible':
-        return el.offsetParent !== null;
-      case ':hidden':
-        return el.offsetParent === null;     
-      case ':removed':      
-        return !el;
-      case ':checked':
-        return el.checked;
-      case ':enabled':
-        return !el.disabled;
-      case ':disabled':
-        return el.disabled;
-      case ':selected':     
-        return el.selected;   
-      default:
-        return el.matches(input);      
- }     
+ switch(input.trim()) {
+  case ':visible': 
+   return el.offsetParent !== null;
+  case ':hidden':
+   return el.offsetParent === null;
+  case ':removed':
+   return !el;
+  case ':checked':
+   return el.checked;
+  case ':enabled':
+   return !el.disabled;
+  case ':disabled':
+   return el.disabled;
+  case ':selected':
+   return el.selected;   
+  default:
+   return el.matches(input);
+ }
+} else if(typeof input === 'function') {
+// Check each element using the provided predicate.
+return input(el, index, arr);
+} else {
+// Check whether the element exists in the provided collection.
+return $(input).elements.includes(el); 
 }
-
-if(typeof input === 'function') return input(el, index, arr); 
-
-return $(input).elements.some(item => item === el);
-}, 'some'); 
+}, 'some');
 }
 
 
