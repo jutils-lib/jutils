@@ -203,6 +203,7 @@ throw new type(info);
 // internal to $.error itself, the very first line (the message header,
 // not a real frame), or browser-internal HTML frames.
 const stack = String(err.stack).split('at').filter((e, i) => {
+console.log(e);
 if(i === 0) return false;
 if(e.includes('http') && !e.includes('$.error')) return true;
   
