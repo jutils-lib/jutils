@@ -175,95 +175,67 @@ return obj;
 
 
 /**
- * Creates a formatted error object with a cleaner, more readable message.
+ * Creates a formatted, location-aware error and either throws or returns it.
  *
- * This helper is designed to standardize error handling across the library.
- * It accepts a message, an error constructor, and a logging/throwing flag.
+ * Accepts either a plain message string or an existing Error instance. When
+ * given an Error instance, its constructor and message are reused unless an
+ * explicit `type` was also passed. The thrown error's stack is then parsed
+ * to attach readable "error at" / "called from" location details to the
+ * final message.
  *
- * Behavior:
- * - Converts the provided `info` value into a string.
- * - Slightly normalizes occurrences of `http` in the message so they are less
- *   likely to be confused with stack-trace parsing.
- * - Creates a new error using the provided `type` constructor.
- * - Extracts stack-trace information to find the approximate source location.
- * - Rewrites the error message to include:
- *   - the original error message
- *   - the line number
- *   - the column number
- *   - the file name
- * - Either throws the error immediately or returns it, depending on `log`.
- *
- * Parameters:
- * - `info`: The message or value to turn into an error message.
- * - `type`: The error constructor to use, such as `TypeError`.
- * - `log`: If `true`, throw the error. If `false`, return the error object.
- *
- * Notes:
- * - This function depends on stack-trace formatting, so its behavior may vary
- *   slightly across environments.
- * - It is intended for internal debugging and developer-facing errors. 
- */ 
-$.error = function (info = '', type = TypeError, log = true) {
-  try { 
+ * @param {string|Error} info - The error message, or an existing Error to wrap.
+ * @param {Function} [type=TypeError] - Error constructor to throw, when `info` isn't an Error.
+ * @param {boolean} [log=true] - If true, throws the error; if false, returns it instead.
+ */
+$.error = function (info, type = TypeError, log = true) {
+try {
+// If an actual Error instance was passed, reuse its own type (unless the
+// caller explicitly overrode `type`) and unwrap its message string.
 if(info instanceof Error) {
-// Ensure type is only use when consider set not using the default type value 'TypeError'
  type = arguments.length > 1 ? type : window[info.name];
- info = info.message;   
-} 
+ info = info.message;
+}   
 
-const normalized = String(info).replace(/(http)/g, (m) => {
- return `(${m.slice(0, 1)})${m.slice(1)}`
- }); 
-throw new type(normalized); 
-   } catch(err) {     
+// Throw immediately so we can capture a real stack trace from this point.
+throw new type(info);
+} catch(err) {
+// Break the raw stack into individual frames, dropping frames that are
+// internal to $.error itself, the very first line (the message header,
+// not a real frame), or browser-internal HTML frames.
+const stack = String(err.stack).split('at').filter((e, i) => {
+if(!e.includes('$.error') && i !== 0 && !/html/i.test(e)) return true;
+});
 
-// Split the stack trace into parts and ignore internal utility frames.
-const stack = String(err.stack).split('at').filter(item => item.includes('http'));
+// Extract url, line, column, and function name from a single stack frame,
+// where `i` counts frames from the end of the stack (1 = most recent).
+const parseStackFrame = (i) => {
+const parts = stack[stack.length - i].split(':');
+const url = parts[parts.length - 3].split('/').pop();
+const line = parts[parts.length - 2];
+const column = parts[parts.length - 1].match(/\d*/).shift();
+const name = parts[0].trim().split(/\s+/).shift() + '()';
 
-const config = (input) => {
-
-if(input.includes('Object.set') || input.includes('jUtils.define')) {
- return { hideErrorInfo: true };
+return { url, line, column, name };
 }
 
-// Break the selected stack frame into colon-separated parts.
-const part = String(input).split(':');
+// The frame where the error actually originated (inside the failing utility).
+const errorFrame = parseStackFrame(2);
 
-// Helper for reading values from the end of the stack frame parts.
-const fn = (n) => part[part.length - n] ?? '';
+// The frame that called into that utility (the user's own code).
+const callerFrame = parseStackFrame(1);
 
-// Extract line and column information from the stack frame.
-const line = fn(2) || 'unknown';
-const column = fn(1).replace(')', '');
-const url = fn(3).split('/').pop() || 'unknown.file';
+// Rebuild the error message to include both the original reason and
+// readable location context for where it happened and who called it.
+err.message = `${info}\n
+Error at (${errorFrame.url}:${errorFrame.line}:${errorFrame.column})\n
+Called from ${errorFrame.name} (${callerFrame.url}:${callerFrame.line}:${callerFrame.column})
+`;
 
-return { url, line, column };
-}
-
-const errorInfo = config(stack[stack.length - 2]);
-
-const callerInfo = config(stack[stack.length - 1]);
-
-// Build a more informative error message with source location details.
-const errDetails = (() => {
-
-let errorLocation = `\nError at line ${errorInfo.line}, column ${errorInfo.column} in ${errorInfo.url}\n`;
-
-if(stack.length <= 2 || 'hideErrorInfo' in errorInfo) {
- errorLocation = '';
-}
-
-return `${err.message}
-${errorLocation}
-Called from line ${callerInfo.line}, column ${callerInfo.column} in ${callerInfo.url}`;
-})();
-
-err.message = errDetails;
-
-// Either throw the error or return it for later handling.   
+// Either throw the fully-formatted error, or return it for the caller
+// to handle manually.
 if(log) throw err;
 else return err;
- }
+}    
 }
 
 
