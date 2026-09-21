@@ -124,8 +124,12 @@ if(!e.includes('$.error') && i !== 0 && !/html/i.test(e)) return true;
 // Extract url, line, column, and function name from a single stack frame,
 // where `i` counts frames from the end of the stack (1 = most recent).
 const parseStackFrame = (i) => {
-if(!stack[stack.length - i]) return {};
-const parts = stack[stack.length - i].split(':');
+const frame = stack[stack.length - i];
+if(!frame) {
+return { url: 'unknown.file', line: 'unknown', column: 'unknown', name: 'anonymous()' };
+}
+  
+const parts = frame.split(':');
 const url = parts[parts.length - 3].split('/').pop();
 const line = parts[parts.length - 2];
 const column = parts[parts.length - 1].match(/\d*/).shift();
