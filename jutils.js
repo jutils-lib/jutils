@@ -141,14 +141,14 @@ $.compute = function (input, ...args) {
  * - $.pos(5).loose(-1) -> 4
  */
 $.pos = function (target) {
-if(!$.isNumber(target)) $.error(`"${target}" is not a number`);
+if(!$.isNumber(target)) $.error(`$.pos(): "${target}" is not a number`);
 
 const obj = {};
 
   // Returns a valid index within the range [0, target - 1].
   // Useful when you want to prevent out-of-bounds positions.
 obj.safe = function (index) {
-if(!$.isNumber(index)) $.error(`"${index}" is not a type of number`);
+if(!$.isNumber(index)) $.error(`$.pos().safe(): "${index}" is not a type of number`);
 
 if(index >= 0 && index < target) return index;
 
@@ -162,7 +162,7 @@ if(index < 0) return Math.max(0, target + index);
   // Positive values are treated as forward offsets, negative values as offsets
   // from the end.
 obj.loose = function (index) {
-if(!$.isNumber(index)) $.error(`"${index}" is not a type of number`);
+if(!$.isNumber(index)) $.error(`$.pos().loose(): "${index}" is not a type of number`);
 
 if(index >= 0) {
 return (target + index) - target;
