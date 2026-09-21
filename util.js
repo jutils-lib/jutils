@@ -118,7 +118,6 @@ throw new type(info);
 // internal to $.error itself, the very first line (the message header,
 // not a real frame), or browser-internal HTML frames.
 const stack = String(err.stack).split('at').filter((e, i) => {
-console.log(e);
 if(i === 0) return false;
 if(e.includes('http') && !e.includes('$.error')) return true;
   
@@ -127,8 +126,8 @@ if(e.includes('http') && !e.includes('$.error')) return true;
 
 // Extract url, line, column, and function name from a single stack frame,
 // where `i` counts frames from the end of the stack (1 = most recent).
-const parseStackFrame = (i) => {
-const frame = stack[stack.length - i];
+const parseStackFrame = (from) => {
+const frame = from === 'first' ? stack.shift() : stack.pop();
 if(!frame) {
 return { url: 'unknown.file', line: 'unknown', column: 'unknown', name: 'anonymous()' };
 }
@@ -143,12 +142,11 @@ return { url, line, column, name };
 }
 
 // The frame where the error actually originated (inside the failing utility).
-const errorFrame = parseStackFrame(2);
+const errorFrame = parseStackFrame('first');
 
 // The frame that called into that utility (the user's own code).
-const callerFrame = parseStackFrame(1);
-console.log('Caller', callerFrame);
-console.log('Error', errorFrame);
+const callerFrame = parseStackFrame('last');
+  
 // Rebuild the error message to include both the original reason and
 // readable location context for where it happened and who called it.
 err.message = `${info}\n
