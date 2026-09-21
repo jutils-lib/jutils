@@ -232,7 +232,8 @@ const errorFrame = parseStackFrame(2);
 
 // The frame that called into that utility (the user's own code).
 const callerFrame = parseStackFrame(1);
-
+console.log('Caller', callerFrame);
+console.log('Error', errorFrame);
 // Rebuild the error message to include both the original reason and
 // readable location context for where it happened and who called it.
 err.message = `${info}\n
