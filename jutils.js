@@ -211,8 +211,8 @@ if(e.includes('http') && !e.includes('$.error')) return true;
 
 // Extract url, line, column, and function name from a single stack frame,
 // where `i` counts frames from the end of the stack (1 = most recent).
-const parseStackFrame = (from) => {
-const frame = from === 'first' ? stack.shift() : stack.pop();
+const parseStackFrame = (i) => {
+const frame = stack[stack.length - i];
 if(!frame) {
 return { url: 'unknown.file', line: 'unknown', column: 'unknown', name: 'anonymous()' };
 }
@@ -227,10 +227,10 @@ return { url, line, column, name };
 }
 
 // The frame where the error actually originated (inside the failing utility).
-const errorFrame = parseStackFrame('first');
+const errorFrame = parseStackFrame(2);
 
 // The frame that called into that utility (the user's own code).
-const callerFrame = parseStackFrame('last');
+const callerFrame = parseStackFrame(1);
   
 // Rebuild the error message to include both the original reason and
 // readable location context for where it happened and who called it.
