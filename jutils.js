@@ -203,7 +203,10 @@ throw new type(info);
 // internal to $.error itself, the very first line (the message header,
 // not a real frame), or browser-internal HTML frames.
 const stack = String(err.stack).split('at').filter((e, i) => {
-if(!e.includes('$.error') && i !== 0 && !/html/i.test(e)) return true;
+if(i === 0) return false;
+if(e.includes('http') && !e.includes('$.error')) return true;
+  
+/*if(!e.includes('$.error') && i !== 0 && !/html/i.test(e)) return true;*/
 });
 
 // Extract url, line, column, and function name from a single stack frame,
