@@ -3767,7 +3767,7 @@ const currentId = $.dialogId++;
       width: 80%;
       max-width: 500px;
       min-height: 180px;
-      max-height: calc(100vh - 15vh);
+      max-height: calc(100vh - 25vh);
       display: flex;
       flex-direction: column;
       color: black;
