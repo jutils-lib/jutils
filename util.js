@@ -3908,124 +3908,119 @@ parseHTML: true
 
 
 
-$.promptId = 0;
-
-$.prompt = function (content = '', btnCancel = 'CANCEL', btnOk = 'OK', options = {}) {
-const {
- closeOnBackdrop = true,
+/**
+ * Displays a prompt dialog: a message plus an editable text field, with
+ * Cancel/Confirm buttons, built on top of $.dialog. Resolves with the
+ * user's choice, and includes the entered text when confirmed.
+ *
+ * @param {Object} [options={}]
+ * @param {string} [options.content=''] - The dialog's message content.
+ * @param {string} [options.confirm='OK'] - Label for the confirm button.
+ * @param {string} [options.cancel='CANCEL'] - Label for the cancel button.
+ * @param {boolean} [options.parseHTML=false] - If true, content is rendered as real HTML; otherwise it's escaped and shown as literal text.
+ * @param {*} [options.autoClose=null] - Passed through to $.dialog's auto-close behavior.
+ * @param {boolean} [options.closeOnBackdrop=true] - Whether clicking the backdrop dismisses the dialog.
+ * @param {Object} [options.style={}] - Custom styles: backdropColor, inputBorderBottom, inputBackground, inputColor, plus the root dialog style.
+ * @returns {Promise<{ok: boolean, reason: string, value?: string}>} Resolves with the user's choice; `value` holds the entered text when confirmed.
+ */
+$.prompt = function (options = {}) {
+let {
+ content = '',
+ confirm = 'OK',
+ cancel = 'CANCEL',
  parseHTML = false,
  autoClose = null,
+ closeOnBackdrop = true,
  style = {}
-} = Object(options);
+} = Object(options);  
 
-if(!$.isObject(style)) $.error(`${style} is not an object.`);
+// Resolve content up front in case it's a function/computed value rather than a plain string.
+content = $.compute(content);
 
-return new Promise(resolve => {
-const currentId = $.promptId++;
+return $.dialog({
+content: () => {
 
-const backdropEl = document.createElement('backdrop-5262419z');    
-    backdropEl.style.cssText = `
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: ${style.backdropColor ?? 'rgba(0, 0, 0, 0.5)'};
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: ${currentId};
-    `;
+// If HTML parsing isn't wanted, escape angle brackets so content renders
+// as literal text instead of being interpreted as markup.
+if(!parseHTML) {
+content = String(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}    
+
+// Build the dialog's inner markup using unique custom tag names as
+// placeholders, so they can be reliably located and styled in render()
+// without colliding with real HTML elements or the user's own content.
+// The input field is a contenteditable div rather than a real <input>,
+// styled/behaved to act like one.
+return `
+<root-4he7gge65dF>${content}</root-4he7gge65dF>
+
+<input-svc3a9KF3n contenteditable="true"></input-svc3a9KF3n>
  
- const dialogEl = document.createElement('dialog-4432796329v');    
-    dialogEl.style.cssText = `
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 500px;
-      min-height: 180px;
-      max-height: calc(100vh - 15vh);
-      display: flex;
-      flex-direction: column;
-      color: black;
-      padding: 10px;
-      z-index: ${currentId};
-      position: fixed;
-    `;
- Object.assign(dialogEl.style, style);
+<button-5267732Fb39h>
+ <cancel-427950252d>${cancel}</cancel-427950252d>
+ <confirm-5l74yh5j>${confirm}</confirm-5l74yh5j>
+</button-5267732Fb39h>
+`;  
+},
+render: (root, resolve) => {
+// Locate the button container, both buttons, and the editable input field
+// by their unique placeholder tag names.
+const container = root.find('button-5267732Fb39h');
+const cancelBtn = root.find('cancel-427950252d');
+const confirmBtn = root.find('confirm-5l74yh5j');
+const inputEl = root.find('input-svc3a9KF3n');
 
- const contentRoot = document.createElement('root-42678934327g');
-   contentRoot.style.cssText = `
-      flex-grow: 1;
-      overflow-y: auto;          
-    `;  
-  const prop = parseHTML ? 'innerHTML' : 'textContent';
-  contentRoot[prop] = $.compute(content);
+// Style the input field: pinned above the button row, single-line-ish
+// height cap with internal scrolling, and caller-customizable colors.
+inputEl.style.cssText = `
+ position: absolute; 
+ bottom: 60px; 
+ left: 0; 
+ width: 100%; 
+ outline: none; 
+ border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'}; 
+ padding: 5px 0; 
+ background-color: ${style.inputBackground ?? 'transparent'}; 
+ color: ${style.inputColor ?? 'black'};   
+ max-height: 15px; 
+ overflow-y: auto; 
+`;
 
-    const inputEl = document.createElement('input');    
-    inputEl.type = 'text';
-    inputEl.style.cssText = `
-      outline: none;
-      border: none;
-      border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'};
-      width: 100%;
-      padding: 5px 0;
-      background-color: ${style.inputBackground ?? 'transparent'};
-      color: ${style.inputColor ?? 'black'};
-    `;
-    
-    const btnRoot = document.createElement('button-526773239h');
-    btnRoot.style.cssText = `
-      display: flex;
-      justify-content: space-between;      
-      padding-bottom: 10px;
-      padding-top: 25px;
-    `;
+// Position the button row bottom, spaced across the dialog's width.
+container.style.cssText = `
+ position: absolute; 
+ bottom: 20px; 
+ display: flex; 
+ justify-content: space-between;  
+ width: 90%;
+ left: 18px;
+`;
+
+// Style the cancel and confirm buttons.    
+cancelBtn.style.cssText = 'font-weight: bold;margin-right: 30px;';
+confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';      
+
+// Resolve the returned promise based on which button the user clicks.
+// Confirm also passes along the text the user typed into the input field.
+cancelBtn.onclick = () => resolve({ ok: false, reason: 'cancel' });
+confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm', value: inputEl.textContent });
  
-   const cancelBtn = document.createElement('cancel-427950252d');
-    cancelBtn.innerHTML = btnCancel;
-    cancelBtn.style.cssText = `    
-    font-weight: bold; 
-    margin-left: 10px;
-    `;
-  
-    cancelBtn.onclick = () => {
-  resolve({ ok: false, reason: 'cancel' });
-      backdropEl.remove();
-    };
- 
-   const okBtn = document.createElement('ok-5274935327495j');
-    okBtn.innerHTML = btnOk;
-    okBtn.style.cssText = `    
-    font-weight: bold; 
-    margin-right: 10px;
-    `;
- 
-    okBtn.onclick = () => {
- resolve({ ok: true, reason: 'confirm', value: inputEl.value });
-      backdropEl.remove();
-    };
-    
-btnRoot.append(cancelBtn, okBtn);
-dialogEl.append(contentRoot, inputEl, btnRoot);
-backdropEl.append(dialogEl);
-document.body.append(backdropEl);
-
-
-backdropEl.addEventListener('click', (event) => {
- if (event.target === backdropEl && closeOnBackdrop) {
-  resolve({ ok: false, reason: 'backdrop' });
-    backdropEl.remove();
- }
-});    
-
-if($.isNumeric(autoClose)) {
-setTimeout(() => {
-resolve({ ok: false, reason: 'autoClose' });
-backdropEl.remove();
-}, autoClose);
-}             
-});
-}
+},
+styles: {
+// Let the caller override the backdrop color via style.backdropColor.
+ backdrop: { background: style.backdropColor },
+// Reserve space at the bottom of the dialog so the input field and
+ // button row (both absolutely positioned) don't overlap the content above.
+ dialog: { 'padding-bottom': '90px' }
+},
+closeOnBackdrop,
+autoClose,
+// The dialog itself always receives real markup (our own generated
+// template) regardless of the caller's parseHTML setting — that flag
+// only controls whether the user-supplied `content` inside it is escaped.
+parseHTML: true
+}); 
+}  
 
 
 
