@@ -3808,7 +3808,8 @@ const root = {
  findAll: (s) => {
   const nodes = contentEl.querySelectorAll(s);
   return Array.from(nodes);
- }
+ },
+context: () => contentEl
 }
  
 // Let the caller wire events and resolve the dialog manually.     
@@ -3943,112 +3944,87 @@ backdropEl.remove();
 
 
 
-$.confirmId = 0;
-
-$.confirm = function (content = '', btnCancel = 'CANCEL', btnOk = 'OK', options = {}) {
-const {
+/**
+ * Displays a confirm dialog with Cancel/Confirm buttons, built on top of $.dialog.
+ * Resolves with the user's choice once they click either button.
+ *
+ * @param {Object} [options={}]
+ * @param {string} [options.content=''] - The dialog's message content.
+ * @param {string} [options.confirm='OK'] - Label for the confirm button.
+ * @param {string} [options.cancel='CANCEL'] - Label for the cancel button.
+ * @param {boolean} [options.parseHTML=false] - If true, content is rendered as real HTML; otherwise it's escaped and shown as literal text.
+ * @param {*} [options.autoClose=null] - Passed through to $.dialog's auto-close behavior.
+ * @param {boolean} [options.closeOnBackdrop=true] - Whether clicking the backdrop dismisses the dialog.
+ * @param {Object} [options.style={}] - Custom styles applied to the dialog's root element; style.backdropColor also sets the backdrop background.
+ * @returns {Promise<{ok: boolean, reason: string}>} Resolves with the user's choice.
+ */
+$.confirm = function (options = {}) {
+let {
+ content = '',
+ confirm = 'OK',
+ cancel = 'CANCEL',
  parseHTML = false,
  autoClose = null,
  closeOnBackdrop = true,
  style = {}
 } = Object(options);
 
-if(!$.isObject(style)) $.error(`${style} is not an object.`);
-
-return new Promise(resolve => {
-const currentId = $.confirmId++;
-
-// Create the backdrop element that covers the viewport.     
- const backdropEl = document.createElement('backdrop-5262419z');
-    backdropEl.style.cssText = `
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: ${style.backdropColor ?? 'rgba(0, 0, 0, 0.5)'};
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: ${currentId};
-    `;
-  
- const dialogEl = document.createElement('dialog-4432796329v');    
-    dialogEl.style.cssText = `
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 500px;
-      min-height: 180px;
-      max-height: calc(100vh - 15vh);
-      display: flex;
-      flex-direction: column;
-      color: black;
-      padding: 10px;
-      z-index: ${currentId};
-      position: fixed;
-    `;
- Object.assign(dialogEl.style, style);    
+// Resolve content up front in case it's a function/computed value rather than a plain string.
+content = $.compute(content);
  
-const contentRoot = document.createElement('root-42678934327g');
-   contentRoot.style.cssText = `
-      flex-grow: 1;
-      overflow-y: auto;          
-    `;  
-  const prop = parseHTML ? 'innerHTML' : 'textContent'; 
-  contentRoot[prop] = $.compute(content);  
- 
-   const btnRoot = document.createElement('button-526773239h');
-   btnRoot.style.cssText = `
-      display: flex;
-      justify-content: flex-end;
-      padding-bottom: 10px;      
-    `;
- 
-   const cancelBtn = document.createElement('cancel-427950252d');
-    cancelBtn.innerHTML = btnCancel;
-    cancelBtn.style.cssText = `    
-    font-weight: bold;     
-    margin-right: 30px;
-    `;
-  
-    cancelBtn.onclick = () => {
- resolve({ ok: false, reason: 'cancel' });
-      backdropEl.remove();
-    };
- 
-   const okBtn = document.createElement('ok-5274935327495j');
-    okBtn.innerHTML = btnOk;
-    okBtn.style.cssText = `       
-    font-weight: bold; 
-    margin-right: 10px;    
-    `;
-  
-    okBtn.onclick = () => {
- resolve({ ok: true, reason: 'confirm' });
-      backdropEl.remove();
-    }; 
-    
-btnRoot.append(cancelBtn, okBtn);
-dialogEl.append(contentRoot, btnRoot);
-backdropEl.append(dialogEl);
-document.body.append(backdropEl);
+return $.dialog({
+content: () => {
 
-// Close the confirm when clicking outside the dialog, if enabled.     
-backdropEl.addEventListener('click', (event) => {
- if (event.target === backdropEl && closeOnBackdrop) {
- resolve({ ok: false, reason: 'backdrop' });
-     backdropEl.remove();
- }
-});
+// If HTML parsing isn't wanted, escape angle brackets so content renders
+// as literal text instead of being interpreted as markup.
+if(!parseHTML) {
+content = String(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-// Auto-close the confirm after the configured duration.    
-if($.isNumeric(autoClose)) {
-setTimeout(() => {
-resolve({ ok: false, reason: 'autoClose' });
-backdropEl.remove();
-}, autoClose);
-}         
-});
+// Build the dialog's inner markup using unique custom tag names as
+// placeholders, so they can be reliably located and replaced/styled
+// in render() without colliding with real HTML elements or the
+// user's own content.
+return `
+<root-4he7gge65dF>${content}</root-4he7gge65dF>
+<button-5267732Fb39h>
+ <cancel-427950252d>${cancel}</cancel-427950252d>
+ <confirm-5l74yh5j>${confirm}</confirm-5l74yh5j>
+</button-5267732Fb39h>
+`;
+},
+render: (root, resolve) => { 
+// Locate the button container and the two action elements by their
+// unique placeholder tag names.
+const container = root.find('button-5267732Fb39h');
+const cancelBtn = root.find('cancel-427950252d');
+const confirmBtn = root.find('confirm-5l74yh5j');
+
+// Position the button row bottom-right within the dialog.
+container.style.cssText = `position: absolute; bottom: 20px; right: 10px; display: flex; padding-bottom: 10px;`;
+
+// Style the cancel and confirm buttons.
+cancelBtn.style.cssText = 'font-weight: bold;margin-right: 30px;';
+confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';
+
+// Apply any custom styles the caller passed onto the dialog's root element.
+Object.assign(root.context().style, style);
+
+// Resolve the returned promise based on which button the user clicks.
+cancelBtn.onclick = () => resolve({ ok: false, reason: 'cancel' });
+confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
+},
+styles: {
+// Let the caller override the backdrop color via style.backdropColor.
+ backdrop: { background: style.backdropColor }  
+},
+closeOnBackdrop,
+autoClose,
+// The dialog itself always receives real markup (our own generated
+// template) regardless of the caller's parseHTML setting — that flag
+// only controls whether the user-supplied `content` inside it is escaped.
+parseHTML: true
+}); 
 }
 
 
