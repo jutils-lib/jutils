@@ -3775,7 +3775,11 @@ const currentId = $.dialogId++;
       z-index: ${currentId};  
       position: fixed;  
     `;  
-    
+
+// Allow the dialog's content to scroll internally if it exceeds the
+// container's height, rather than overflowing outside the dialog bounds.
+contentEl.style.overflowY = 'auto';
+  
 // Apply user-defined style overrides.   
 Object.assign(backdropEl.style, styles.backdrop);
 Object.assign(dialogEl.style, styles.dialog);
