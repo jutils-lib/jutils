@@ -3823,122 +3823,80 @@ context: () => contentEl
 
 
 /**
- * Creates and opens a simple alert dialog with optional HTML or text content.
+ * Displays an alert dialog with a single confirm/OK button, built on top
+ * of $.dialog. Resolves once the user dismisses it.
  *
- * The alert returns a promise-like object and supports:
- * - plain text or HTML content rendering
- * - configurable timeout
- * - closing on backdrop click
- * - basic style overrides
- *
- * @param {string} [content=''] - Alert content to display.
- * @param {string} [btnText='OK'] - Button label.
- * @param {Object} [options={}] - Alert configuration options.
- * @param {'text'|'html'} [options.type='text'] - How to render content and button text.
- * @param {number} [options.timeout] - Auto-close timeout in milliseconds.
- * @param {boolean} [options.closeOnBackdrop=true] - Whether clicking the backdrop closes the alert.
- * @param {Object} [options.style={}] - Style overrides for the modal.
- * @returns {Promise} Promise-like alert result.
+ * @param {Object} [options={}]
+ * @param {string} [options.content=''] - The dialog's message content.
+ * @param {string} [options.confirm='OK'] - Label for the dismiss button.
+ * @param {boolean} [options.closeOnBackdrop=true] - Whether clicking the backdrop dismisses the dialog.
+ * @param {boolean} [options.parseHTML=false] - If true, content is rendered as real HTML; otherwise it's escaped and shown as literal text.
+ * @param {*} [options.autoClose=null] - Passed through to $.dialog's auto-close behavior.
+ * @param {Object} [options.style={}] - Custom styles applied to the dialog's root element; style.backdropColor also sets the backdrop background.
+ * @returns {Promise<{ok: boolean, reason: string}>} Resolves once the user dismisses the alert.
  */
-$.alertId = 0;
+$.alert = function (options = {}) {
+let {
+ content = '',
+ confirm = 'OK',
+ closeOnBackdrop = true,
+ parseHTML = false,
+ autoClose = null,
+ style = {}
+} = Object(options);  
 
-$.alert = function (content = '', btnContent = 'OK', options = {}) {
-const {
-parseHTML = false,
-closeOnBackdrop = true,
-autoClose = null, 
-style = {}
-} = Object(options);
+// Resolve content up front in case it's a function/computed value rather than a plain string.
+content = $.compute(content);
 
-if(!$.isObject(style)) $.error(`${style} is not an object.`);
+return $.dialog({
+content: () => {
 
-return new Promise(resolve => {
-const currentId = $.alertId++;  
+// If HTML parsing isn't wanted, escape angle brackets so content renders
+// as literal text instead of being interpreted as markup.
+if(!parseHTML) {
+content = String(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-// Create the backdrop element that covers the viewport.     
- const backdropEl = document.createElement('backdrop-5262419z');    
-    backdropEl.style.cssText = `
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: ${style.backdropColor ?? 'rgba(0, 0, 0, 0.5)'};
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: ${currentId};
-    `; 
+// Build the dialog's inner markup using unique custom tag names as
+// placeholders, so they can be reliably located in render() without
+// colliding with real HTML elements or the user's own content.
+return `
+<root-4he7gge65dF>${content}</root-4he7gge65dF>
+<button-5267732Fb39h>
+ <confirm-5l74yh5j>${confirm}</confirm-5l74yh5j>
+</button-5267732Fb39h>
+`;
+},
+render: (root, resolve) => {
+// Locate the button container and the single confirm button by their
+// unique placeholder tag names.
+const container = root.find('button-5267732Fb39h');
+const confirmBtn = root.find('confirm-5l74yh5j');
 
-// Create the modal container.       
- const dialogEl = document.createElement('dialog-4432796329v');
-    dialogEl.style.cssText = `
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 500px;
-      min-height: 180px;
-      max-height: calc(100vh - 15vh); 
-      display: flex;
-      flex-direction: column;
-      color: black;
-      padding: 10px;
-      z-index: ${currentId};
-      position: fixed;
-    `;
-Object.assign(dialogEl.style, style);    
+// Position the button row bottom-right within the dialog.
+container.style.cssText = `position: absolute; bottom: 20px; right: 10px; display: flex; padding-bottom: 10px;`;
 
-// Create the content area.     
-   const contentRoot = document.createElement('content-42678934327g');
-   contentRoot.style.cssText = `
-      flex-grow: 1;
-      overflow-y: auto;          
-    `;  
-  let prop = parseHTML ? 'innerHTML' : 'textContent';
-  contentRoot[prop] = $.compute(content);
+// Style the confirm button.
+confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';
 
-// Create the button wrapper.    
-   const btnRoot = document.createElement('button-526773239h');
-   btnRoot.style.cssText = `
-      display: flex;
-      justify-content: flex-end;
-      padding-bottom: 10px;      
-    `;
+// Apply any custom styles the caller passed onto the dialog's root element.
+Object.assign(root.context().style, style);
 
-// Create the confirmation button.        
-   const btn = document.createElement('btn-432899936438k');
-   btn.innerHTML = btnContent;
-    btn.style.cssText = `        
-    font-weight: bold;
-    margin-right: 10px;    
-    `;  
-    
-// Resolve the alert when the button is clicked.      
-   btn.onclick = () => {
-      resolve({ ok: true, reason: 'confirm' });
-      backdropEl.remove();
-    }; 
-    
-// Mount the dialog structure into the document.        
-btnRoot.append(btn);
-dialogEl.append(contentRoot, btnRoot);
-backdropEl.append(dialogEl);
-document.body.append(backdropEl);
-
-// Close the alert when clicking outside the dialog, if enabled.     
-backdropEl.addEventListener('click', (event) => {
- if (event.target === backdropEl && closeOnBackdrop) {
-   resolve({ ok: false, reason: 'backdrop' });
-   backdropEl.remove();
- }
-});   
-
-// Auto-close the alert after the configured duration.
-if($.isNumeric(autoClose)) {
-setTimeout(() => {
-resolve({ ok: false, reason: 'autoClose' });
-backdropEl.remove();
-}, autoClose);
-}   
+// Resolve the returned promise once the user clicks the button.
+// Matches $.confirm's { ok, reason } shape for a consistent resolved value
+// across the dialog family, even though $.alert only has one outcome.
+confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
+},
+styles: { 
+// Let the caller override the backdrop color via style.backdropColor.
+ backdrop: { background: style.backdropColor }
+},
+closeOnBackdrop,
+autoClose,
+// The dialog itself always receives real markup (our own generated
+// template) regardless of the caller's parseHTML setting — that flag
+// only controls whether the user-supplied `content` inside it is escaped.
+parseHTML: true
 });
 }
 
