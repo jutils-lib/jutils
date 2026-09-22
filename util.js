@@ -3793,10 +3793,10 @@ const container = root.find('button-5267732Fb39h');
 const confirmBtn = root.find('confirm-5l74yh5j');
 
 // Position the button row bottom-right within the dialog.
-container.style.cssText = `position: absolute; bottom: 20px; right: 10px; display: flex; padding-bottom: 10px;`;
+container.style.cssText = `position: absolute; bottom: 20px; right: 25px;`;
 
 // Style the confirm button.
-confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';
+confirmBtn.style.fontWeight = 'bold';
 
 // Apply any custom styles the caller passed onto the dialog's root element.
 Object.assign(root.context().style, style);
