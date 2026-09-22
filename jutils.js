@@ -3778,7 +3778,7 @@ const currentId = $.dialogId++;
 
 // Allow the dialog's content to scroll internally if it exceeds the
 // container's height, rather than overflowing outside the dialog bounds.
-contentEl.style.overflowY = 'auto';
+contentEl.style.cssText = 'overflow-y: auto; flex-grow: 1;';
   
 // Apply user-defined style overrides.   
 Object.assign(backdropEl.style, styles.backdrop);
@@ -3893,7 +3893,8 @@ confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
 },
 styles: { 
 // Let the caller override the backdrop color via style.backdropColor.
- backdrop: { background: style.backdropColor }
+ backdrop: { background: style.backdropColor },
+ dialog: { 'padding-bottom': '60px' }
 },
 closeOnBackdrop,
 autoClose,
@@ -3978,7 +3979,8 @@ confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
 },
 styles: {
 // Let the caller override the backdrop color via style.backdropColor.
- backdrop: { background: style.backdropColor }  
+ backdrop: { background: style.backdropColor },
+ dialog: { 'padding-bottom': '60px' }
 },
 closeOnBackdrop,
 autoClose,
