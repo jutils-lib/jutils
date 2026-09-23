@@ -3728,6 +3728,7 @@ const {
   autoClose = null,
   closeOnBackdrop = true,
   parseHTML = false,
+  lockViewport = true,
   render = () => {},
   styles = {}
 } = Object(options);
@@ -3744,6 +3745,8 @@ const prop = parseHTML ? 'innerHTML' : 'textContent';
 contentEl[prop] = $.compute(content);
 }
 
+
+const viewportLock = (() => {
 // Find the existing viewport meta tag, if the page already has one.
 let meta = document.querySelector('meta[name="viewport"]');
 
@@ -3759,9 +3762,22 @@ document.head.appendChild(meta);
 // restored once the dialog closes (empty string if the tag was just created).
 const originalContent = meta.content;
 
+ return {
+  lock: () => {
 // Lock the viewport to a fixed, non-zoomable state while the dialog is open,
 // so it doesn't inherit any zoom level the user had applied to the page.
 meta.content = 'width=device-width, initial-scale=1, user-scalable=no';
+  },
+  restore: () => {
+  // Restore the viewport to whatever it was set to before it was locked.
+   meta.content = originalContent;  
+  }
+ }
+})();
+
+// Apply the viewport lock only if the caller opted into it
+// (lockViewport defaults to true, so this runs unless explicitly disabled).
+if(lockViewport) viewportLock.lock();
   
 const promise = new Promise(resolve => {
 const currentId = $.dialogId++;
@@ -3842,12 +3858,12 @@ context: () => contentEl
  }); 
 });
 
-// Once the dialog's promise resolves, restore the viewport to whatever
-// it was set to before the dialog locked it.
+// Once the dialog's promise resolves, restore the viewport back to its
+// original state — but only if it was actually locked in the first place.
 promise.then(() => {
- meta.content = originalContent
+ if(lockViewport) viewportLock.restore();
 });
-  
+
 return promise;
 }
 
