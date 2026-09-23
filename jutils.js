@@ -3801,8 +3801,8 @@ const currentId = $.dialogId++;
       border-radius: 5px;
       width: 80%;
       max-width: 500px;
-      min-height: 130px;
-      max-height: calc(100vh - 25vh);
+      min-height: 180px;
+      max-height: calc(100vh - 15vh);
       display: flex;
       flex-direction: column;
       color: black;
@@ -3888,6 +3888,7 @@ let {
  confirm = 'OK',
  closeOnBackdrop = true,
  parseHTML = false,
+ lockViewport = true,
  autoClose = null,
  style = {}
 } = Object(options);  
@@ -3937,9 +3938,14 @@ confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
 styles: { 
 // Let the caller override the backdrop color via style.backdropColor.
  backdrop: { background: style.backdropColor },
- dialog: { 'padding-bottom': '60px' }
+ dialog: { 
+  paddingBottom: '60px',
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)'  
+ }  
 },
 closeOnBackdrop,
+lockViewport,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
@@ -3970,6 +3976,7 @@ let {
  confirm = 'OK',
  cancel = 'CANCEL',
  parseHTML = false,
+ lockViewport = true,
  autoClose = null,
  closeOnBackdrop = true,
  style = {}
@@ -4023,9 +4030,14 @@ confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
 styles: {
 // Let the caller override the backdrop color via style.backdropColor.
  backdrop: { background: style.backdropColor },
- dialog: { 'padding-bottom': '60px' }
+ dialog: { 
+  paddingBottom: '60px',
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)'  
+ }
 },
 closeOnBackdrop,
+lockViewport,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
@@ -4057,6 +4069,7 @@ let {
  confirm = 'OK',
  cancel = 'CANCEL',
  parseHTML = false,
+ lockViewport = true,
  autoClose = null,
  closeOnBackdrop = true,
  style = {}
@@ -4137,11 +4150,17 @@ confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm', value: inputEl
 styles: {
 // Let the caller override the backdrop color via style.backdropColor.
  backdrop: { background: style.backdropColor },
-// Reserve space at the bottom of the dialog so the input field and
- // button row (both absolutely positioned) don't overlap the content above.
- dialog: { 'padding-bottom': '90px' }
+
+ // Reserve space at the bottom of the dialog so the input field and
+ // button row (both absolutely positioned) don't overlap the content above. 
+ dialog: { 
+  paddingBottom: '60px',
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)'  
+ }
 },
 closeOnBackdrop,
+lockViewport,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
