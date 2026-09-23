@@ -3661,34 +3661,39 @@ contentEl[prop] = $.compute(content);
 }
 
 
+// Sets up a lock/restore controller for the page's viewport meta tag(s),
+// used to temporarily force a fixed, non-zoomable viewport while a dialog
+// is open, then return it to its original state afterward.
 const viewportLock = (() => {
-// Find the existing viewport meta tag, if the page already has one.
-let meta = document.querySelector('meta[name="viewport"]');
+// Find any existing viewport meta tags on the page.
+let metaTags = document.querySelectorAll('meta[name="viewport"]');
 
-// If no viewport meta tag exists yet, create and insert one so we have
-// something to set/restore content on.
-if(!meta) {
-meta = document.createElement('meta');
-meta.name = 'viewport';
-document.head.appendChild(meta);
+// If none exist yet, create one so there's something to lock/restore.
+if(metaTags.length === 0) {
+const tag = document.createElement('meta');
+tag.name = 'viewport';
+document.head.appendChild(tag);
+metaTags = [tag];
 }
 
-// Save whatever the viewport was set to before we touch it, so it can be
-// restored once the dialog closes (empty string if the tag was just created).
-const originalContent = meta.content;
-
- return {
-  lock: () => {
-// Lock the viewport to a fixed, non-zoomable state while the dialog is open,
-// so it doesn't inherit any zoom level the user had applied to the page.
-meta.content = 'width=device-width, initial-scale=1, user-scalable=no';
-  },
-  restore: () => {
-  // Restore the viewport to whatever it was set to before it was locked.
-   meta.content = originalContent;  
-  }
+return {
+// Save each tag's current content, then force a fixed, non-zoomable
+ // viewport so the dialog isn't affected by any zoom level the user
+ // had applied to the page.
+ lock: () => {
+metaTags.forEach(tag => {
+tag.$jUtils_metaContent = tag.content;
+tag.content = 'width=device-width, initial-scale=1, user-scalable=no';
+});    
+ },
+// Restore each tag's content back to what it was before locking.
+ restore: () => {
+metaTags.forEach(tag => {
+tag.content = tag.$jUtils_metaContent;
+});    
  }
-})();
+}
+})();  
 
 // Apply the viewport lock only if the caller opted into it
 // (lockViewport defaults to true, so this runs unless explicitly disabled).
