@@ -3744,7 +3744,26 @@ const prop = parseHTML ? 'innerHTML' : 'textContent';
 contentEl[prop] = $.compute(content);
 }
 
-return new Promise(resolve => {
+// Find the existing viewport meta tag, if the page already has one.
+let meta = document.querySelector('meta[name="viewport"]');
+
+// If no viewport meta tag exists yet, create and insert one so we have
+// something to set/restore content on.
+if(!meta) {
+meta = document.createElement('meta');
+meta.name = 'viewport';
+document.head.appendChild(meta);
+}
+
+// Save whatever the viewport was set to before we touch it, so it can be
+// restored once the dialog closes (empty string if the tag was just created).
+const originalContent = meta.content;
+
+// Lock the viewport to a fixed, non-zoomable state while the dialog is open,
+// so it doesn't inherit any zoom level the user had applied to the page.
+meta.content = 'width=device-width, initial-scale=1, user-scalable=no';
+  
+const promise = new Promise(resolve => {
 const currentId = $.dialogId++;
 
 // Base backdrop styling.        
@@ -3766,7 +3785,7 @@ const currentId = $.dialogId++;
       border-radius: 5px;
       width: 80%;
       max-width: 500px;
-      min-height: 180px;
+      min-height: 130px;
       max-height: calc(100vh - 25vh);
       display: flex;
       flex-direction: column;
@@ -3822,6 +3841,14 @@ context: () => contentEl
    backdropEl.remove();
  }); 
 });
+
+// Once the dialog's promise resolves, restore the viewport to whatever
+// it was set to before the dialog locked it.
+promise.then(() => {
+ meta.content = originalContent
+});
+  
+return promise;
 }
 
 
