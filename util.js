@@ -473,7 +473,7 @@ if(!$.isObject(options)) {
  if(options.upper) str += charset['upper'];
  if(options.numeric) str += charset['numeric'];
  if(options.symbol) str += charset['symbol'];   
- if(options.custom) str += options.custom;
+ if(options.custom) str += $.compute(options.custom);
 }
 
 // Convert the pool into an array of characters for random selection. 
