@@ -118,15 +118,19 @@ return `(${char.slice(0, 1)})${char.slice(1)}`;
 // Throw immediately so we can capture a real stack trace from this point.
 throw new type(info);
 } catch(err) {
+
+let methodName = 'anonymous';
 // Break the raw stack into individual frames, dropping frames that are
 // internal to $.error itself, the very first line (the message header,
 // not a real frame), or browser-internal HTML frames.
-const stack = String(err.stack).split('at').filter((e, i) => {
-console.log(e);
+const stack = arr.filter((e, i) => {
 if(i === 0) return false;
-if(e.includes('http') && !e.includes('$.error')) return true;
-  
-/*if(!e.includes('$.error') && i !== 0 && !/html/i.test(e)) return true;*/
+if(!e.includes('$.error')) {
+if(e.includes('http')) return true;
+if(e.includes('anonymous')) {
+methodName = e.match(/[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+/);
+}
+}
 });
 
 // Extract url, line, column, and function name from a single stack frame,
@@ -134,7 +138,7 @@ if(e.includes('http') && !e.includes('$.error')) return true;
 const parseStackFrame = (i) => {
 const frame = stack[stack.length - i];
 if(!frame) {
-return { url: 'unknown.file', line: 'unknown', column: 'unknown', name: 'anonymous()' };
+return { url: 'unknown.file', line: 'unknown', column: 'unknown', name: `${methodName}()` };
 }
   
 const parts = frame.split(':');
