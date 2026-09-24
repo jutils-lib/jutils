@@ -507,10 +507,10 @@ $.randFloat = function (min, max) {
  * - If the array is empty, the result will be `undefined`.
  *
  * Example:
- * - $.randItem([1, 2, 3]) -> 1, 2, or 3
- * - $.randItem("abc")     -> "a", "b", or "c"
+ * - $.randPick([1, 2, 3]) -> 1, 2, or 3
+ * - $.randPick("abc")     -> "a", "b", or "c"
  */
-$.randItem = function (input = []) {
+$.randPick = function (input = []) {
 // Objects are not supported because this helper expects a list-like value.
 if($.isObject(input)) $.error(`${input} contains invalid type at argument 1, expects non object`);
 
