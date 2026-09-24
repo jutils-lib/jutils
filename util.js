@@ -3635,7 +3635,7 @@ if(from === to) onComplete();
  *
  * @returns {Object} Dialog API with html, text, styles, and open methods.
  */
-$.dialogId = 0;
+$.dialogId = 250000;
 
 $.dialog = function (options = {}) {
 const {
