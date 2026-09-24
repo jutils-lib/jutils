@@ -444,11 +444,11 @@ return input[Math.floor(Math.random() * input.length)];
  *
  * @param {number} [length=8] - The desired token length.
  * @param {Object} [options] - Character set options.
- * @param {boolean} [options.letters=true] - Include both lowercase and uppercase letters.
- * @param {boolean} [options.lower=false] - Include lowercase letters.
- * @param {boolean} [options.upper=false] - Include uppercase letters.
- * @param {boolean} [options.numbers=false] - Include numeric characters.
- * @param {boolean} [options.symbols=false] - Include symbol characters.
+ * @param {boolean} [options.alpha=true] - Include both lowercase and uppercase letters.
+ * @param {boolean} [options.lower=true] - Include lowercase letters.
+ * @param {boolean} [options.upper=true] - Include uppercase letters.
+ * @param {boolean} [options.numeric=true] - Include numeric characters.
+ * @param {boolean} [options.symbol=true] - Include symbol characters.
  * @param {string} [options.custom] - Additional custom characters to include.
  * @returns {string} A randomly generated token.
  */
