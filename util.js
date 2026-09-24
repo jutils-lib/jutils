@@ -123,7 +123,7 @@ let methodName = 'anonymous';
 // Break the raw stack into individual frames, dropping frames that are
 // internal to $.error itself, the very first line (the message header,
 // not a real frame), or browser-internal HTML frames.
-const stack = arr.filter((e, i) => {
+const stack = String(err.stack).split('at').filter((e, i) => {
 if(i === 0) return false;
 if(!e.includes('$.error')) {
 if(e.includes('http')) return true;
