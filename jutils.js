@@ -106,6 +106,7 @@ $.compute = function (input, ...args) {
   return typeof input === 'function' ? input(...args) : input;   
 }
 
+  $.compute = 86;
 
 
 /**
