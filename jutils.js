@@ -1113,92 +1113,101 @@ $.timerHandles.forEach(util => {
 
 
 /**
- * Performs an HTTP GET request with optional delay, timeout, and caching behavior.
+ * Custom request wrapper attached to the $ object.
+ * Fetches data using the Fetch API with a fallback to XMLHttpRequest for legacy browsers.
  *
- * This helper accepts a callback and an options object, then sends a request
- * using `fetch()` when available, falling back to `XMLHttpRequest` otherwise.
- *
- * Options:
- * - `url`: Request URL. Defaults to a CoinGecko Bitcoin price endpoint.
- * - `dataType`: Response type / parser name, such as `json`.
- * - `timeout`: Maximum time in milliseconds before the request is aborted.
- * - `cache`: When `true`, allows cached responses; otherwise disables cache.
- *
- * Callback result:
- * - `{ ok: true, status: 'success' }` on success
- * - `{ ok: false, status: 'timeout' }` on timeout
- * - `{ ok: false, status: 'error' }` on failure
- *
- * Notes:
- * - The `fetch()` branch calls `response[dataType]()` dynamically, so `dataType`
- *   must match a valid response method such as `json`, `text`, or `blob`.
- * - In the XHR fallback, `xhr.responseType = dataType` must also be a valid
- *   XHR response type.
- * - The current code does not pass the parsed response body to the callback;
- *   it only reports status.
- *
- * Example:
- * - $.request(result => console.log(result))
- * - $.request(result => console.log(result), { url: "/api/data", timeout: 3000 })
+ * @param {Object} [options={}] - Configuration options for the request.
+ * @param {string} [options.url] - The endpoint URL (defaults to CoinGecko BTC price API).
+ * @param {string} [options.dataType='json'] - Expected response parsing method/type (e.g., 'json', 'text').
+ * @param {boolean} [options.cache=false] - Whether to allow browser/network caching.
+ * @param {number|null} [options.timeout=null] - Timeout duration in milliseconds.
+ * @returns {Promise<Object>} Resolves with an object containing `{ ok: boolean, status: string }`.
  */
-$.request = async function (callback, options = {}) {
-
-// Validate the callback before making any network request. 
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
-  
+$.request = function (options = {}) {
+// Destructure and set default parameters, safely handling non-object inputs
 const {
  url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
  dataType = 'json',
- timeout = null,
- cache = false
+ cache = false,
+ timeout = null
 } = Object(options);
 
-// Prefer fetch when available.  
-if(window.fetch) {
+// Instantiates an AbortController to manage request cancellation/timeouts for fetch
 const controller = new AbortController();
 
-// Abort the request if a numeric timeout is configured.  
-if($.isNumeric(timeout)) {
-setTimeout(() => controller.abort(), timeout);  
+/**
+   * Helper function to configure timeout logic for either Fetch or XHR.
+   *
+   * @param {Object} params
+   * @param {boolean} params.isFetch - Flag indicating if Fetch API is being used.
+   * @param {XMLHttpRequest} [params.xhr] - The XHR instance (required if isFetch is false).
+   * @param {Function} [params.resolve] - The Promise resolve function (required if isFetch is false).
+   */
+function setupTimeout({ isFetch, xhr, resolve }) {
+// Exit if timeout is not a valid numeric value (assumes $.isNumeric is available)
+if(!$.isNumeric(timeout)) return;
+
+if(isFetch) {
+// Abort the fetch request after the specified timeout duration
+setTimeout(() => controller.abort(), timeout);
+} else {
+// Use native XHR timeout functionality
+xhr.timeout = timeout;   
+xhr.ontimeout = () => resolve({ ok: false, status: 'timeout' }); 
+}
 }
 
-try {
-   const response = await fetch(url, {
+return new Promise(async resolve => {
+
+// Check if the modern Fetch API is supported in the current environment
+if(window.fetch) {
+// Initialize timeout timer for fetch
+setupTimeout({ isFetch: true });  
+
+ try {
+// Execute the fetch request with configured cache strategy and abort signal
+  const response = await fetch(url, {
    cache: cache ? 'force-cache' : 'no-store',
    method: 'GET',
    signal: controller.signal
-   });
-   
-// Parse the response using the requested method.          
-   await response[dataType]();
-   
-   callback({ ok: true, status: 'success' });
-  } catch(err) {
+  });   
+
+// Parse response body based on specified dataType (e.g., response.json())
+  await response[dataType]();
+  
+  resolve({ ok: true, status: 'success' });      
+ } catch(err) {
+// Distinguish between a manual abort/timeout error and general network errors
   const status = err.name === 'AbortError' ? 'timeout' : 'error';
-   callback({ ok: false, status });
-  }    
+  resolve({ ok: false, status }); 
+ }
 } else {
-// Fallback for older browsers using XMLHttpRequest.      
+// Fallback path for legacy browsers using XMLHttpRequest 
 const xhr = new XMLHttpRequest();
-xhr.open('GET', cache ? url : `${url}ts=${Date.now()}`, true);
+
+// Append a timestamp parameter if cache is false to prevent IE/legacy browser caching
+xhr.open('GET', cache ? url : `${url}?ts=${Date.now()}`, true);
 xhr.responseType = dataType;
 
+// Handle successful network responses
 xhr.onload = () => {
  if(xhr.status >= 200 && xhr.status < 300) {
- callback({ ok: true, status: 'success' });  
+ resolve({ ok: true, status: 'success' });  
  } else {
- callback({ ok: false, status: 'error' });  
+ resolve({ ok: false, status: 'error' });  
  }
 }
 
-xhr.onerror = () => callback({ ok: false, status: 'error' }); 
+// Handle network-level failures
+xhr.onerror = () => resolve({ ok: false, status: 'error' }); 
 
-if($.isNumeric(timeout)) xhr.timeout = timeout;
+// Configure XHR timeout behavior 
+setupTimeout({ isFetch: false, xhr, resolve }); 
 
-xhr.ontimeout = () => callback({ ok: false, status: 'timeout' });
-
-xhr.send();    
-} 
+// Dispatch the request
+xhr.send();
+}
+});
 }
 
 
