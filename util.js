@@ -18,10 +18,10 @@
 $.compute = function (input, ...args) {
   // If the input is a function, execute it with the remaining arguments.
   // Otherwise, return the input unchanged.
-  return typeof input === 'function' ? input(...args) : input;   
+  return typeof input === 'function' ? input(...args) : input; 
+ // Normally 
 }
 
-  $.compute = 86;
 
 
 /**
