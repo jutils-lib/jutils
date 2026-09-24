@@ -196,6 +196,7 @@ if(info instanceof Error) {
  info = info.message;
 }   
 
+// Wrap the first character of every "at" match in parentheses.
 info = info.replace(/at/g, char => {
 return `(${char.slice(0, 1)})${char.slice(1)}`;
 });
@@ -205,9 +206,8 @@ throw new type(info);
 } catch(err) {
 
 let methodName = 'anonymous';
-// Break the raw stack into individual frames, dropping frames that are
-// internal to $.error itself, the very first line (the message header,
-// not a real frame), or browser-internal HTML frames.
+  
+// Parse the stack trace to find relevant caller entries and extract the method reference  
 const stack = String(err.stack).split('at').filter((e, i) => {
 if(i === 0) return false;
 if(!e.includes('$.error')) {
