@@ -6819,6 +6819,12 @@ return this;
 function ui(u) {
 console.log(u);    
 }
+
+
+jUtils.fn.amaze = function (input) {
+console.log(input);
+}
+
 /**
  * Locks all existing methods on `jUtils.fn` so they cannot be overwritten or reconfigured.
  *
