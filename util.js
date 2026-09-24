@@ -1,6 +1,4 @@
 
-$.fit = () => console.log(62782);
-
 /**
  * Computes a value from the given input.
  *
