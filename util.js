@@ -4204,6 +4204,9 @@ $.phase = function (callback, key) {
 // Ensure the supplied callback is callable before attempting execution.
 if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1.`);
 
+// A key is required to track which phase has already run.
+if(key === undefined) $.error('Key cannot be undefined at argument 2.');
+  
 // Run the callback when no phase marker exists for the supplied key.
 if(!sessionStorage.getItem(key)) callback();
 
