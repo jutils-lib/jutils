@@ -3765,7 +3765,7 @@ const root = {
   const nodes = contentEl.querySelectorAll(s);
   return Array.from(nodes);
  },
-context: () => contentEl
+ context: () => dialogEl
 }
  
 // Let the caller wire events and resolve the dialog manually.     
@@ -3806,6 +3806,7 @@ let {
  closeOnBackdrop = true,
  parseHTML = false,
  lockViewport = true,
+ zIndex = 250000,
  autoClose = null,
  style = {}
 } = Object(options);  
@@ -3863,6 +3864,7 @@ styles: {
 },
 closeOnBackdrop,
 lockViewport,
+zIndex,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
@@ -3894,6 +3896,7 @@ let {
  cancel = 'CANCEL',
  parseHTML = false,
  lockViewport = true,
+ zIndex = 250000,
  autoClose = null,
  closeOnBackdrop = true,
  style = {}
@@ -3955,6 +3958,7 @@ styles: {
 },
 closeOnBackdrop,
 lockViewport,
+zIndex,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
@@ -3987,6 +3991,7 @@ let {
  cancel = 'CANCEL',
  parseHTML = false,
  lockViewport = true,
+ zIndex = 250000,
  autoClose = null,
  closeOnBackdrop = true,
  style = {}
@@ -4078,6 +4083,7 @@ styles: {
 },
 closeOnBackdrop,
 lockViewport,
+zIndex,
 autoClose,
 // The dialog itself always receives real markup (our own generated
 // template) regardless of the caller's parseHTML setting — that flag
