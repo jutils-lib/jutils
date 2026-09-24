@@ -3635,8 +3635,6 @@ if(from === to) onComplete();
  *
  * @returns {Object} Dialog API with html, text, styles, and open methods.
  */
-$.dialogId = 250000;
-
 $.dialog = function (options = {}) {
 const {
   content = '',
@@ -3644,6 +3642,7 @@ const {
   closeOnBackdrop = true,
   parseHTML = false,
   lockViewport = true,
+  zIndex = 250000,
   render = () => {},
   styles = {}
 } = Object(options);
@@ -3700,7 +3699,6 @@ tag.content = tag.$jUtils_metaContent;
 if(lockViewport) viewportLock.lock();
   
 const promise = new Promise(resolve => {
-const currentId = $.dialogId++;
 
 // Base backdrop styling.        
     backdropEl.style.cssText = `
@@ -3711,7 +3709,7 @@ const currentId = $.dialogId++;
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: ${currentId};         
+      z-index: ${zIndex};         
     `; 
 
 // Base dialog styling.         
@@ -3726,8 +3724,7 @@ const currentId = $.dialogId++;
       display: flex;
       flex-direction: column;
       color: black;
-      padding: 10px;
-      z-index: ${currentId};  
+      padding: 10px;      
       position: fixed;  
     `;  
 
