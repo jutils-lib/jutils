@@ -478,10 +478,10 @@ if(!$.isObject(options)) {
 
 // Convert the pool into an array of characters for random selection. 
 let result = '';
-let char = Array.from(str);
+const char = Array.from(str);
 
 // Randomly pick characters until the requested length is reached. 
-for(let i = 0; i < length; i++) {
+for(let i = 0; (i < length && char.length > 0); i++) {
 result += char[Math.floor(Math.random() * char.length)];   
 }
 
