@@ -84,8 +84,6 @@ this.length = result.filter(el => el && el.nodeType === 1).length;
  */
 jUtils.fn = jUtils.prototype;
 
-$.fit = () => console.log(62782);
-
 /**
  * Computes a value from the given input.
  *
