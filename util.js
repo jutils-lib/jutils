@@ -457,22 +457,22 @@ let str = '';
 
 // Predefined character sets that can be combined to build the token pool.  
 const charset = {
- letters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+ alpha: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
  lower: 'abcdefghijklmnopqrstuvwxyz',
  upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
- numbers: '0123456789',
- symbols: '!@#$%^&*()-_=+[]{}|\\:;"\'<>,.?/' 
+ numeric: '0123456789',
+ symbol: '!@#$%^&*()-_=+[]{}|\\:;"\'<>,.?/' 
 } 
 
 // Build the character set from the specified options, defaulting to letters.
 if(!$.isObject(options)) {
- str += charset['letters'];
+ str += charset['alpha'];
 } else {
- if(options.letters) str += charset['letters'];
+ if(options.alpha) str += charset['alpha'];
  if(options.lower) str += charset['lower'];
  if(options.upper) str += charset['upper'];
- if(options.numbers) str += charset['numbers'];
- if(options.symbols) str += charset['symbols'];   
+ if(options.numeric) str += charset['numeric'];
+ if(options.symbol) str += charset['symbol'];   
  if(options.custom) str += options.custom;
 }
 
