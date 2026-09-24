@@ -84,6 +84,8 @@ this.length = result.filter(el => el && el.nodeType === 1).length;
  */
 jUtils.fn = jUtils.prototype;
 
+function custom() {}
+
 /**
  * Computes a value from the given input.
  *
