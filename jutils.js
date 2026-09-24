@@ -3810,7 +3810,7 @@ const promise = new Promise(resolve => {
       flex-direction: column;
       color: black;
       padding: 10px;      
-      position: fixed;  
+      position: absolute;  
     `;  
 
 // Allow the dialog's content to scroll internally if it exceeds the
