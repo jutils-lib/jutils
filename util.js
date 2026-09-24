@@ -1,4 +1,6 @@
 
+function custom() {}
+
 /**
  * Computes a value from the given input.
  *
