@@ -230,33 +230,22 @@ return [...String(value)].every(n => /[0-9.\+-]/.test(n));
 
 
 /**
- * Converts a value into a number and falls back to `0` when the result is not
- * considered numeric by this library's validation rules.
+ * Converts a value to a number, returning a fallback if the value isn't numeric.
  *
- * This helper is meant to provide a safe numeric conversion path:
- * - First, it coerces the input using `Number(...)`.
- * - Then it checks whether the converted result passes `$.isNumeric(...)`.
- * - If the value is not numeric, it returns `0` instead of propagating an
- *   invalid result.
- *
- * This is useful when you want a predictable numeric output and do not want
- * to deal with `NaN` or other invalid values downstream.
- *
- * Example:
- * - $.toNumber("5")   -> 5
- * - $.toNumber(12)    -> 12
- * - $.toNumber("abc") -> 0
+ * @param {*} value - The value to convert to a number.
+ * @param {number} [fallback=0] - The value to return if `value` isn't numeric.
+ * @returns {number}
  */
-$.toNumber = function (value) {
+$.toNumber = function (value, fallback = 0) {
 
-  // If the converted value is not numeric according to the library's rules,
-  // return a safe fallback.
-if(!$.isNumeric(value)) return 0;
+// Ensure the fallback itself is a valid number before it can ever be used.
+if(!$.isNumeric(fallback)) $.error('Fallback must be a numeric value at argument 2.');
 
-// Convert to number 
-value = Number(value);
+// If value isn't numeric, return the fallback converted to a number instead.
+if(!$.isNumeric(value)) return Number(fallback);
 
-return value;
+// Otherwise, convert and return the actual value.
+return Number(value);
 }
 
 
