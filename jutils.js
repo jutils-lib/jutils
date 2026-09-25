@@ -638,59 +638,38 @@ return Number(value).toFixed(length);
 
 
 /**
- * Sorting helper for arrays.
- *
- * This utility provides two sorting modes:
- *
- * - `asc(input, fn)`:
- *   Sorts the array in ascending order.
- *
- * - `desc(input, fn)`:
- *   Sorts the array in descending order.
- *
- * The `fn` argument is a selector function used to extract the value that
- * should be compared for each item. This makes the sorter flexible enough to
- * work with arrays of numbers, strings, or objects.
- *
- * How it works:
- * - The input must be an array.
- * - The selector function must be a function.
- * - For string values, sorting uses `localeCompare()` so alphabetical ordering
- *   is handled properly.
- * - For non-string values, sorting uses numeric comparison.
- *
- * Important:
-  * - This function sorts the original array in place because it uses
- *   `Array.prototype.sort()`.
- * - If you need to preserve the original array, make a copy before sorting.
- * - The comparison logic assumes the selector returns either strings or values
- *   that can be compared numerically.
- *
- * Example:
- * - $.sort.asc([3, 1, 2], x => x) -> [1, 2, 3]
- * - $.sort.desc(["b", "a"], x => x) -> ["b", "a"]
- * - $.sort.asc(users, user => user.name)
+ * Sorting utility supporting ascending/descending order, with a selector
+ * function to extract the value to compare from each item. Handles both
+ * numeric and string comparisons automatically, and silently tolerates
+ * a selector throwing (e.g. accessing a property on a null/undefined item)
+ * rather than letting the sort itself crash.
  */
 $.sort = (() => {
-// Shared sorting implementation used by both ascending and descending modes.  
+// Shared comparator logic used by both asc() and desc().
 const config = function (input, fn, mode) {
-// Validate that the first argument is an array.   
+
+// Ensure the input is actually an array before attempting to sort it. 
 if(!Array.isArray(input)) $.error(`${input} is not an array at argument 1`);
 
-// Validate that the second argument is a function.   
+// Ensure a selector function was provided to extract the compare value.
 if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 2`);
 
-// Sort the array by comparing the values returned from the selector.    
 return input.sort((a, b) => {
-const x = fn(a ?? {});
-const y = fn(b ?? {});
+let x, y;
+// If the selector throws for either item (e.g. accessing a property on
+// null/undefined), swallow the error and leave x/y as undefined rather
+// than letting the whole sort crash.
+try {
+x = fn(a);
+y = fn(b);
+} catch {};
 
-// Use locale-aware comparison for strings.     
+// Use locale-aware string comparison when both values are strings.
 if(typeof x === 'string' && typeof y === 'string') {
- return mode === 'asc' ? x.localeCompare(y) : y.localeCompare(x);
+return mode === 'asc' ? x.localeCompare(y) : y.localeCompare(x);
 }
 
-// Use numeric comparison for non-string values.    
+// Otherwise, compare numerically.  
 return mode === 'asc' ? x - y : y - x;
 });
 }
