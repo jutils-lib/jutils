@@ -827,35 +827,33 @@ return typeof callback === 'function' ? result.map(callback) : result;
 
 
 /**
- * Redirects the browser to a new URL, optionally after a delay.
+ * Navigates the browser to a given URL, optionally after a delay, and
+ * optionally replacing the current history entry instead of pushing a new one.
  *
- * This helper validates that `url` is a string, then navigates the current
- * page either immediately or after a timeout.
- *
- * Options:
- * - `delay`: If numeric, the redirect is scheduled after this many milliseconds.
- * - `replace`: If `true`, uses `window.location.replace(...)` instead of setting
- *   `window.location.href`, which avoids adding a new history entry.
- *
- * Return value:
- * - Returns an object with a `cancel()` method that clears the scheduled
- *   redirect timeout, if one was created.
- *
- * Example:
- * - $.redirect("https://example.com")
- * - $.redirect("https://example.com", { delay: 2000 })
- * - $.redirect("https://example.com", { replace: true })
+ * @param {string|Object} url - The target URL, or an object coercible to one (e.g. a URL instance).
+ * @param {Object} [options={}]
+ * @param {number} [options.delay=null] - Milliseconds to wait before redirecting; redirects immediately if not a number.
+ * @param {boolean} [options.replace=false] - If true, uses location.replace() instead of location.href.
+ * @returns {{cancel: Function}} A handle to cancel a pending delayed redirect.
  */
 $.redirect = function (url, options = {}) {
 
-// Ensure the target URL is a string before attempting navigation. 
-if(typeof url !== 'string') $.error(`${url} is not a string at argument 1`);
+// Reject primitive non-string values (numbers, booleans, etc.) outright.
+// Objects are allowed through here, but aren't guaranteed to produce a
+// valid URL — they'll be coerced to a string later via toString(), which
+// may silently fail navigation if no meaningful toString() is defined.
+if(typeof url !== 'string' && !$.isObject(url)) {
+$.error('Url must be a string or url object at argument 1.');
+}
 
 // Read redirect options with a default for replace behavior.  
-const { delay, replace = false } = Object(options);
+const { 
+ delay = null,
+ replace = false 
+} = Object(options);
 
-  // Perform the actual navigation, either by replacing the current history
-  // entry or by assigning a new location.  
+// Perform the actual navigation, either by replacing the current history
+// entry or by assigning a new location.  
 const loc = () => {
 replace ? window.location.replace(url) : window.location.href = url;
 }
