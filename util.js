@@ -402,36 +402,21 @@ $.randFloat = function (min, max) {
 
 
 /**
- * Returns a random item from the provided input.
+ * Returns a single random element from an array, or a random character
+ * from a string.
  *
- * This helper is designed to work with array-like or string-like values by
- * converting non-array inputs into an array of characters first.
- *
- * Behavior:
- * - If `input` is an object, an error is thrown because objects are not valid
- *   sources for random item selection in this helper.
- * - If `input` is not already an array, it is converted into an array using
- *   `Array.from(String(input))`.
- * - A random element is then selected from the resulting array.
- *
- * Important:
- * - For strings, this returns a random character.
- * - For arrays, this returns a random array element.
- * - If the array is empty, the result will be `undefined`.
- *
- * Example:
- * - $.randPick([1, 2, 3]) -> 1, 2, or 3
- * - $.randPick("abc")     -> "a", "b", or "c"
+ * @param {Array|string} input - The array or string to pick from.
+ * @returns {*} A randomly selected element (or character).
  */
-$.randPick = function (input = []) {
-// Objects are not supported because this helper expects a list-like value.
-if($.isObject(input)) $.error(`${input} contains invalid type at argument 1, expects non object`);
+$.randPick = function (input) {
 
-  // Convert non-array values into an array of characters so they can still be
-  // sampled randomly.
-if(!Array.isArray(input)) input = Array.from(String(input));
+// Only arrays and strings have discrete items to pick from — reject
+// anything else rather than silently returning unexpected results.
+if(!Array.isArray(input) && typeof input !== 'string') {
+$.error(`Input must be an array or a string at argument 1.`); 
+}
 
-// Pick a random index from the array and return the item at that position. 
+// Pick a random index within range and return the element/character at it.
 return input[Math.floor(Math.random() * input.length)];
 }
 
