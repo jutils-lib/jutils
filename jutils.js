@@ -1459,34 +1459,31 @@ $.isEmail = function (email) {
 
 
 /**
- * Updates the document title and changes the browser history entry without
- * reloading the page.
+ * Updates the browser's URL and document title without triggering a full page reload.
+ * Wraps the HTML5 History API (`pushState` and `replaceState`).
  *
- * This helper uses the History API to either:
- * - push a new history entry, or
- * - replace the current one
- *
- * Options:
- * - `replace`: when `true`, uses `history.replaceState(...)`; otherwise uses
- *   `history.pushState(...)`
- * - `state`: an arbitrary state object stored in the history entry
- *
- * Behavior:
- * - Sets `document.title` to the provided `title`
- * - Calls the appropriate History API method with `state`, `title`, and `url`
- *
- * Example:
- * - $.navigate("/about", "About Us")
- * - $.navigate("/profile", "Profile", { replace: true, state: { from: "home" } })
+ * @param {string} url - The target URL to display in the browser address bar.
+ * @param {Object} [options={}] - Configuration options for the navigation entry.
+ * @param {string} [options.title=document.title] - The new document title to set.
+ * @param {boolean} [options.replace=false] - If true, replaces the current history entry instead of creating a new one.
+ * @param {*} [options.state={}] - Custom state object to associate with the history entry.
  */
-$.navigate = function (url, title = '', options = {}) {
-  const { replace = false, state = {} } = Object(options);
-  
+$.navigate = function (url, options = {}) {
+// Destructure optional configuration parameters with default fallback values
+const { 
+ title = document.title,
+ replace = false, 
+ state = {} 
+} = Object(options);
+
+// Update the visual browser tab title
 document.title = title;
 
+// Determine whether to append a new entry or overwrite the current history record
 const method = replace ? 'replaceState' : 'pushState';
 
-window.history[method](state, title, url);
+// Update the browser history and address bar URL using the selected method
+window.history[method](state, title, url); 
 }
 
 
