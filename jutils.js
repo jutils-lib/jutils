@@ -1468,7 +1468,7 @@ $.isEmail = function (email) {
  * @param {boolean} [options.replace=false] - If true, replaces the current history entry instead of creating a new one.
  * @param {*} [options.state={}] - Custom state object to associate with the history entry.
  */
-$.navigate = function (url, options = {}) {
+$.route = function (url, options = {}) {
 // Destructure optional configuration parameters with default fallback values
 const { 
  title = document.title,
