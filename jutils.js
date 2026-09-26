@@ -1401,59 +1401,40 @@ $.insertStr = function (input, position, value) {
 
 
 /**
- * Checks whether a string looks like a valid URL.
+ * Validates whether a given input is a properly formatted email address.
  *
- * This helper returns `false` for empty values or non-string inputs, then tests
- * the trimmed string against a regular expression that allows:
- * - optional `http://` or `https://`
- * - a domain name with dots
- * - an optional port
- * - an optional path
- *
- * Notes:
- * - This is a lightweight URL validator, not a full RFC-compliant parser.
- * - It will accept many common URLs, but may reject some valid edge cases.
- *
- * Example:
- * - $.isUrl("https://example.com") -> true
- * - $.isUrl("example.com/path") -> true
- * - $.isUrl("not a url") -> false
+ * @param {*} email - The value to validate.
+ * @returns {boolean} `true` if the input is a valid email string within length limits, otherwise `false`.
  */
-$.isUrl = function (url) {
-  if (!url || typeof url !== "string") return false;
-  
-      const regex = /^(https?:\/\/)?[a-zA-Z0-9.-]+\.[a-zA-Z0-9]{2,}(:[0-9]+)?(\/.*)?$/;
-            
-  return regex.test(url.trim());             
+$.isEmail = function (email) { 
+// Guard clause: ensure input is a string primitive before performing string operations 
+if(typeof email !== "string") return false;
+
+// Regular expression matching standard email structure: username@domain.tld    
+const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+// Strip leading/trailing whitespace, test regex, and enforce RFC 5321 length limit (max 254 chars)  
+return regex.test(email.trim()) && email.length <= 254;       
 }
 
 
 
 /**
- * Checks whether a string looks like a valid email address.
+ * Validates whether a given input is a properly formatted URL structure.
+ * Supports http/https protocols (optional), domain names, optional ports, and paths.
  *
- * This helper returns `false` for empty values or non-string inputs, then tests
- * the trimmed string against a regular expression that allows:
- * - a local part made of common email-safe characters
- * - an `@` symbol
- * - a domain name with at least one dot
- * - a top-level domain of at least 2 letters
- *
- * Notes:
- * - This is a lightweight validator, not a full RFC-compliant email parser.
- * - It also enforces a maximum length of 254 characters, which matches the
- *   common practical limit for email addresses.
- *
- * Example:
- * - $.isEmail("test@example.com") -> true
- * - $.isEmail("bad@email") -> false
+ * @param {*} url - The value to validate.
+ * @returns {boolean} `true` if the input matches URL format syntax, otherwise `false`.
  */
-$.isEmail = function (email) {  
-      if (!email || typeof email !== "string") return false;
-    
-      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  
-   return regex.test(email.trim()) && email.length <= 254;       
+$.isUrl = function (url) {
+// Guard clause: ensure input is a string primitive
+if(typeof url !== "string") return false;
+
+// Regex matching optional protocol (http/https://), domain/TLD, optional port, and optional path  
+const regex = /^(https?:\/\/)?[a-zA-Z0-9.-]+\.[a-zA-Z0-9]{2,}(:[0-9]+)?(\/.*)?$/;
+
+// Strip leading/trailing whitespace and test against the URL pattern            
+return regex.test(url.trim());             
 }
 
 
