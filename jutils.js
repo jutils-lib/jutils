@@ -1489,46 +1489,33 @@ window.history[method](state, title, url);
 
 
 /**
- * Checks whether a value is a plain object.
+ * Checks if a value is a non-null object type, excluding arrays.
+ * Note: Returns true for standard objects as well as functions, dates, or custom instances.
  *
- * This helper first verifies that `input` is an object, then checks whether its
- * constructor is exactly `Object`.
- *
- * Behavior:
- * - Returns `false` for non-objects
- * - Returns `true` for plain object literals like `{}` and `new Object()`
- * - Returns `false` for arrays, dates, functions, class instances, and other
- *   non-plain objects
- *
- * Example:
- * - $.isPlainObject({}) -> true
- * - $.isPlainObject([]) -> false
- * - $.isPlainObject(new Date()) -> false
+ * @param {*} value - The value to test.
+ * @returns {boolean} `true` if the value is an object (and not an array or null), otherwise `false`.
  */
-$.isPlainObject = function (input) {
-if(!$.isObject(input)) return false;
- return input.constructor === Object;
+$.isObject = function (value) {
+// Verifies the value uses the 'object' primitive type while filtering out JavaScript's 
+// default object exceptions (null values and Array instances).
+return (typeof value === 'object' && !Array.isArray(value) && value !== null);
 }
 
 
 
 /**
- * Checks whether a value is an object-like value.
+ * Checks if a value is a plain object created by the Object constructor or an object literal `{}`.
+ * Excludes custom class instances, DOM nodes, dates, arrays, and null.
  *
- * This helper returns `true` for non-null objects that are not arrays.
- *
- * Behavior:
- * - Returns `false` for `null`
- * - Returns `false` for arrays
- * - Returns `true` for plain objects, dates, regexes, and other non-array objects
- *
- * Example:
- * - $.isObject({}) -> true
- * - $.isObject([]) -> false
- * - $.isObject(null) -> false
+ * @param {*} input - The value to test.
+ * @returns {boolean} `true` if the input is a plain object, otherwise `false`.
  */
-$.isObject = function (value) {
-return (value !== null && typeof value === 'object' && !Array.isArray(value));
+$.isPlainObject = function (input) {
+// First ensure the value meets the baseline criteria of a non-null, non-array object
+if(!$.isObject(input)) return false;
+
+// Verify the object was directly instantiated via standard Object constructor
+return input.constructor === Object;
 }
 
 
