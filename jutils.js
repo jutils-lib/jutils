@@ -5130,34 +5130,34 @@ return this;
 
 
 /**
- * Masks the visible content of matched elements with a repeated symbol.
+ * Masks the visible text (or value, for inputs/textareas) of each matched
+ * element, replacing it with a repeated symbol. The original text is
+ * preserved on the element for later restoration (e.g. via an unmask
+ * method). Calling mask() again strips any pre-existing symbol characters
+ * from the stored value first, so repeated calls don't corrupt it.
  *
- * Behavior:
- * - Uses `value` for `INPUT` and `TEXTAREA` elements.
- * - Uses `textContent` for all other elements.
- * - Stores the original content in `el.$jUtils_maskValue` the first time masking is applied.
- * - Replaces the displayed content with a repeated mask symbol.
- *
- * Notes:
- * - If `length` is numeric, it controls how many mask characters are shown.
- * - Otherwise, the current content length is used.
- * - Masking is only applied once per element because of the `el.$jUtils_maskValue` guard.
- * - This method is chainable.
- *
- * @param {string} [symbol='*'] - The character or string used to mask the content.
- * @param {number} [length] - Optional number of mask characters to display.
- * @returns {Object} The current instance for chaining.
+ * @param {string} [symbol='*'] - The character to mask with.
+ * @param {number} [length] - How many symbol characters to display; defaults to the current text's length.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.mask = function (symbol = '*', length) {
-this.set(el => {
-  const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent';   
-   
-if(!el.$jUtils_maskValue) {
-el.$jUtils_maskValue = el[prop];
+// Build a regex to strip out any existing symbol characters, so calling
+// mask() repeatedly doesn't accumulate masked symbols into the saved value.
+const regex = new RegExp($.escapeRegex(symbol), 'g');
 
-const len = $.isNumeric(length) ? length : el[prop].length;
-el[prop] = String(symbol).repeat(len);
-}
+this.set(el => {
+// Inputs/textareas store their text in `value`; everything else uses `textContent`.
+const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
+
+// Append the current (symbol-stripped) text onto whatever original value
+// was already saved, so the real text is preserved across repeated calls.  
+el.$jUtils_maskValue = (el.$jUtils_maskValue ?? '') + el[prop].replace(regex, '');
+
+// Default the mask length to the current text's length if none was given.
+if(!$.isNumeric(length)) length = el[prop].length;
+
+// Replace the visible text with the repeated mask symbol.
+el[prop] = String(symbol).repeat(length);
 });
 return this;
 }
@@ -5165,28 +5165,24 @@ return this;
 
 
 /**
- * Restores the original content of masked matched elements.
+ * Restores each matched element's original text (or value, for inputs/
+ * textareas) that was saved by mask(), then clears the saved value so
+ * a later mask() call starts fresh.
  *
- * Behavior:
- * - Uses `value` for `INPUT` and `TEXTAREA` elements.
- * - Uses `textContent` for all other elements.
- * - Restores the saved original content from `el.$jUtils_maskValue`.
- * - Removes the mask marker after restoring the content.
- *
- * Notes:
- * - Only elements that were previously masked are affected.
- * - This method is chainable.
- *
- * @returns {Object} The current instance for chaining.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.unmask = function () {
 this.set(el => {
-// Restore the original value only if the element was previously masked.  
-  if(el.$jUtils_maskValue) {
-   const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent';
-   el[prop] = el.$jUtils_maskValue;  
-   delete el.$jUtils_maskValue;
-  }  
+// Inputs/textareas store their text in `value`; everything else uses `textContent`.
+const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent';
+
+// Only restore if a masked value was actually saved — avoids overwriting
+// the element's real content with undefined if unmask() is called without
+// a prior mask().
+if(el.$jUtils_maskValue) {
+el[prop] = el.$jUtils_maskValue;
+delete el.$jUtils_maskValue;
+}
 });
 return this;    
 }
