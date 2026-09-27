@@ -239,7 +239,7 @@ return [...String(value)].every(n => /[0-9.\+-]/.test(n));
 $.toNumber = function (value, fallback = 0) {
 
 // Ensure the fallback itself is a valid number before it can ever be used.
-if(!$.isNumeric(fallback)) $.error('Fallback must be a numeric value at argument 2.');
+if(!$.isNumeric(fallback)) $.error(`"${fallback}" must be a numeric value at argument 2.`);
 
 // If value isn't numeric, return the fallback converted to a number instead.
 if(!$.isNumeric(value)) return Number(fallback);
@@ -413,7 +413,7 @@ $.randPick = function (input) {
 // Only arrays and strings have discrete items to pick from — reject
 // anything else rather than silently returning unexpected results.
 if(!Array.isArray(input) && typeof input !== 'string') {
-$.error(`${input} must be an array or a string at argument 1.`); 
+$.error(`"${input}" must be an array or a string at argument 1.`); 
 }
 
 // Pick a random index within range and return the element/character at it.
@@ -541,10 +541,10 @@ return obj;
  */
 $.toFixed = function (value, length = 2) {
 // Reject non-numeric values early so formatting does not silently fail. 
-if(!$.isNumeric(value)) $.error(`${value} is not a numeric value at argument 1`);
+if(!$.isNumeric(value)) $.error(`"${value}" is not a numeric value at argument 1`);
 
 // Validate the decimal precision argument as well.
-if(!$.isNumeric(length)) $.error(`${length} is not a numeric value at argument 2`);
+if(!$.isNumeric(length)) $.error(`"${length}" is not a numeric value at argument 2`);
 
 // Convert to a number and format with the requested decimal precision.   
 return Number(value).toFixed(length);  
@@ -564,10 +564,10 @@ $.sort = (() => {
 const config = function (input, fn, mode) {
 
 // Ensure the input is actually an array before attempting to sort it. 
-if(!Array.isArray(input)) $.error(`${input} is not an array at argument 1`);
+if(!Array.isArray(input)) $.error(`"${input}" is not an array at argument 1`);
 
 // Ensure a selector function was provided to extract the compare value.
-if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 2`);
+if(typeof fn !== 'function') $.error(`"${fn}" is not a function at argument 2`);
 
 return input.sort((a, b) => {
 let x, y;
@@ -683,10 +683,10 @@ return Promise.resolve(successful)
 $.chunk = function (input, size, callback) {
 
 // Only arrays and strings are supported as chunkable inputs. 
-if(!Array.isArray(input) && typeof input !== 'string') $.error(`${input} is not an array or a string at argument 1`);
+if(!Array.isArray(input) && typeof input !== 'string') $.error(`"${input}" must be an array or a string at argument 1`);
 
 // Chunk size must be a numeric value of at least 1.
-if(!$.isNumeric(size) || size < 1) $.error(`${size} is not a number or it's less than 1, at argument 2`);
+if(!$.isNumeric(size) || size < 1) $.error(`"${size}" is not a number or it's less than 1, at argument 2`);
 
 let isString = false;
 
@@ -737,7 +737,7 @@ $.redirect = function (url, options = {}) {
 // valid URL — they'll be coerced to a string later via toString(), which
 // may silently fail navigation if no meaningful toString() is defined.
 if(typeof url !== 'string' && !$.isObject(url)) {
-$.error(`${url} must be a string or url object at argument 1.`);
+$.error(`"${url}" must be a string or url object at argument 1.`);
 }
 
 // Read redirect options with a default for replace behavior.  
