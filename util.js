@@ -2472,7 +2472,7 @@ return obj;
  * @param {any} value - The value to escape.
  * @returns {string} The escaped string.
  */
-$.escapeRegExp = (value) => {
+$.escapeRegex = (value) => {
 return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
   
@@ -2498,7 +2498,7 @@ separator = [].concat(separator);
 
 const result = separator.reduce((str, curr) => {
 if(curr === '') return str;
-const regex = new RegExp($.escapeRegExp(curr) + '(.)', 'g');
+const regex = new RegExp($.escapeRegex(curr) + '(.)', 'g');
 
 return String(str).replace(regex, (_, v) => {
 // stop conversion once step limit is reached
@@ -2537,7 +2537,7 @@ let regex;
 if(curr === '([A-Z])') {
 regex = new RegExp(curr, 'g'); 
 } else {
-regex = new RegExp($.escapeRegExp(curr) + '(.)', 'g');
+regex = new RegExp($.escapeRegex(curr) + '(.)', 'g');
 }
 
 return String(str).replace(regex, (_, v) => {
