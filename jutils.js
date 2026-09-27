@@ -498,7 +498,7 @@ $.randPick = function (input) {
 // Only arrays and strings have discrete items to pick from — reject
 // anything else rather than silently returning unexpected results.
 if(!Array.isArray(input) && typeof input !== 'string') {
-$.error(`Input must be an array or a string at argument 1.`); 
+$.error(`${input} must be an array or a string at argument 1.`); 
 }
 
 // Pick a random index within range and return the element/character at it.
@@ -822,7 +822,7 @@ $.redirect = function (url, options = {}) {
 // valid URL — they'll be coerced to a string later via toString(), which
 // may silently fail navigation if no meaningful toString() is defined.
 if(typeof url !== 'string' && !$.isObject(url)) {
-$.error('Url must be a string or url object at argument 1.');
+$.error(`${url} must be a string or url object at argument 1.`);
 }
 
 // Read redirect options with a default for replace behavior.  
@@ -1366,36 +1366,40 @@ $.merge = function (...args) {
 
 
 /**
- * Inserts a value into a string at a given position.
+ * Inserts a value into a string, either at a specific character position
+ * (supports negative indices) or at the location of a matching substring
+ * or regex pattern. By default the value is inserted before the target;
+ * pass append=true to insert it after instead.
  *
- * @param {string} input - The source string.
- * @param {number|string} position - The insert index, or a substring to insert before.
+ * @param {*} input - The source value, coerced to a string.
+ * @param {string|RegExp|number} index - Where to insert: a substring/regex to match, or a numeric position.
  * @param {string} value - The value to insert.
- * @returns {string} The updated string with the value inserted.
+ * @param {boolean} [append=false] - If true, inserts after the match/position instead of before.
+ * @returns {string}
  */
-$.insertStr = function (input, position, value) {
-  if (typeof position !== "number" && typeof position !== "string") {
-    $.error(`${position} must be a number or a string at argument 2`);
-  }
+$.inject = function (input, index, value, append = false) {
 
-  let index = position;
-  input = String(input);
+// Ensure we're always working with a string, regardless of input type.
+input = String(input);
 
-  if (typeof position === "string") index = input.indexOf(position);
+// Pattern-based insertion: string or RegExp locates the target substring.
+if(typeof index === 'string' || index instanceof RegExp) {
+return input.replace(index, m => {
+return append ? m + value : value + m;   
+});
+} else if($.isNumeric(index)) {
+// Position-based insertion: resolve the index, supporting negative values
+// (e.g. -1 for the last character), same as native array negative indexing.
+const pos = $.pos(input.length).loose(index)
 
-  if (position < 0) {
-    const p = $.pos(input.length).loose(position);
-
-    // Insert from the end when the position is negative.
-    const result = input.replace(/./g, (m, i) => {
-      if (i === p) return m + value;
-      return m;
-    });
-
-    return input.length < Math.abs(position) ? value + input : result;
-  }
-
-  return input.slice(0, index) + value + input.slice(index);
+// Split into characters so we can insert relative to a specific position.
+const chars = Array.from(input);
+chars.splice(pos, 1, append ? chars[pos] + value : value + chars[pos]);
+return chars.join('');
+} else {
+// index wasn't a recognized type — nothing to match or insert at.
+$.error(`"${index}" must be a string, RegExp, or number at argument 2.`);
+}
 }
 
 
