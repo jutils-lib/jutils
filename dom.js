@@ -779,44 +779,68 @@ return this.get(el => el.$jUtils_maskValue);
 
 
 /**
- * Masks a specific range of characters in the matched elements.
- *
- * Behavior:
- * - Uses `value` for `INPUT` and `TEXTAREA` elements.
- * - Uses `textContent` for all other elements.
- * - Stores the original content in `el.$jUtils_maskValue` the first time masking is applied.
- * - Replaces either a single character or a range of characters with the provided symbol.
- *
- * Notes:
- * - If only `symbol` and `start` are effectively provided, a single character at the safe index is masked.
- * - If `length` is provided, a range starting at `start` is replaced with repeated mask symbols.
- * - The original content is preserved so it can be restored later.
- * - This method is chainable.
- *
- * @param {string} [symbol='*'] - The symbol used for masking.
- * @param {number} [start=0] - The starting index of the masked range.
- * @param {number} [length=1] - The number of characters to mask.
- * @returns {Object} The current instance for chaining.
+ * Masks a specified range of characters within input fields, textareas, or standard HTML elements.
+ * 
+ * @param {string} [symbol='*'] - The character used to obscure text.
+ * @param {number} start - The zero-based starting index to begin masking.
+ * @param {number} [length] - The number of additional characters to process relative to start.
+ * @returns {Object} Returns `this` for method chaining.
  */
-jUtils.fn.maskRange = function (symbol = '*', start = 0, length = 1) {
+jUtils.fn.maskRange = function (symbol = '*', start, length) {
+// Iterate over each selected DOM element in the wrapper set
 this.set(el => {
+
+// Determine whether to read/write from 'value' (for inputs) or 'textContent' (for elements like div/span)
 const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
 
-if(!el.$jUtils_maskValue) {
- el.$jUtils_maskValue = el[prop];
- const value = Array.from(String(el[prop]));
+// Escape special characters in the symbol to safely use it in a regular expression
+const regex = new RegExp($.escapeRegex(symbol), 'g');
 
-// Mask either a single safe character or a full range, depending on the provided arguments.     
- if(arguments.length >= 0 && arguments.length <= 2) {    
- // Ensure it produces safe length so -1 and others work correctly 
-  const len = $.pos(value.length).safe(start);
-  value[len] = symbol;
-  el[prop] = value.join('');
+// Retrieve the current visible text or value from the element
+const current = el[prop];
+
+// Initialize state-tracking custom properties on the element if they do not exist
+el.$jUtils_maskHistory = el.$jUtils_maskHistory ?? [];
+el.$jUtils_maskString = el.$jUtils_maskString ?? '';
+
+// Store the unmasked/current snapshot into history for tracking
+el.$jUtils_maskHistory.push(current);
+
+// Apply masking across the character array
+el[prop] = Array.from(current).map((c, i) => {
+            /*
+             * MASKING LOGIC:
+             * Case 1: Both `start` and `length` are valid numbers.
+             * Note: `i <= (length + 1)` behaves as a static end-index cap rather than a true character count.
+             * Case 2: Only `start` is provided; mask a single character at index `start`.
+             */
+if(($.isNumeric(start) && $.isNumeric(length) && i >= start && i <= (length + 1)) || ($.isNumeric(start) && i === Number(start))) {
+return symbol;
+} 
+return c;    
+}).join('');
+
+// Process the history stack to reconstruct and unmask raw values
+while(el.$jUtils_maskHistory.length) {
+// Retrieve the oldest entry from history
+const current = el.$jUtils_maskHistory.shift();
+ if(!current.includes(symbol)) {
+// If no mask symbol is found in this snapshot, save it as the base clean string
+  el.$jUtils_maskString = current;
  } else {
-  value.splice(start, length, String(symbol).repeat(length));
-  el[prop] = value.join('');
+// Replace mask symbols using characters from the existing stored mask string
+  el.$jUtils_maskString = current.replace(regex, (m, i) => {
+   if(m === symbol) {
+    return Array.from(el.$jUtils_maskString)[i];
+   }
+   return m;
+  });  
  }
-}  
+}
+
+// Cache the reconstructed unmasked value on the element
+el.$jUtils_maskValue = el.$jUtils_maskString;
+
 });
 return this;   
 }
@@ -824,8 +848,7 @@ return this;
 
 
 /**
- * Masks characters in the matched elements based on a callback condition.
- *
+ * Masks characters in the matched elements based on a callback condition
  * Behavior:
  * - Uses `value` for `INPUT` and `TEXTAREA` elements.
  * - Uses `textContent` for all other elements.
