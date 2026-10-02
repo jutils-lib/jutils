@@ -5208,7 +5208,7 @@ return this.get(el => el.$jUtils_maskValue);
  * @param {number} [length] - The number of additional characters to process relative to start.
  * @returns {Object} Returns `this` for method chaining.
  */
-jUtils.fn.maskRange = function (symbol = '*', start, length) {
+jUtils.fn.maskRange = function (symbol = '*', start = 1, length = 2) {
 // Iterate over each selected DOM element in the wrapper set
 this.set(el => {
 
