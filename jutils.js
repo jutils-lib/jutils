@@ -5228,17 +5228,19 @@ el.$jUtils_maskString = el.$jUtils_maskString ?? '';
 // Store the unmasked/current snapshot into history for tracking
 el.$jUtils_maskHistory.push(current);
 
+// Normalize both param as a number.
+start = Number(start);
+length = Number(length);
+
 // Apply masking across the character array
-el[prop] = Array.from(current).map((c, i) => {
-            /*
-             * MASKING LOGIC:
-             * Case 1: Both `start` and `length` are valid numbers.
-             * Note: `i <= (length + 1)` behaves as a static end-index cap rather than a true character count.
-             * Case 2: Only `start` is provided; mask a single character at index `start`.
-             */
-if(($.isNumeric(start) && $.isNumeric(length) && i >= start && i <= (length + 1)) || ($.isNumeric(start) && i === Number(start))) {
-return symbol;
-} 
+el[prop] = Array.from(current).map((c, i) => { 
+// Single character masking at a given index.
+if(arguments.length === 2) {
+if($.isNumeric(start) && i === start) return symbol;
+} else {
+// Range masking from start for length characters.
+if(i >= start && i <= (length + start) - 1) return symbol;
+}
 return c;    
 }).join('');
 
