@@ -5197,7 +5197,7 @@ return this;
  *
  * @returns {string} The text before masking was applied.
  */
-jUtils.fn.unmaskText = function () {
+jUtils.fn.getUnmasked = function () {
 return this.get(el => el.$jUtils_maskValue);
 }
 
