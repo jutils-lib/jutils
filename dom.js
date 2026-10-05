@@ -709,26 +709,29 @@ return this;
 
 /**
  * Masks the visible text (or value, for inputs/textareas) of each matched
- * element, replacing it with a repeated symbol. The original text is
- * preserved on the element for later restoration (e.g. via an unmask
- * method). Calling mask() again strips any pre-existing symbol characters
- * from the stored value first, so repeated calls don't corrupt it.
+ * element, replacing it with a repeated symbol. Tracks every symbol ever
+ * used on this element (across repeated mask() calls) so the stored
+ * original value is correctly stripped of all past mask characters, not
+ * just the current one.
  *
  * @param {string} [symbol='*'] - The character to mask with.
  * @param {number} [length] - How many symbol characters to display; defaults to the current text's length.
  * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.mask = function (symbol = '*', length) {
-// Build a regex to strip out any existing symbol characters, so calling
-// mask() repeatedly doesn't accumulate masked symbols into the saved value.
-const regex = new RegExp($.escapeRegex(symbol), 'g');
-
 this.set(el => {
 // Inputs/textareas store their text in `value`; everything else uses `textContent`.
 const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
 
+// Remember every distinct symbol ever used to mask this element, so all
+// of them can be stripped out below, not just the one passed this time.
+el.$jUtils_symbol = (el.$jUtils_symbol ?? '') + symbol;
+
+// Build a character-class regex matching any symbol used so far.
+const regex = new RegExp(`[${el.$jUtils_symbol}]`, 'g');
+
 // Append the current (symbol-stripped) text onto whatever original value
-// was already saved, so the real text is preserved across repeated calls.  
+// was already saved, so the real text is preserved across repeated calls.
 el.$jUtils_maskValue = (el.$jUtils_maskValue ?? '') + el[prop].replace(regex, '');
 
 // Default the mask length to the current text's length if none was given.
