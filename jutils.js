@@ -5204,118 +5204,91 @@ return this.get(el => el.$jUtils_maskValue);
 
 
 /**
- * Masks a specified range of characters within input fields, textareas, or standard HTML elements.
- * 
- * @param {string} [symbol='*'] - The character used to obscure text.
- * @param {number} start - The zero-based starting index to begin masking.
- * @param {number} [length] - The number of additional characters to process relative to start.
- * @returns {Object} Returns `this` for method chaining.
+ * Masks a specific range of characters within an element's visible text
+ * (or value, for inputs/textareas), replacing them with a repeated symbol.
+ * If length is omitted, only the single character at `start` is masked.
+ * Tracks every symbol ever used on this element so the stored original
+ * value can be correctly restored across repeated mask calls.
+ *
+ * @param {string} [symbol='*'] - The character to mask with.
+ * @param {number} [start=0] - The index to start masking at.
+ * @param {number} [length] - How many characters to mask from `start`; masks a single character if omitted.
+ * @returns {jUtils} this, for chaining.
  */
-jUtils.fn.maskRange = function (symbol = '*', start = 1, length = 2) {
-// Iterate over each selected DOM element in the wrapper set
+jUtils.fn.maskRange = function (symbol = '*', start = 0, length) {
 this.set(el => {
-
-// Determine whether to read/write from 'value' (for inputs) or 'textContent' (for elements like div/span)
+// Inputs/textareas store their text in `value`; everything else uses `textContent`.
 const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
 
-// Escape special characters in the symbol to safely use it in a regular expression
-const regex = new RegExp($.escapeRegex(symbol), 'g');
+// Remember every distinct symbol ever used to mask this element, so all
+// of them can be stripped out below, not just the one passed this time.
+el.$jUtils_symbol = (el.$jUtils_symbol ?? '') + symbol;
 
-// Retrieve the current visible text or value from the element
-const current = el[prop];
+// Build a character-class regex matching any symbol used so far.
+const regex = new RegExp(`[${el.$jUtils_symbol}]`, 'g');
 
-// Initialize state-tracking custom properties on the element if they do not exist
-el.$jUtils_maskHistory = el.$jUtils_maskHistory ?? [];
-el.$jUtils_maskString = el.$jUtils_maskString ?? '';
-
-// Store the unmasked/current snapshot into history for tracking
-el.$jUtils_maskHistory.push(current);
-
-// Normalize both param as a number.
-start = Number(start);
-length = Number(length);
-
-// Apply masking across the character array
-el[prop] = Array.from(current).map((c, i) => { 
-// Single character masking at a given index.
-if(arguments.length === 2) {
-if($.isNumeric(start) && i === start) return symbol;
-} else {
-// Range masking from start for length characters.
-if(i >= start && i <= (length + start) - 1) return symbol;
-}
-return c;    
-}).join('');
-
-// Process the history stack to reconstruct and unmask raw values
-while(el.$jUtils_maskHistory.length) {
-// Retrieve the oldest entry from history
-const current = el.$jUtils_maskHistory.shift();
- if(!current.includes(symbol)) {
-// If no mask symbol is found in this snapshot, save it as the base clean string
-  el.$jUtils_maskString = current;
- } else {
-// Replace mask symbols using characters from the existing stored mask string
-  el.$jUtils_maskString = current.replace(regex, (m, i) => {
-   if(m === symbol) {
-    return Array.from(el.$jUtils_maskString)[i];
-   }
-   return m;
-  });  
- }
-}
-
-// Cache the reconstructed unmasked value on the element
-el.$jUtils_maskValue = el.$jUtils_maskString;
-
+// Restore each masked character in the current text from the previously
+// saved original value, positionally, before re-masking the new range.
+el.$jUtils_maskValue = el[prop].replace(regex, (m, i) => {
+return Array.from(el.$jUtils_maskValue)[i];
 });
-return this;   
+
+// Tracks how many characters have been masked so far, for the length-limited branch.
+let count = 1;
+
+// Walk every character and replace it with the mask symbol if it falls
+// within the requested range.
+el[prop] = Array.from(el[prop]).map((m, i) => {
+if(arguments.length <= 2) {
+// No length given — mask only the single character at `start`.
+if(i === Number(start)) return symbol;
+} else {
+// Mask from `start` onward, up to `length` characters.
+if(i >= start && count++ <= length) return symbol;
+}
+return m;
+}).join('');
+  
+});
+return this;  
 }
 
 
 
 /**
- * Masks characters in the matched elements based on a callback condition
- * Behavior:
- * - Uses `value` for `INPUT` and `TEXTAREA` elements.
- * - Uses `textContent` for all other elements.
- * - Calls `callback(char, index, originalValue, element)` for each character.
- * - Replaces characters with the provided symbol when the callback returns a truthy value.
- * - Stores the original content in `el.$jUtils_maskValue` before masking.
+ * Masks individual characters within each matched element's visible text
+ * (or value, for inputs/textareas), based on a per-character predicate.
+ * The callback is invoked for every character, receiving details about
+ * that character and its context; returning a truthy value masks it.
  *
- * Notes:
- * - `callback` must be a function; otherwise an error is thrown.
- * - Masking is applied only once per element because of the `el.$jUtils_maskValue` guard.
- * - This method is chainable.
- *
- * @param {string} [symbol='*'] - The symbol used to replace matched characters.
- * @param {Function} callback - A function that decides which characters should be masked.
- * @returns {Object} The current instance for chaining.
+ * @param {string} [symbol='*'] - The character to mask with.
+ * @param {Function} callback - Called with {char, charIndex, text, element, elementIndex} for each character; return true to mask it.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.maskEach = function (symbol = '*', callback) {
-  if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 2`);
-  
+// Ensure a predicate function was actually provided.
+if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 2`);
+
 this.set((el, index) => {
+// Inputs/textareas store their text in `value`; everything else uses `textContent`.
 const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent'; 
 
-// Build the masked value character by character, then store the original content once. 
-const value = Array.from(String(el[prop])).map((char, i, text) => {
+// Check every character individually against the caller's predicate.
+Array.from(el[prop]).forEach((char, i) => {
 const options = {
- char, 
+ char,
  charIndex: i,
- text: el[prop], 
- element: el, 
+ // Use the already-saved original text if this element was masked
+ // before, so repeated calls still evaluate against the real content.
+ text: el.$jUtils_maskValue ?? el[prop],
+ element: el,
  elementIndex: index
 }
 
-if(callback(options)) return symbol;
-return char;
-}).join(''); 
-
-if(!el.$jUtils_maskValue) {
-el.$jUtils_maskValue = el[prop];
-el[prop] = value;
-}
+// Mask this specific character if the callback says it matches.
+if(callback(options)) this.maskRange(symbol, i);
+});
+    
 });
 return this;  
 }
