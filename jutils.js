@@ -5998,7 +5998,7 @@ if(el === document.body || el === document.documentElement) $.error("Detaching t
     sibling: el.nextSibling 
   });
  el.remove();
-}, 'map');
+});
 
 this.storedElements = result;
 return this;
