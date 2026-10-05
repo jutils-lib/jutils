@@ -728,8 +728,8 @@ const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent
 el.$jUtils_symbol = (el.$jUtils_symbol ?? '') + symbol;
 
 // Build a character-class regex matching any symbol used so far.
-const regex = new RegExp(`[${el.$jUtils_symbol}]`, 'g');
-
+const regex = new RegExp(`[${$.escapeRegex(el.$jUtils_symbol)}]`, 'g');
+ 
 // Append the current (symbol-stripped) text onto whatever original value
 // was already saved, so the real text is preserved across repeated calls.
 el.$jUtils_maskValue = (el.$jUtils_maskValue ?? '') + el[prop].replace(regex, '');
@@ -803,8 +803,8 @@ const prop = ['INPUT', 'TEXTAREA'].includes(el.tagName) ? 'value' : 'textContent
 el.$jUtils_symbol = (el.$jUtils_symbol ?? '') + symbol;
 
 // Build a character-class regex matching any symbol used so far.
-const regex = new RegExp(`[${el.$jUtils_symbol}]`, 'g');
-
+const regex = new RegExp(`[${$.escapeRegex(el.$jUtils_symbol)}]`, 'g');
+ 
 // Restore each masked character in the current text from the previously
 // saved original value, positionally, before re-masking the new range.
 el.$jUtils_maskValue = el[prop].replace(regex, (m, i) => {
