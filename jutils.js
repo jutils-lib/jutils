@@ -5942,35 +5942,42 @@ return this;
 
 
 /**
- * Gets or sets the outer HTML of the matched elements.
+ * Gets or sets the outer HTML of each matched element. With no argument,
+ * returns the outer HTML (or a previously-set override) for the first
+ * matched element. With an argument, replaces each matched element
+ * entirely — accepts either an HTML string or another element/selector
+ * to replace with.
  *
- * Behavior:
- * - When called with no arguments, returns the stored outerHTML if available,
- *   otherwise returns the element's current `outerHTML`.
- * - When called with a Node, replaces the element with that Node and stores
- *   the Node's `outerHTML`.
- * - When called with a string, sets `outerHTML` directly and stores the string.
- *
- * @param {Node|string} [input] - Replacement content or omitted to read outerHTML.
- * @returns {jUtils|string} The current instance when setting, or the outerHTML value when getting.
+ * @param {string|*} [input] - HTML string, or a selector/element to replace with. Omit to get the current outer HTML.
+ * @returns {string|jUtils} The outer HTML when getting; this (for chaining) when setting.
  */
 jUtils.fn.outerHTML = function (input) {
+// No argument — act as a getter.
 if(arguments.length === 0) {
- return this.get(el => {
+return this.get(el => {
+// Prefer a previously-set override, since a live element's real
+// outerHTML may differ after replacement (e.g. attributes added by
+// the browser), otherwise fall back to its actual outerHTML.
 return el.$jUtils_outerHTML ?? el.outerHTML;
- });
+});
 }
 
+// Argument given — act as a setter, replacing each matched element.
 this.set(el => {
-if(input instanceof Node) {
-el.replaceWith(input);  
-el.$jUtils_outerHTML = input.outerHTML;
-} else {
+if(typeof input === 'string') {
+// Replace with raw HTML, and remember what was set for the getter above.
 el.outerHTML = input;  
-el.$jUtils_outerHTML = input;
+el.$jUtils_outerHTML = input;    
+} else {
+// Resolve input (selector, element, etc.) to a single real element.
+const target = $(input).get(item => item); 
+if(target) {
+// Replace this element with the resolved target element.
+el.replaceWith(target);  
+el.$jUtils_outerHTML = target.outerHTML; 
+}
 }
 });
-
 return this;
 }
 
