@@ -2594,7 +2594,9 @@ if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeri
 // Validate length argument
 if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
 
-const result = Array.from(String(value)); 
+value = String(value);
+  
+const result = Array.from(value); 
 
 // Full-string conversion
  if(arguments.length === 1) {
@@ -2637,7 +2639,9 @@ if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeri
 // Validate length argument
 if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
 
-const result = Array.from(String(value)); 
+value = String(value);
+  
+const result = Array.from(value); 
 
 // Full-string conversion
  if(arguments.length === 1) {
