@@ -83,7 +83,7 @@ this.length = result.filter(el => el && el.nodeType === 1).length;
  * Alias for the `jUtils` prototype, used for extending instance methods.
  */
 jUtils.fn = jUtils.prototype;
-$.hgkl = 76;
+
 /**
  * Computes a value from the given input.
  *
