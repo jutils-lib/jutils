@@ -1,5 +1,3 @@
-$.fit = 833;
-$.hj = 244;
 
 /**
  * Computes a value from the given input.
