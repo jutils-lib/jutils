@@ -1,4 +1,4 @@
-$.hg = 76;
+$.hgkl = 76;
 /**
  * Computes a value from the given input.
  *
