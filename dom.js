@@ -1,4 +1,3 @@
-jUtils.fn.gh = 8383;
 
 /**
  * Executes a callback on each valid element in the collection, optionally after a delay.
