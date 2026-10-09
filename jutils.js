@@ -2794,13 +2794,17 @@ return result.join('');
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toInverseCase = function (value, start, length) {
+
+// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
+
 // Validate start argument
 if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
 
 // Validate length argument
 if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
 
-const result = Array.from(String(value));
+const result = Array.from(value);
 
 // Swap the case of a single character 
 const swapCase = (value) => {
@@ -2812,19 +2816,25 @@ const swapCase = (value) => {
 }
 
 // Full-string conversion
- if(arguments.length === 1) {
-  return result.map(char => swapCase(char)).join('');
- } else if(arguments.length === 2) {
- // Single-character conversion at the given index   
-  const index = $.pos(result.length).safe(Number(start)); 
- result.splice(index, 1, swapCase(result[index]));
-  return result.join('');
- } else {
- // Range conversion from start for length characters  
-  const extracted = result.splice(start, length); 
-result.splice(start, 0, extracted.map(char => swapCase(char)).join(''))
-  return result.join('');  
- }   
+if(arguments.length === 1) {
+return result.map(char => swapCase(char)).join('');
+} else if(arguments.length === 2) {
+// Single-character conversion at the given index   
+const pos = $.pos(result.length).loose(start);
+
+// Prevent invalid index.
+if(!result[pos]) return value;
+result.splice(pos, 1, swapCase(result[pos]));
+return result.join('');
+} else {
+const bounds = $.pos(result.length);
+const pos = start > 0 ? bounds.loose(start) : bounds.clamp(start);
+
+// Range conversion from start for length characters  
+const extracted = result.splice(pos, length); 
+result.splice(pos, 0, extracted.map(char => swapCase(char)).join(''))
+return result.join('');  
+}   
 }
 
 
