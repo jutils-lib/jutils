@@ -2694,7 +2694,7 @@ const result = Array.from(value);
   return value.toUpperCase();
  } else if(arguments.length === 2) {
 // Single-character conversion at the given index. 
-  const index = $.poss(result.length).safe(Number(start));
+  const index = $.pos(result.length).safe(Number(start));
   
 // Prevent invalid index, can occur when value is ''.
   if(index === -1) return value; 
