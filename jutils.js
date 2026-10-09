@@ -1384,26 +1384,24 @@ $.merge = function (...args) {
  */
 $.inject = function (input, index, value, append = false) {
 
-// Ensure we're always working with a string, regardless of input type.
-input = String(input);
+// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
 
+const result = Array.from(input);
+
+// Position-based insertion: resolve the index, supporting negative values
+if(typeof index === 'number') {
+const pos = $.pos(input.length).clamp(index); 
+
+// Prevent invalid index.
+if(!result[pos]) return value;
+result.splice(pos, 1, append ? result[pos] + value : value + result[pos]);
+return result.join('');   
+} else {
 // Pattern-based insertion: string or RegExp locates the target substring.
-if(typeof index === 'string' || index instanceof RegExp) {
 return input.replace(index, m => {
 return append ? m + value : value + m;   
-});
-} else if($.isNumeric(index)) {
-// Position-based insertion: resolve the index, supporting negative values
-// (e.g. -1 for the last character), same as native array negative indexing.
-const pos = $.pos(input.length).loose(index)
-
-// Split into characters so we can insert relative to a specific position.
-const chars = Array.from(input);
-chars.splice(pos, 1, append ? chars[pos] + value : value + chars[pos]);
-return chars.join('');
-} else {
-// index wasn't a recognized type — nothing to match or insert at.
-$.error(`"${index}" must be a string, RegExp, or number at argument 2.`);
+});    
 }
 }
 
