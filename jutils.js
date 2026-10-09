@@ -2690,23 +2690,23 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
- if(arguments.length === 1) {
-  return value.toUpperCase();
- } else if(arguments.length === 2) {
+ if(arguments.length === 1) return value.toUpperCase();
+
+// Normalize index.
+const pos = $.pos(result.length).loose(Number(start));
+
 // Single-character conversion at the given index. 
-  const index = $.pos(result.length).safe(Number(start));
-  
-// Prevent invalid index, can occur when value is ''.
-  if(index === -1) return value; 
-     
-  result.splice(index, 1, result[index].toUpperCase());
-  return result.join('');   
- } else {
+if(arguments.length === 2) {  
+// Prevent invalid index.
+if(!result[pos]) return value;
+result.splice(pos, 1, result[pos].toUpperCase());
+return result.join('');   
+} else { 
 // Range conversion from start for length characters   
- const extracted = result.splice(start, length).join('');     
- result.splice(start, 0, extracted.toUpperCase());
-  return result.join('');
- }
+const extracted = result.splice(pos, length).join('');    
+result.splice(pos, 0, extracted.toUpperCase());
+return result.join('');
+}
 }
 
 
@@ -2745,23 +2745,23 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
- if(arguments.length === 1) {
-  return value.toLowerCase();
- } else if(arguments.length === 2) {
-// Single-character conversion at the given index.   
-  const index = $.pos(result.length).safe(Number(start)); 
-  
-// Prevent invalid index, can occur when value is ''.
-  if(index === -1) return value; 
-  
-  result.splice(index, 1, result[index].toLowerCase());
-  return result.join('');   
- } else {
+if(arguments.length === 1) return value.toLowerCase();
+
+// Normalize index.
+const pos = $.pos(result.length).loose(Number(start)); 
+
+// Single-character conversion at the given index.    
+if(arguments.length === 2) {  
+// Prevent invalid index.
+if(!result[pos]) return value;
+result.splice(pos, 1, result[pos].toLowerCase());
+return result.join('');   
+} else {
 // Range conversion from start for length characters. 
- const extracted = result.splice(start, length).join('');    
- result.splice(start, 0, extracted.toLowerCase());
-  return result.join('');
- }
+const extracted = result.splice(pos, length).join('');    
+result.splice(pos, 0, extracted.toLowerCase());
+return result.join('');
+}
 }
 
 
