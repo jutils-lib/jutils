@@ -62,7 +62,7 @@ const obj = {};
 
   // Returns a valid index within the range [0, target - 1].
   // Useful when you want to prevent out-of-bounds positions.
-obj.safe = function (index) {
+obj.clamp = function (index) {
 if(!$.isNumber(index)) $.error(`"${index}" is not a type of number`);
 
 if(index >= 0 && index < target) return index;
@@ -2605,18 +2605,20 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
- if(arguments.length === 1) return value.toUpperCase();
-
-// Normalize index.
-const pos = $.pos(result.length).loose(Number(start));
-
+if(arguments.length === 1) {
+return value.toUpperCase();
+} else if(arguments.length === 2) {  
 // Single-character conversion at the given index. 
-if(arguments.length === 2) {  
+const pos = $.pos(result.length).loose(start);
+
 // Prevent invalid index.
 if(!result[pos]) return value;
 result.splice(pos, 1, result[pos].toUpperCase());
 return result.join('');   
-} else { 
+} else {
+const bounds = $.pos(result.length);
+const pos = start > 0 ? bounds.loose(start) : bounds.clamp(start);
+ 
 // Range conversion from start for length characters   
 const extracted = result.splice(pos, length).join('');    
 result.splice(pos, 0, extracted.toUpperCase());
@@ -2660,18 +2662,20 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
-if(arguments.length === 1) return value.toLowerCase();
-
-// Normalize index.
-const pos = $.pos(result.length).loose(Number(start)); 
-
+if(arguments.length === 1) {
+return value.toLowerCase();
+} else if(arguments.length === 2) { 
 // Single-character conversion at the given index.    
-if(arguments.length === 2) {  
+const pos = $.pos(result.length).loose(start); 
+ 
 // Prevent invalid index.
 if(!result[pos]) return value;
 result.splice(pos, 1, result[pos].toLowerCase());
 return result.join('');   
 } else {
+const bounds = $.pos(result.length);
+const pos = start > 0 ? bounds.loose(start) : bounds.clamp(start);
+
 // Range conversion from start for length characters. 
 const extracted = result.splice(pos, length).join('');    
 result.splice(pos, 0, extracted.toLowerCase());
