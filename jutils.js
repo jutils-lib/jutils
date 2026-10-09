@@ -116,7 +116,7 @@ $.compute = function (input, ...args) {
  *
  * This helper returns an object with two modes:
  *
- * - `safe(index)`:
+ * - `clamp(index)`:
  *   Normalizes an index so it always stays within valid bounds.
  *   - Returns the index unchanged if it is already within range.
  *   - Clamps values greater than or equal to `target` to `target - 1`.
@@ -134,21 +134,24 @@ $.compute = function (input, ...args) {
  * otherwise.
  *
  * Example:
- * - $.pos(5).safe(2)   -> 2
- * - $.pos(5).safe(10)  -> 4
- * - $.pos(5).safe(-1)  -> 4
+ * - $.pos(5).clamp(2)   -> 2
+ * - $.pos(5).clamp(10)  -> 4
+ * - $.pos(5).clamp(-1)  -> 4
  * - $.pos(5).loose(2)  -> 2
  * - $.pos(5).loose(-1) -> 4
  */
 $.pos = function (target) {
-if(!$.isNumber(target)) $.error(`"${target}" is not a number`);
+if(!$.isNumeric(target)) $.error(`"${target}" is not a numeric value`);
 
+target = Number(target);
 const obj = {};
 
-  // Returns a valid index within the range [0, target - 1].
-  // Useful when you want to prevent out-of-bounds positions.
+// Returns a valid index within the range [0, target - 1].
+// Useful when you want to prevent out-of-bounds positions.
 obj.clamp = function (index) {
-if(!$.isNumber(index)) $.error(`"${index}" is not a type of number`);
+if(!$.isNumeric(index)) $.error(`"${index}" is not a numeric value`);
+
+index = Number(index);
 
 if(index >= 0 && index < target) return index;
 
@@ -158,11 +161,13 @@ if(index < 0) return Math.max(0, target + index);
 }
 
 
-  // Converts an index relative to the target length into an absolute position.
-  // Positive values are treated as forward offsets, negative values as offsets
-  // from the end.
+// Converts an index relative to the target length into an absolute position.
+// Positive values are treated as forward offsets, negative values as offsets
+// from the end.
 obj.loose = function (index) {
-if(!$.isNumber(index)) $.error(`"${index}" is not a type of number`);
+if(!$.isNumeric(index)) $.error(`"${index}" is not a numeric value`);
+
+index = Number(index);
 
 if(index >= 0) {
 return (target + index) - target;
