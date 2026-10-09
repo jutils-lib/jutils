@@ -2588,27 +2588,37 @@ return `${$.toKebabCase(key)}:${value};`;
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toUpper = function (value, start, length) {
-// Validate start argument
-if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
 
-// Validate length argument
-if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
+// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
 
-value = String(value);
+// Validate that start is a numeric input.
+if(start !== undefined && !$.isNumeric(start)) {
+$.error(`${start} is not a numeric value at argument 2`);
+}
+
+// Validate that length is a numeric input. 
+if(length !== undefined && !$.isNumeric(length)) {
+$.error(`${length} is not a numeric value at argument 3`);
+}
   
 const result = Array.from(value); 
 
-// Full-string conversion
+// Full-string conversion.
  if(arguments.length === 1) {
   return value.toUpperCase();
  } else if(arguments.length === 2) {
- // Single-character conversion at the given index   
-  const index = $.pos(result.length).safe(Number(start)); 
+// Single-character conversion at the given index. 
+  const index = $.poss(result.length).safe(Number(start));
+  
+// Prevent invalid index, can occur when value is ''.
+  if(index === -1) return value; 
+     
   result.splice(index, 1, result[index].toUpperCase());
   return result.join('');   
  } else {
- // Range conversion from start for length characters   
- const extracted = result.splice(start, length).join('');    
+// Range conversion from start for length characters   
+ const extracted = result.splice(start, length).join('');     
  result.splice(start, 0, extracted.toUpperCase());
   return result.join('');
  }
@@ -2633,26 +2643,36 @@ const result = Array.from(value);
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toLower = function (value, start, length) {
-// Validate start argument
-if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
 
-// Validate length argument
-if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
+// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
 
-value = String(value);
+// Validate that start is a numeric input.
+if(start !== undefined && !$.isNumeric(start)) {
+$.error(`${start} is not a numeric value at argument 2`);
+}
+
+// Validate that length is a numeric input. 
+if(length !== undefined && !$.isNumeric(length)) {
+$.error(`${length} is not a numeric value at argument 3`);
+}
   
 const result = Array.from(value); 
 
-// Full-string conversion
+// Full-string conversion.
  if(arguments.length === 1) {
   return value.toLowerCase();
  } else if(arguments.length === 2) {
- // Single-character conversion at the given index   
+// Single-character conversion at the given index.   
   const index = $.pos(result.length).safe(Number(start)); 
+  
+// Prevent invalid index, can occur when value is ''.
+  if(index === -1) return value; 
+  
   result.splice(index, 1, result[index].toLowerCase());
   return result.join('');   
  } else {
- // Range conversion from start for length characters   
+// Range conversion from start for length characters. 
  const extracted = result.splice(start, length).join('');    
  result.splice(start, 0, extracted.toLowerCase());
   return result.join('');
