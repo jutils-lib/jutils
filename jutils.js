@@ -2697,7 +2697,7 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
-if(arguments.length === 1) {
+if(arguments.length <= 1) {
 return value.toUpperCase();
 } else if(arguments.length === 2) {  
 // Single-character conversion at the given index. 
@@ -2756,7 +2756,7 @@ $.error(`${length} is not a numeric value at argument 3`);
 const result = Array.from(value); 
 
 // Full-string conversion.
-if(arguments.length === 1) {
+if(arguments.length <= 1) {
 return value.toLowerCase();
 } else if(arguments.length === 2) { 
 // Single-character conversion at the given index.    
@@ -2822,7 +2822,7 @@ const swapCase = (value) => {
 }
 
 // Full-string conversion
-if(arguments.length === 1) {
+if(arguments.length <= 1) {
 return result.map(char => swapCase(char)).join('');
 } else if(arguments.length === 2) {
 // Single-character conversion at the given index   
