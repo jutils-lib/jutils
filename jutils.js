@@ -5265,22 +5265,25 @@ el.$jUtils_maskValue = el[prop].replace(regex, (m, i) => {
 return Array.from(el.$jUtils_maskValue)[i];
 });
 
-// Tracks how many characters have been masked so far, for the length-limited branch.
-let count = 1;
+// Split the current text into individual characters so specific positions
+// can be replaced.
+const result = Array.from(el[prop]);
 
-// Walk every character and replace it with the mask symbol if it falls
-// within the requested range.
-el[prop] = Array.from(el[prop]).map((m, i) => {
+// Resolve the start index, supporting negative values (e.g. -1 = last character).
+const pos = $.pos(result.length).loose(start);
+
 if(arguments.length <= 2) {
-// No length given — mask only the single character at `start`.
-if(i === Number(start)) return symbol;
+// No length given — replace just the single character at `pos`.
+result.splice(pos, 1, symbol);
+el[prop] = result.join('');
 } else {
-// Mask from `start` onward, up to `length` characters.
-if(i >= start && count++ <= length) return symbol;
-}
-return m;
-}).join('');
-  
+// Replace `length` characters starting at `pos` with the repeated symbol.
+result.splice(pos, length, symbol.repeat(length));
+
+// Truncate back to the original length, in case the replacement
+// introduced extra characters (e.g. multi-character symbols).
+el[prop] = result.join('').slice(0, el[prop].length);    
+}  
 });
 return this;  
 }
