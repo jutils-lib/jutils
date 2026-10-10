@@ -1298,10 +1298,6 @@ $.merge = function (...args) {
  * @returns {string}
  */
 $.inject = function (input = '', index, value, append = false) {
-
-/*// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
-
 input = String(input);
   
 const result = Array.from(input);
@@ -2593,12 +2589,6 @@ return `${$.toKebabCase(key)}:${value};`;
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toUpper = function (value = '', start, length) {
-
-/*// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
-
-value = String(value);
-  
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
 $.error(`${start} is not a numeric value at argument 2`);
@@ -2608,7 +2598,9 @@ $.error(`${start} is not a numeric value at argument 2`);
 if(length !== undefined && !$.isNumeric(length)) {
 $.error(`${length} is not a numeric value at argument 3`);
 }
-  
+
+value = String(value);
+    
 const result = Array.from(value); 
 
 // Full-string conversion.
@@ -2652,12 +2644,6 @@ return result.join('');
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toLower = function (value = '', start, length) {
-
-/*// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
-
-value = String(value);
-  
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
 $.error(`${start} is not a numeric value at argument 2`);
@@ -2667,7 +2653,9 @@ $.error(`${start} is not a numeric value at argument 2`);
 if(length !== undefined && !$.isNumeric(length)) {
 $.error(`${length} is not a numeric value at argument 3`);
 }
-  
+
+value = String(value);
+    
 const result = Array.from(value); 
 
 // Full-string conversion.
@@ -2713,18 +2701,14 @@ return result.join('');
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
 $.toInverseCase = function (value = '', start, length) {
-
-/*// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
-
-value = String(value);
-  
 // Validate start argument
 if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
 
 // Validate length argument
 if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
 
+value = String(value);
+    
 const result = Array.from(value);
 
 // Swap the case of a single character 
