@@ -1382,11 +1382,13 @@ $.merge = function (...args) {
  * @param {boolean} [append=false] - If true, inserts after the match/position instead of before.
  * @returns {string}
  */
-$.inject = function (input, index, value, append = false) {
+$.inject = function (input = '', index, value, append = false) {
 
-// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
+/*// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
 
+input = String(input);
+  
 const result = Array.from(input);
 
 // Position-based insertion: resolve the index, supporting negative values
@@ -2675,11 +2677,13 @@ return `${$.toKebabCase(key)}:${value};`;
  * @returns {string} The converted string.
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
-$.toUpper = function (value, start, length) {
+$.toUpper = function (value = '', start, length) {
 
-// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
+/*// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
 
+value = String(value);
+  
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
 $.error(`${start} is not a numeric value at argument 2`);
@@ -2732,11 +2736,13 @@ return result.join('');
  * @returns {string} The converted string.
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
-$.toLower = function (value, start, length) {
+$.toLower = function (value = '', start, length) {
 
-// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
+/*// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
 
+value = String(value);
+  
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
 $.error(`${start} is not a numeric value at argument 2`);
@@ -2791,11 +2797,13 @@ return result.join('');
  * @returns {string} The converted string.
  * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
  */
-$.toInverseCase = function (value, start, length) {
+$.toInverseCase = function (value = '', start, length) {
 
-// Validate that value is a string type.
-if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);
+/*// Validate that value is a string type.
+if(typeof value !== 'string') $.error(`${value} is not a string at argument 1`);*/
 
+value = String(value);
+  
 // Validate start argument
 if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
 
