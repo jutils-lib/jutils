@@ -289,32 +289,14 @@ return [...String(value)].every(n => /[0-9.\+-]/.test(n)) && typeof value === 'n
 
 
 /**
- * Checks whether a value looks numeric when converted to a string.
+ * Checks whether a value is a numeric string (or number), allowing an
+ * optional leading sign and decimal point.
  *
- * This function does not verify that the value is actually a JavaScript number.
- * Instead, it checks whether every character in the string representation is
- * one of the allowed numeric characters:
- * - digits 0–9
- * - decimal point `.`
- * - plus sign `+`
- * - minus sign `-`
- *
- * Important:
- * - This is a loose "numeric-like" check, not a strict number validation.
- * - It may return `true` for values that are not valid numbers in JavaScript.
- * - It does not guarantee that the value can safely be used as a number.
- *
- * Example:
- * - $.isNumeric("123")   -> true
- * - $.isNumeric("12.5")  -> true
- * - $.isNumeric("-8")    -> true
- * - $.isNumeric("1e3")   -> false
- * - $.isNumeric("abc")   -> false
+ * @param {*} value - The value to test.
+ * @returns {boolean}
  */
 $.isNumeric = function (value) {
-  // Convert the value to a string and ensure every character is one of the
-  // allowed numeric symbols.
-return [...String(value)].every(n => /[0-9.\+-]/.test(n));    
+return /^[+-]?\d*\.?\d*$/.test(value);
 }
 
 
