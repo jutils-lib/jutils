@@ -117,7 +117,7 @@ if(info instanceof Error) {
 }   
 
 // Wrap the first character of every "at" match in parentheses.
-info = info.replace(/at/g, char => {
+info = String(info).replace(/at/g, char => {
 return `(${char.slice(0, 1)})${char.slice(1)}`;
 });
   
@@ -128,7 +128,7 @@ throw new type(info);
 let methodName = 'anonymous';
   
 // Parse the stack trace to find relevant caller entries and extract the method reference  
-const stack = String(err.stack).split('at').filter((e, i) => {
+const stack = String(err.stack).split(/\s+at\s+/).filter((e, i) => {
 if(i === 0) return false;
 if(!e.includes('$.error')) {
 if(e.includes('http')) return true;
