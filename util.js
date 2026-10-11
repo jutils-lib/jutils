@@ -559,31 +559,30 @@ return obj;
  */
 $.copy = function (text = '') {
 // Prefer the modern clipboard API when it is available. 
- if(navigator.clipboard) {
+if(!navigator.clipboard) {
 return navigator.clipboard.writeText(text)
 .then(() => true, () => false);
- } else {
-    // Fallback for older browsers: create a temporary textarea, select the
-    // text, and use the legacy copy command.    
-    const textarea = document.createElement('textarea');
-    textarea.id = 'fit';
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.top = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-      
-    const successful = document.execCommand('copy'); 
+} else {
+// Fallback for older browsers: create a temporary textarea, select the
+// text, and use the legacy copy command.    
+const textarea = document.createElement('textarea');
+textarea.value = text;
+textarea.style.position = 'fixed';
+textarea.style.top = '-9999px';
+document.body.appendChild(textarea);
+textarea.focus();
+textarea.select();
+
+const successful = document.execCommand('copy'); 
 
 // Clean up the temporary element and return the result as a Promise.           
 return Promise.resolve(successful)
-.then(x => {
-   textarea.blur();
-   document.body.removeChild(textarea);    
-   return x;
+.then(success => {
+ textarea.blur();
+ document.body.removeChild(textarea);    
+ return success;
 });   
- }
+}
 }
 
 
