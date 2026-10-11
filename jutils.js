@@ -408,7 +408,7 @@ $.isEmpty = function (value) {
 $.randInt = function (min, max) {
  if($.isNumeric(min) && $.isNumeric(max)) {
 // Inclusive random integer between min and max.   
- return Math.floor(Math.random() * (max - min + 1)) + min;
+ return Math.floor(Math.random() * (max - min + 1)) + Number(min);
  } else if($.isNumeric(min)) {
 // Single-argument form: random integer from 0 up to min - 1. 
  return Math.floor(Math.random() * min);  
@@ -448,7 +448,7 @@ $.randInt = function (min, max) {
 $.randFloat = function (min, max) {
  if($.isNumeric(min) && $.isNumeric(max)) {
 // Generate a floating-point number in the requested range.   
- return Math.random() * (max - min) + min;
+ return Math.random() * (max - min) + Number(min);
  } else if($.isNumeric(min)) {
 // Single-argument form: random float from 0 up to min.   
  return Math.random() * min;  
