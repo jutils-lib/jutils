@@ -644,7 +644,7 @@ return obj;
  */
 $.copy = function (text = '') {
 // Prefer the modern clipboard API when it is available. 
-if(!navigator.clipboard) {
+if(navigator.clipboard) {
 return navigator.clipboard.writeText(text)
 .then(() => true, () => false);
 } else {
