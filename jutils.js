@@ -842,10 +842,10 @@ $.timeoutIds = {};
 
 $.timeout = function (callback, delay, id) {
 // Ensure the first argument is a callable function. 
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`); 
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`); 
 
 // Ensure the delay is a valid numeric value. 
-if(!$.isNumeric(delay)) $.error(`${delay} is not a numeric value at argument 2`);
+if(!$.isNumeric(delay)) $.error(`"${delay}" is not a numeric value at argument 2`);
 
 // Create the timeout and keep the native timeout handle.
 const timeoutId = setTimeout(callback, delay);
@@ -888,10 +888,10 @@ $.intervalIds = {};
 
 $.interval = function (callback, delay, id) {
 // Ensure the first argument is a callable function. 
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`); 
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`); 
 
 // Ensure the delay is a valid numeric value.
-if(!$.isNumeric(delay)) $.error(`${delay} is not a numeric value at argument 2`);
+if(!$.isNumeric(delay)) $.error(`"${delay}" is not a numeric value at argument 2`);
 
 // Create the interval and keep the native interval handle. 
 const intervalId = setInterval(callback, delay);
@@ -930,7 +930,7 @@ $.rafIds = {};
 
 $.raf = function (callback, id) {
 // Ensure the first argument is a callable function.
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);  
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`);  
 
 // Request the next animation frame and keep the native frame handle.
 const rafId = requestAnimationFrame(callback);   
@@ -1230,7 +1230,7 @@ return result;
  * - $.toOrdinal(103) -> "103rd"
  */
 $.toOrdinal = function (n) {
-if(!$.isNumeric(n)) $.error(`${n} is not a numeric value at argument 1`);
+if(!$.isNumeric(n)) $.error(`"${n}" is not a numeric value at argument 1`);
 
   const lastTwo = n % 100;
   const last = n % 10;
@@ -1446,7 +1446,7 @@ return input.constructor === Object;
  */
 $.filterify = function (input, options = {}) {
 // Validate that the input is an array before processing.  
-if(!Array.isArray(input)) $.error(`${input} is not an array at argument 1`);
+if(!Array.isArray(input)) $.error(`"${input}" is not an array at argument 1`);
 
 options = Object(options);
   
@@ -1529,49 +1529,47 @@ return allPromises;
  * @returns {*} A deep clone of the provided value.
  */
 $.clone = function (value) {
-     // Clone DOM nodes together with their descendants.
-    if (value instanceof Node && !(value instanceof Document)) {
-        return value.cloneNode(true);
-    }
-
-    // Recursively clone each array element.
-    if (Array.isArray(value)) {
-        return value.map(item => $.clone(item));
-    }
-
-    // Clone plain objects and class instances.
-    if (value && typeof value === 'object') {
-        try {
-
-// Use the native clone algorithm for plain objects.        
-  if (value.constructor === Object) {
-    return structuredClone(value);
-  }
-
-// Preserve the prototype when cloning class instances.
-const copy = Object.create(Object.getPrototypeOf(value));
-
-// Recursively clone each own property.
-for (const key in value) {
-    copy[key] = $.clone(value[key]);
+// Clone DOM nodes together with their descendants.
+if(value instanceof Node && !(value instanceof Document)) {
+return value.cloneNode(true);
 }
 
-return copy;
-        } catch {
-        
-    // Fallback recursive clone when the native API is unavailable.    
-            const result = {};
+// Recursively clone each array element.
+if(Array.isArray(value)) {
+return value.map(item => $.clone(item));
+}
 
-            for (const key in value) {
-                result[key] = $.clone(value[key]);
-            }
+// Clone plain objects and class instances.
+if(value && typeof value === 'object') {
+ try {
+ // Use the native clone algorithm for plain objects.        
+ if (value.constructor === Object) {
+ return structuredClone(value);
+ }
 
-            return result;
-        }
-    }
+ // Preserve the prototype when cloning class instances.
+ const copy = Object.create(Object.getPrototypeOf(value));
+
+ // Recursively clone each own property.
+ for (const key in value) {
+ copy[key] = $.clone(value[key]);
+ }
+
+ return copy;
+} catch {        
+ // Fallback recursive clone when the native API is unavailable.    
+ const result = {};
+
+ for (const key in value) {
+  result[key] = $.clone(value[key]);
+ }
+
+ return result;
+ }
+}
 
 // Primitive values are immutable and returned directly.
-    return value;
+return value;
 }
 
 
@@ -1669,22 +1667,22 @@ return Object.is(a, b);
  * @returns {Array<*>} A new array containing unique values.
  */
 $.unique = function (...args) {
-    const result = [];
+const result = [];
 
 // Skip values that already exist in the result.
-    outer:
-    for (const item of args) {
-        for (const existing of result) {
-            if ($.equals(item, existing)) {
-                continue outer;
-            }
-        }
+outer:
+ for(const item of args) {
+  for(const existing of result) {
+   if($.equals(item, existing)) {
+    continue outer;
+   }
+  }
 
 // Store the value if no duplicate was found.
-        result.push(item);
-    }
+result.push(item);
+}
 
-    return result;
+return result;
 }
 
 
@@ -2015,7 +2013,7 @@ return query.length === 1 ? x => x[key] : x => x[key] === value;
 } else if(typeof query === 'function') {
 return query;
 } else {
-$.error(`Invalid query: expected [key, value], [key], or a predicate function; received ${typeof query}.`);
+$.error(`Invalid query: expected [key, value], [key], or a predicate function; received "${typeof query}".`);
 }
 }
 
@@ -2064,7 +2062,7 @@ return this;
 
 // Update existing properties on every record matching the supplied query.
 obj.update = function (query, data = {}) {
-if(!$.isObject(data)) $.error(`${data} is not an object`);
+if(!$.isObject(data)) $.error(`"${data}" is not an object`);
 
 config(query, ({ result, cursor, missing }) => {
 if(missing) return;
@@ -2082,7 +2080,7 @@ return this;
 
 // Update matching records using all supplied properties, including new ones.
 obj.upsert = function (query, data = {}) {
-if(typeof data !== 'object') $.error(`${data} is not an object`);
+if(typeof data !== 'object') $.error(`"${data}" is not an object`);
 
 config(query, ({ result, cursor, missing }) => {
 if(missing) return;
@@ -2565,7 +2563,7 @@ return pascal ? result.slice(0, 1).toUpperCase() + result.slice(1) : result;
  */
 $.toCssString = function (options = {}) {
 // validate input type (must be an object)
-if(!$.isPlainObject(options)) $.error(`${options} is not a plain object at argument 1`);
+if(!$.isPlainObject(options)) $.error(`"${options}" is not a plain object at argument 1`);
 
 return Object.entries(options).map(([key, value]) => {
 return `${$.toKebabCase(key)}:${value};`;   
@@ -2593,12 +2591,12 @@ return `${$.toKebabCase(key)}:${value};`;
 $.toUpper = function (value = '', start, length) {
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
-$.error(`${start} is not a numeric value at argument 2`);
+$.error(`"${start}" is not a numeric value at argument 2`);
 }
 
 // Validate that length is a numeric input. 
 if(length !== undefined && !$.isNumeric(length)) {
-$.error(`${length} is not a numeric value at argument 3`);
+$.error(`"${length}" is not a numeric value at argument 3`);
 }
 
 value = String(value);
@@ -2648,12 +2646,12 @@ return result.join('');
 $.toLower = function (value = '', start, length) {
 // Validate that start is a numeric input.
 if(start !== undefined && !$.isNumeric(start)) {
-$.error(`${start} is not a numeric value at argument 2`);
+$.error(`"${start}" is not a numeric value at argument 2`);
 }
 
 // Validate that length is a numeric input. 
 if(length !== undefined && !$.isNumeric(length)) {
-$.error(`${length} is not a numeric value at argument 3`);
+$.error(`"${length}" is not a numeric value at argument 3`);
 }
 
 value = String(value);
@@ -2704,10 +2702,10 @@ return result.join('');
  */
 $.toInverseCase = function (value = '', start, length) {
 // Validate start argument
-if(!$.isNumeric(start) && start !== undefined) $.error(`${start} is not a numeric value at argument 2`);
+if(!$.isNumeric(start) && start !== undefined) $.error(`"${start}" is not a numeric value at argument 2`);
 
 // Validate length argument
-if(!$.isNumeric(length) && length !== undefined) $.error(`${length} is not a numeric value at argument 3`);
+if(!$.isNumeric(length) && length !== undefined) $.error(`"${length}" is not a numeric value at argument 3`);
 
 value = String(value);
     
@@ -2859,7 +2857,7 @@ return this;
  
 // Remove values that match a predicate function   
  where(fn) {
-if(typeof fn !== 'function') $.error(`${fn} is not a function at argument 1`);
+if(typeof fn !== 'function') $.error(`"${fn}" is not a function at argument 1`);
 
 const filtered = Array.from(unique).filter((...args) => {
   if(!fn(...args)) return true;
@@ -2902,7 +2900,7 @@ $.elapsed = function (callback, options = {}) {
 let { mode = 'timeout', period = Infinity } = Object(options); 
 
 // Validate the selected mode.
-if(!['timeout', 'interval'].includes(mode)) $.error(`${mode} is not a valid mode expects [timeout, interval]`);
+if(!['timeout', 'interval'].includes(mode)) $.error(`"${mode}" is not a valid mode expects [timeout, interval]`);
 
 
 // Small wrapper around native timer APIs so the mode can switch behavior.
@@ -2986,7 +2984,7 @@ const timers = [];
 
 // Schedule a one-time callback after a given duration.
 obj.once = function (fn, duration) {
- if(typeof fn !== 'function') $.error(`${fn} is not a function`);
+ if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
  
  if(!$.isNumeric(duration)) $.error(`${duration} is not a numeric value`);
 
@@ -2998,7 +2996,7 @@ obj.once = function (fn, duration) {
 
 // Schedule a repeating callback at a given interval.
 obj.repeat = function (fn, duration) {
- if(typeof fn !== 'function') $.error(`${fn} is not a function`);
+ if(typeof fn !== 'function') $.error(`"${fn}" is not a function`);
  
  if(!$.isNumeric(duration)) $.error(`${duration} is not a numeric value`);
  
@@ -3113,7 +3111,7 @@ return Object.entries(options).reduce((acc, [key, value]) => {
  if(!(key in conversions)) $.error(`"${key}" is not a valid time unit, expect [${Object.keys(conversions)}]`);
 
 // Ensure each unit value is numeric before converting.    
- if(!$.isNumeric(value)) $.error(`${value} is not a numeric value`);
+ if(!$.isNumeric(value)) $.error(`"${value}" is not a numeric value`);
  
 return acc + conversions[key] * Number(value);
 }, 0);
@@ -3379,7 +3377,7 @@ obj.format = function (input = 'YYYY-MM-DD') {
 // Allow custom formatting logic through a callback.      
   return input(obj, now); 
  } else {
-  $.error(`${input} is not a valid type, expect a function or a string`);   
+  $.error(`"${input}" is not a valid type, expect a function or a string`);   
  }
 }
 
@@ -3437,9 +3435,7 @@ obj.resolve(input);
 
 // Pauses execution for the specified duration.
 obj.sleep = function (ms) {
-return new Promise(resolve => {
-setTimeout(resolve, ms);
-});
+return new Promise(resolve => setTimeout(resolve, ms));
 }  
 
 return obj;   
@@ -3459,7 +3455,7 @@ return obj;
  */
 $.promise = function (callback) {
 // Validate that the executor is a function.
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`);
 
 const meta = {};
 
@@ -3620,7 +3616,7 @@ const {
   styles = {}
 } = Object(options);
 
-if(!$.isObject(styles)) $.error(`${styles} is not an object.`);
+if(!$.isObject(styles)) $.error(`"${styles}" is not an object.`);
 
 // Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
@@ -4157,7 +4153,7 @@ return obj;
 // Execute the callback only once for the current browser session.
 $.phase = function (callback, key) {
 // Ensure the supplied callback is callable before attempting execution.
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1.`);
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1.`);
 
 // A key is required to track which phase has already run.
 if(key === undefined) $.error('Key cannot be undefined at argument 2.');
