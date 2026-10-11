@@ -618,12 +618,12 @@ $.chunk = function (input, size, callback) {
 if(!Array.isArray(input) && typeof input !== 'string') $.error(`"${input}" must be an array or a string at argument 1`);
 
 // Chunk size must be a numeric value of at least 1.
-if(!$.isNumeric(size) || size < 1) $.error(`"${size}" is not a number or it's less than 1, at argument 2`);
+if(!$.isNumeric(size) || size < 1) $.error(`"${size}" is not a numeric value or it's less than 1, at argument 2`);
 
 let isString = false;
 
-  // Normalize strings into character arrays so they can be chunked the same
-  // way as arrays.
+// Normalize strings into character arrays so they can be chunked the same
+// way as arrays.
 if(typeof input === 'string') {
 input = Array.from(input);
 isString = true;
@@ -760,7 +760,7 @@ $.timeout = function (callback, delay, id) {
 if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`); 
 
 // Ensure the delay is a valid numeric value. 
-if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
+if(!$.isNumeric(delay)) $.error(`${delay} is not a numeric value at argument 2`);
 
 // Create the timeout and keep the native timeout handle.
 const timeoutId = setTimeout(callback, delay);
@@ -806,7 +806,7 @@ $.interval = function (callback, delay, id) {
 if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`); 
 
 // Ensure the delay is a valid numeric value.
-if(!$.isNumeric(delay)) $.error(`${delay} is not a number at argument 2`);
+if(!$.isNumeric(delay)) $.error(`${delay} is not a numeric value at argument 2`);
 
 // Create the interval and keep the native interval handle. 
 const intervalId = setInterval(callback, delay);
@@ -1035,18 +1035,18 @@ xhr.send();
  * - $.encrypt("hello", "123")
  */
 $.encrypt = (value, pin = '') => {
-  let result = '';
+let result = '';
 
 // Base offset derived from the PIN characters.  
-  let offset = 0;
+let offset = 0;
 
 // Normalize the PIN to a string so it can be processed consistently. 
- pin = String(pin);
+pin = String(pin);
 
 // If a PIN exists, sum the character codes to create an additional offset.
-  if (pin) {
-    offset = [...pin].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  }
+if (pin) {
+offset = [...pin].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
 
 // Normalize the value to a string before encrypting it.
 value = String(value);
@@ -1054,16 +1054,14 @@ value = String(value);
 // Shift each character code and build the encrypted result.
 for (let i = 0; i < value.length; i++) {
  
-    const charCode = value.charCodeAt(i);
+const charCode = value.charCodeAt(i);
     
-    const encrypted = String.fromCharCode(
-      charCode + (i % 10) * (pin ? pin.length : 1) + offset
-    );
- 
-    result += encrypted;
-  }
+const encrypted = String.fromCharCode(
+charCode + (i % 10) * (pin ? pin.length : 1) + offset);
+result += encrypted;
+}
 
-  return result;
+return result;
 };
 
 
@@ -1092,19 +1090,19 @@ for (let i = 0; i < value.length; i++) {
  * - $.decrypt(encryptedText, "123")
  */
 $.decrypt = (value, pin = '') => {
-  let result = '';
+let result = '';
 
 // Base offset derived from the PIN characters.  
-  let offset = 0;
+let offset = 0;
 
 // Normalize the PIN to a string so it can be processed consistently.   
- pin = String(pin);
+pin = String(pin);
 
-  // If a PIN exists, sum the character codes to recreate the same offset used
-  // during encryption. 
-  if (pin) {
-    offset = [...pin].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  }
+// If a PIN exists, sum the character codes to recreate the same offset used
+// during encryption. 
+if (pin) {
+offset = [...pin].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
 
 // Normalize the value to a string before decrypting it.
 value = String(value);
@@ -1112,16 +1110,14 @@ value = String(value);
 // Reverse the character shifting applied during encryption.   
 for (let i = 0; i < value.length; i++) {
   
-    const charCode = value.charCodeAt(i);
+const charCode = value.charCodeAt(i);
  
-    const decrypted = String.fromCharCode(
-      charCode - (i % 10) * (pin ? pin.length : 1) - offset
-    );
-  
-    result += decrypted;
-  }
+const decrypted = String.fromCharCode(
+charCode - (i % 10) * (pin ? pin.length : 1) - offset);
+result += decrypted;
+}
  
-  return result;
+return result;
 };
 
 
@@ -1168,25 +1164,9 @@ if(!$.isNumeric(n)) $.error(`${n} is not a numeric value at argument 1`);
 
 
 
-/**
- * Merges properties from one or more source objects into a target object.
- *
- * This helper validates that `target` is an object before delegating to
- * `Object.assign(...)`.
- *
- * Behavior:
- * - Throws an error if `target` is not an object
- * - Copies enumerable own properties from each source into `target`
- * - Mutates and returns the original `target` object
- * - Later sources overwrite earlier properties when keys conflict
- *
- * Example:
- * - $.extend({}, { a: 1 }, { b: 2 }) -> { a: 1, b: 2 }
- * - $.extend(obj, { name: "Alice" })
- */
-$.extend = function (target = {}, ...args) {
-if(!$.isObject(target)) $.error(`${target} is not an object at argument 1`);
-return Object.assign(target, ...args);   
+// Merges properties from one or more source objects.
+$.extend = function (...args) {
+return Object.assign(...args);   
 }
 
 
@@ -1207,7 +1187,7 @@ return Object.assign(target, ...args);
  * - $.merge(1, 2, 3) -> [1, 2, 3]
  */
 $.merge = function (...args) {
- return [].concat(...args);
+return [].concat(...args);
 }
 
 
