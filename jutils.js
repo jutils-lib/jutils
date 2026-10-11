@@ -384,8 +384,7 @@ $.isEmpty = function (value) {
 /**
  * Returns a random integer. With two numeric arguments, returns an
  * inclusive random integer between min and max. With only min given
- * (max omitted), returns a random integer from 0 up to (but not
- * including) min.
+ * (max omitted), returns a random integer from 0 to min.
  *
  * @param {number} [min=100] - The lower bound (two-arg form), or the exclusive upper bound (one-arg form).
  * @param {number} [max] - The upper bound, inclusive.
@@ -397,7 +396,7 @@ if($.isNumeric(min) && $.isNumeric(max)) {
 return Math.floor(Math.random() * (max - min + 1)) + Number(min);
 } else if($.isNumeric(min)) {
 // Single-argument form: random integer from 0 up to min - 1.
-return Math.floor(Math.random() * min);  
+return Math.floor(Math.random() * min) + 1;  
 } else {
 // min isn't usable — reject rather than silently guessing.
 $.error(`"${min}" is not a numeric value at argument 1.`);
