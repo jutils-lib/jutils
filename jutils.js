@@ -547,32 +547,19 @@ return obj;
 
 
 /**
- * Formats a numeric value to a fixed number of decimal places.
+ * Formats a numeric value to a fixed number of decimal places. With no
+ * length given, returns the value unchanged (as a string).
  *
- * This helper validates both inputs before formatting:
- * - `value` must be numeric
- * - `length` must be numeric and represents the number of digits after the
- *   decimal point
- *
- * The function then converts `value` to a number and uses the native
- * `toFixed(length)` method to return a string with the requested precision.
- *
- * Important:
- * - The return value is a string, not a number.
- * - This is useful for display formatting, not for preserving numeric type.
- * - If you need a rounded number instead of a formatted string, you will need
- *   a different helper.
- *
- * Example:
- * - $.toFixed(12.345)    -> "12.35"
- * - $.toFixed(12.3, 0)   -> "12"
- * - $.toFixed("5.1", 3)  -> "5.100"
+ * @param {number|string} value - The numeric value to format.
+ * @param {number} [length] - Number of decimal places; omit to leave the value untouched.
+ * @returns {string}
  */
-$.toFixed = function (value, length = 2) {
+$.toFixed = function (value, length) {
 // Reject non-numeric values early so formatting does not silently fail. 
 if(!$.isNumeric(value)) $.error(`"${value}" is not a numeric value at argument 1`);
 
-// Validate the decimal precision argument as well.
+if(arguments.length === 1) return String(value);
+
 if(!$.isNumeric(length)) $.error(`"${length}" is not a numeric value at argument 2`);
 
 // Convert to a number and format with the requested decimal precision.   
