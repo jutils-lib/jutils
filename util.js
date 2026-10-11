@@ -1339,48 +1339,71 @@ return input.constructor === Object;
 
 
 /**
- * Filters an input array based on the provided options.
- *
- * Behavior:
- * - Validates that the input is an array.
- * - Optionally removes empty arrays when `options.array` is enabled.
- * - Optionally removes empty objects when `options.object` is enabled.
- * - Keeps all other values unchanged.
- *
- * Notes:
- * - This function only filters the top-level items in the array.
- * - Array items are considered removable when they are empty (`length === 0`).
- * - Object items are considered removable when they have no own keys.
- * - If both `options.array` and `options.object` are enabled, both checks apply.
+ * Removes "empty" or unwanted values from an array, based on which
+ * options are enabled. Supports stripping empty arrays, empty objects,
+ * empty/blank strings, null, undefined, and either all JS falsy values
+ * or a specific allowlist of falsy values to remove.
  *
  * @param {Array} input - The array to filter.
- * @param {Object} [options={}] - Filtering options.
- * @param {boolean} [options.array=false] - Whether to remove empty arrays.
- * @param {boolean} [options.object=false] - Whether to remove empty objects.
- * @returns {Array} A new filtered array.
+ * @param {Object} [options={}]
+ * @param {boolean} [options.array] - Remove empty arrays.
+ * @param {boolean} [options.object] - Remove empty objects.
+ * @param {boolean} [options.string] - Remove empty/whitespace-only strings.
+ * @param {boolean} [options.null] - Remove null values.
+ * @param {boolean} [options.undefined] - Remove undefined values.
+ * @param {boolean|Array} [options.falsy] - true removes all falsy values; an array removes only the specific falsy values listed.
+ * @returns {Array}
  */
-$.filterify = function (input, options = {}) {
-// Validate that the input is an array before processing.  
+$.compact = function (input, options = {}) {
+
+// Ensure the input is actually an array before attempting to filter it.
 if(!Array.isArray(input)) $.error(`"${input}" is not an array at argument 1`);
 
 options = Object(options);
   
-// Filter items according to the enabled removal rules.
 return input.filter(item => {
-// Remove empty arrays when array filtering is enabled.  
+
+// Drop empty arrays, if enabled.
 if(options.array && Array.isArray(item)) {
 return item.length > 0;   
 } 
 
-// Remove empty objects when object filtering is enabled.   
+// Drop empty objects, if enabled.
 if(options.object && $.isObject(item)) {
 return Object.keys(item).length > 0; 
-}   
+} 
 
-// Remove nullish item when null filtering is enabled.   
-if(options.null && item == null) return false;
+// Drop empty or whitespace-only strings, if enabled.
+if(options.string && typeof item === 'string') {
+return item.trim() !== '';
+}  
 
-// Keep all values that do not match a removal rule.  
+// Drop null values, if enabled.
+if(options.null && item === null) return false;
+
+// Drop undefined values, if enabled.
+if(options.undefined && item === undefined) return false;
+
+if(options.falsy) {
+// true means remove every falsy value, with no restriction.
+if(options.falsy === true) return Boolean(item);
+
+if(Array.isArray(options.falsy)) {
+// Otherwise options.falsy is an allowlist of specific falsy values to
+// remove — validate every entry is actually falsy, since a truthy
+// value here would silently never match anything.
+for(const key of options.falsy) {
+if(Boolean(key)) {
+$.error(`"${key}" is not a falsy value in options.falsy.`);
+}
+
+// Remove the item only if it matches one of the allowed falsy values.
+if(key === item) return false;
+}
+}
+}
+
+// Keep anything that didn't match an enabled removal rule.
 return true;
 });
 }
