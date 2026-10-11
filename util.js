@@ -473,8 +473,10 @@ $.toFixed = function (value, length) {
 // Reject non-numeric values early so formatting does not silently fail. 
 if(!$.isNumeric(value)) $.error(`"${value}" is not a numeric value at argument 1`);
 
+// No length given — return the value unchanged, just as a string.
 if(arguments.length === 1) return String(value);
 
+// Validate the decimal precision argument as well.
 if(!$.isNumeric(length)) $.error(`"${length}" is not a numeric value at argument 2`);
 
 // Convert to a number and format with the requested decimal precision.   
