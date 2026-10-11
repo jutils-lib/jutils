@@ -178,27 +178,14 @@ else return err;
 
 
 /**
- * Checks whether a value is a valid number.
+ * Checks whether a value is an actual number type (not just a numeric
+ * string) — e.g. distinguishes 5 from "5".
  *
- * This function is intended to verify that the provided value is actually of
- * type `number`, while also ensuring its string representation contains only
- * numeric characters and basic number symbols.
- *
- * Important:
- * - This currently accepts only values whose type is exactly `number`.
- * - It rejects numeric strings such as `"5"`.
- * - It may still behave unexpectedly for special numeric values like `NaN`
- *   or `Infinity`, depending on how strict you want the check to be.
- *
- * Example:
- * - $.isNumber(5)    -> true
- * - $.isNumber("5")  -> false
- * - $.isNumber(NaN)  -> false or unexpected depending on intent
+ * @param {*} value - The value to test.
+ * @returns {boolean}
  */
-$.isNumber = function (value) {
-  // Convert the value to a string and ensure every character looks numeric
-  // or like a basic number symbol.  
-return [...String(value)].every(n => /[0-9.\+-]/.test(n)) && typeof value === 'number';
+$.isNumber = function (value) {  
+return $.isNumeric(value) && typeof value === 'number';
 }
 
 
