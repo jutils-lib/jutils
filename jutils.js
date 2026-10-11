@@ -382,80 +382,50 @@ $.isEmpty = function (value) {
 
 
 /**
- * Returns a random integer within a range.
+ * Returns a random integer. With two numeric arguments, returns an
+ * inclusive random integer between min and max. With only min given
+ * (max omitted), returns a random integer from 0 up to (but not
+ * including) min.
  *
- * This helper supports two calling styles:
- *
- * - `$.randInt(min, max)`
- *   Returns a random integer between `min` and `max`, inclusive.
- *
- * - `$.randInt(max)`
- *   Returns a random integer between `0` and `max - 1`.
- *
- * If neither argument is numeric, the function returns `0`.
- *
- * Notes:
- * - The result is generated using `Math.random()`, so it is not suitable for
- *   cryptographic use.
- * - When both `min` and `max` are provided, the range is inclusive on both ends.
- * - The function assumes `min` and `max` are valid numeric values.
- *
- * Examples:
- * - $.randInt(1, 5) -> 1, 2, 3, 4, or 5
- * - $.randInt(5)    -> 0, 1, 2, 3, or 4
- * - $.randInt("x")  -> 0
+ * @param {number} [min=100] - The lower bound (two-arg form), or the exclusive upper bound (one-arg form).
+ * @param {number} [max] - The upper bound, inclusive.
+ * @returns {number}
  */
-$.randInt = function (min, max) {
- if($.isNumeric(min) && $.isNumeric(max)) {
-// Inclusive random integer between min and max.   
- return Math.floor(Math.random() * (max - min + 1)) + Number(min);
- } else if($.isNumeric(min)) {
-// Single-argument form: random integer from 0 up to min - 1. 
- return Math.floor(Math.random() * min);  
- } else {
-// Fallback when no numeric input is provided.   
- return 0;   
- } 
+$.randInt = function (min = 100, max) {
+if($.isNumeric(min) && $.isNumeric(max)) {
+// Inclusive random integer between min and max.
+return Math.floor(Math.random() * (max - min + 1)) + Number(min);
+} else if($.isNumeric(min)) {
+// Single-argument form: random integer from 0 up to min - 1.
+return Math.floor(Math.random() * min);  
+} else {
+// min isn't usable — reject rather than silently guessing.
+$.error(`"${min}" is not a numeric value at argument 1.`);
+}
 }
 
 
 
 /**
- * Returns a random floating-point number within a range.
+ * Returns a random floating-point number. With two numeric arguments,
+ * returns a random float between min and max. With only min given
+ * (max omitted), returns a random float from 0 up to min.
  *
- * This helper supports two calling styles:
- *
- * - `$.randFloat(min, max)`
- *   Returns a random float between `min` and `max`.
- *
- * - `$.randFloat(max)`
- *   Returns a random float between `0` and `max`.
- *
- * If neither argument is numeric, the function returns `0`.
- *
- * Notes:
- * - The result is generated using `Math.random()`, so it is not suitable for
- *   cryptographic use.
- * - Unlike `randInt`, this function does not round the result.
- * - The current formula uses `max - min + 1`, which is more typical for
- *   integer ranges than floating-point ranges.
- *
- * Examples:
- * - $.randFloat(1, 5) -> a float between 1 and 6
- * - $.randFloat(5)    -> a float between 0 and 5
- * - $.randFloat("x")  -> 0
+ * @param {number} [min=100] - The lower bound (two-arg form), or the upper bound (one-arg form).
+ * @param {number} [max] - The upper bound.
+ * @returns {number}
  */
-$.randFloat = function (min, max) {
- if($.isNumeric(min) && $.isNumeric(max)) {
+$.randFloat = function (min = 100, max) {
+if($.isNumeric(min) && $.isNumeric(max)) {
 // Generate a floating-point number in the requested range.   
- return Math.random() * (max - min) + Number(min);
- } else if($.isNumeric(min)) {
+return Math.random() * (max - min) + Number(min);
+} else if($.isNumeric(min)) {
 // Single-argument form: random float from 0 up to min.   
- return Math.random() * min;  
- } else {
-// Fallback when no numeric input is provided. 
- return 0;   
- } 
+return Math.random() * min;  
+} else {
+// min isn't usable — reject rather than silently guessing.
+$.error(`"${min}" is not a numeric value at argument 1.`);
+} 
 }
 
 
