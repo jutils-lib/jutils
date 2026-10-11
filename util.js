@@ -1194,34 +1194,44 @@ return [].concat(...args);
 
 /**
  * Inserts a value into a string, either at a specific character position
- * (supports negative indices) or at the location of a matching substring
- * or regex pattern. By default the value is inserted before the target;
- * pass append=true to insert it after instead.
+ * (clamped to valid bounds, supports negative indices) or at the location
+ * of a matching substring or regex pattern. By default the value is
+ * inserted before the target; pass append=true to insert it after instead.
+ * Invalid patterns (not a string/RegExp) simply won't match anything, so
+ * the original input is returned unchanged rather than throwing.
  *
- * @param {*} input - The source value, coerced to a string.
- * @param {string|RegExp|number} index - Where to insert: a substring/regex to match, or a numeric position.
+ * @param {*} input - The source value; must not be null/undefined, coerced to a string.
+ * @param {number|string|RegExp} index - A numeric position, or a substring/regex to match.
  * @param {string} value - The value to insert.
  * @param {boolean} [append=false] - If true, inserts after the match/position instead of before.
  * @returns {string}
  */
-$.inject = function (input = '', index, value, append = false) {
+$.inject = function (input, index, value, append = false) {
+
+// Reject null/undefined outright — these are almost always a bug upstream,
+// not something worth silently coercing.
+if(input == null) $.error(`"${input}" cannot be null or undefined at argument 1.`);
 input = String(input);
-  
+
+// Split into characters so a specific position can be targeted.  
 const result = Array.from(input);
 
-// Position-based insertion: resolve the index, supporting negative values
 if(typeof index === 'number') {
+// Resolve the index, clamping out-of-range values into valid bounds
+// (supports negative indices too).
 const pos = $.pos(input.length).clamp(index); 
 
-// Prevent invalid index.
-if(!result[pos]) return value;
+// Out-of-bounds position — nothing to insert at, return input untouched.
+if(!result[pos]) return input;
+
 result.splice(pos, 1, append ? result[pos] + value : value + result[pos]);
 return result.join('');   
 } else {
-// Pattern-based insertion: string or RegExp locates the target substring.
-return input.replace(index, m => {
-return append ? m + value : value + m;   
-});    
+// Pattern-based insertion: string or RegExp locates the target substring,
+// $& refers to the matched text in the replacement. Anything that isn't
+// a valid pattern (object, array, etc.) simply won't match, so .replace()
+// returns the input unchanged rather than throwing.
+return input.replace(index, append ? `$&${value}` : `${value}$&`);    
 }
 }
 
