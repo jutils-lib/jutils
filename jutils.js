@@ -2699,59 +2699,64 @@ return result.join('');
 
 
 /**
- * Converts a string to inverse case by swapping uppercase characters to lowercase
- * and lowercase characters to uppercase.
+ * Inverts the case of a string, or a portion of it — uppercase characters
+ * become lowercase and vice versa. With only a value, inverts the whole
+ * string. With a start index, inverts just that single character. With
+ * start and length, inverts that range of characters. Supports negative
+ * indices (counting from the end, unclamped).
  *
- * Behavior depends on the number of arguments provided:
- * - With one argument, swaps the case of every character in the string.
- * - With two arguments, swaps the case of only the character at the given position.
- * - With three arguments, swaps the case of the substring starting at `start`
- *   with the given `length`.
- *
- * The function validates that `start` and `length`, when provided, are numeric values.
- *
- * @param {any} value - The value to convert.
- * @param {number} [start] - The starting index for partial conversion.
- * @param {number} [length] - The number of characters to convert when performing a range conversion.
- * @returns {string} The converted string.
- * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
+ * @param {*} value - The value to invert case on; must not be null/undefined, coerced to a string.
+ * @param {number} [start] - The index to start inverting at.
+ * @param {number} [length] - How many characters to invert from `start`.
+ * @returns {string}
  */
-$.toInverseCase = function (value = '', start, length) {
-// Validate start argument
-if(!$.isNumeric(start) && start !== undefined) $.error(`"${start}" is not a numeric value at argument 2`);
+$.toInverseCase = function (value, start, length) {
 
-// Validate length argument
-if(!$.isNumeric(length) && length !== undefined) $.error(`"${length}" is not a numeric value at argument 3`);
+// Reject null/undefined outright — likely a bug upstream, not worth coercing.
+if(value == null) $.error(`"${value}" cannot be null or undefined at argument 1.`);
 
 value = String(value);
-    
+
+// Split into characters so a specific range/position can be targeted.    
 const result = Array.from(value);
 
 // Swap the case of a single character 
-const swapCase = (value) => {
- if(value === value.toUpperCase()) {
-  return value.toLowerCase();
+const swapCase = (char) => {
+ if(char === char.toUpperCase()) {
+  return char.toLowerCase();
  } else {
-  return value.toUpperCase();
+  return char.toUpperCase();
  }    
 }
 
-// Full-string conversion
-if(arguments.length <= 1) {
+// No start given — invert the whole string.
+if(arguments.length === 1) {
 return result.map(char => swapCase(char)).join('');
-} else if(arguments.length === 2) {
-// Single-character conversion at the given index   
+}
+
+// Ensure start is a valid number before resolving it.
+if(!$.isNumeric(start)) $.error(`"${start}" is not a numeric value at argument 2`);
+
+if(arguments.length === 2) {
+// Only start given — invert just that single character.
 const pos = $.pos(result.length).loose(start);
 
-// Prevent invalid index.
+// Out-of-bounds position — nothing to invert, return value untouched.
 if(!result[pos]) return value;
+
 result.splice(pos, 1, swapCase(result[pos]));
 return result.join('');
 } else {
-const bounds = $.pos(result.length);
-const pos = start > 0 ? bounds.loose(start) : bounds.clamp(start);
 
-// Range conversion from start for length characters  
+// Ensure length is a valid number before using it.
+if(!$.isNumeric(length)) $.error(`"${length}" is not a numeric value at argument 3`);
+
+const pos = $.pos(result.length).loose(start);
+
+// Out-of-bounds position — nothing to invert, return value untouched.
+if(!result[pos]) return value;
+
+// Pull out the target range, invert each character's case, and put it back in place.
 const extracted = result.splice(pos, length); 
 result.splice(pos, 0, extracted.map(char => swapCase(char)).join(''))
 return result.join('');  
