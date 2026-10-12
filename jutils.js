@@ -2644,52 +2644,52 @@ return result.join('');
 
 
 /**
- * Converts a string to lowercase.
+ * Lowercases a string, or a portion of it. With only a value, uppercases
+ * the whole string. With a start index, lowercases just that single
+ * character. With start and length, lowercases that range of characters.
+ * Supports negative indices (counting from the end, unclamped).
  *
- * Behavior depends on the number of arguments provided:
- * - With one argument, converts the entire string to lowercase.
- * - With two arguments, converts only the character at the given position to lowercase.
- * - With three arguments, converts the substring starting at `start` with the given `length` to lowercase.
- *
- * The function validates that `start` and `length`, when provided, are numeric values.
- *
- * @param {any} value - The value to convert.
- * @param {number} [start] - The starting index for partial conversion.
- * @param {number} [length] - The number of characters to convert when performing a range conversion.
- * @returns {string} The converted string.
- * @throws {Error} Throws if `start` or `length` is provided but is not numeric.
+ * @param {*} value - The value to lowercase; must not be null/undefined, coerced to a string.
+ * @param {number} [start] - The index to start uppercasing at.
+ * @param {number} [length] - How many characters to lowercase from `start`.
+ * @returns {string}
  */
-$.toLower = function (value = '', start, length) {
-// Validate that start is a numeric input.
-if(start !== undefined && !$.isNumeric(start)) {
-$.error(`"${start}" is not a numeric value at argument 2`);
-}
+$.toLower = function (value, start, length) {
 
-// Validate that length is a numeric input. 
-if(length !== undefined && !$.isNumeric(length)) {
-$.error(`"${length}" is not a numeric value at argument 3`);
-}
+// Reject null/undefined outright — likely a bug upstream, not worth coercing.
+if(value == null) $.error(`"${value}" cannot be null or undefined at argument 1.`);
 
 value = String(value);
-    
+
+// Split into characters so a specific range/position can be targeted.   
 const result = Array.from(value); 
 
-// Full-string conversion.
-if(arguments.length <= 1) {
-return value.toLowerCase();
-} else if(arguments.length === 2) { 
-// Single-character conversion at the given index.    
-const pos = $.pos(result.length).loose(start); 
- 
-// Prevent invalid index.
+// No start given — lowercase the whole string.
+if(arguments.length === 1) return value.toLowerCase();
+
+// Ensure start is a valid number before resolving it.
+if(!$.isNumeric(start)) $.error(`"${start}" is not a numeric value at argument 2`);
+
+if(arguments.length === 2) { 
+// Only start given — lowercase just that single character.
+const pos = $.pos(result.length).loose(start);
+
+// Out-of-bounds position — nothing to lowercase, return value untouched.
 if(!result[pos]) return value;
+
 result.splice(pos, 1, result[pos].toLowerCase());
 return result.join('');   
 } else {
-const bounds = $.pos(result.length);
-const pos = start > 0 ? bounds.loose(start) : bounds.clamp(start);
 
-// Range conversion from start for length characters. 
+// Ensure length is a valid number before using it.
+if(!$.isNumeric(length)) $.error(`"${length}" is not a numeric value at argument 3`);
+
+const pos = $.pos(result.length).loose(start);
+
+// Out-of-bounds position — nothing to lowercase, return value untouched.
+if(!result[pos]) return value;
+
+// Pull out the target range, lowercase it, and put it back in place. 
 const extracted = result.splice(pos, length).join('');    
 result.splice(pos, 0, extracted.toLowerCase());
 return result.join('');
