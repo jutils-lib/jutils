@@ -109,73 +109,66 @@ $.compute = function (input, ...args) {
 
 
 /**
- * Creates a position helper for working with indexes relative to a target length.
+ * Resolves an index relative to a given length, supporting negative
+ * indices (counting from the end). Returns an object with two resolution
+ * strategies: clamp (always bounds the result to a valid index) and
+ * loose (allows out-of-range results to pass through unchanged).
  *
- * The `target` value represents the upper boundary of the range, typically the
- * length of an array, string, or any indexed collection.
- *
- * This helper returns an object with two modes:
- *
- * - `clamp(index)`:
- *   Normalizes an index so it always stays within valid bounds.
- *   - Returns the index unchanged if it is already within range.
- *   - Clamps values greater than or equal to `target` to `target - 1`.
- *   - Converts negative indexes into positions counted from the end.
- *   - Never returns a value below `0`.
- *
- * - `loose(index)`:
- *   Converts a relative index into an absolute position without clamping.
- *   - Positive indexes are treated as offsets from the start.
- *   - Negative indexes are treated as offsets from the end.
- *   - This mode is less strict and may return values outside the usual safe range
- *     depending on the input.
- *
- * Both methods validate that their arguments are numbers and throw an error
- * otherwise.
- *
- * Example:
- * - $.pos(5).clamp(2)   -> 2
- * - $.pos(5).clamp(10)  -> 4
- * - $.pos(5).clamp(-1)  -> 4
- * - $.pos(5).loose(2)  -> 2
- * - $.pos(5).loose(-1) -> 4
+ * @param {number} target - The length to resolve indices against.
+ * @returns {{clamp: Function, loose: Function}}
  */
 $.pos = function (target) {
+// Ensure the target length is a valid number.
 if(!$.isNumeric(target)) $.error(`"${target}" is not a numeric value`);
 
 target = Number(target);
 const obj = {};
 
-// Returns a valid index within the range [0, target - 1].
-// Useful when you want to prevent out-of-bounds positions.
+/**
+ * Resolves index, always bounding the result to a valid position
+ * within [0, target - 1] (or 0 if target is 0).
+ */
 obj.clamp = function (index) {
 if(!$.isNumeric(index)) $.error(`"${index}" is not a numeric value`);
 
 index = Number(index);
 
-if(index >= 0 && index < target) return index;
+// Nothing to resolve against — always return 0.
+if(target === 0) return target;
 
+if(index >= 0) {
+// Clamp positive indices that overshoot the length down to the last valid position.
 if(index >= target) return target - 1;
-
-if(index < 0) return Math.max(0, target + index);    
+else return index;
+} else {
+// Negative index — count from the end, clamped at 0 if it goes too far back.
+return Math.max(0, target + index);    
+}
 }
 
 
-// Converts an index relative to the target length into an absolute position.
-// Positive values are treated as forward offsets, negative values as offsets
-// from the end.
+/**
+ * Resolves index relative to target, but does NOT clamp — negative
+ * indices that go past the start are returned unchanged, out of bounds.
+ */
 obj.loose = function (index) {
 if(!$.isNumeric(index)) $.error(`"${index}" is not a numeric value`);
 
 index = Number(index);
 
 if(index >= 0) {
+// Positive indices are returned as-is (target cancels out, left for clarity).
 return (target + index) - target;
-} else { return target + index; };    
+} else {
+// Negative index — count from the end; if that still lands out of
+// bounds, return the original negative index unchanged rather than clamping.
+const resolved = target + index;   
+return resolved >= 0 ? resolved : index;
+} 
 }
 
 return obj; 
-};
+}
 
 
 
