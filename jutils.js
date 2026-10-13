@@ -2178,6 +2178,13 @@ const result = await this.getAll();
 return Promise.resolve(result.some(normalizeQuery(query)));
 };
 
+
+// Determine whether every stored record satisfies the supplied query.
+obj.every = async function (query) {
+const result = await this.getAll();
+return Promise.resolve(result.every(normalizeQuery(query)));
+};  
+
 return obj;
 }
 
