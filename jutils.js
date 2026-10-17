@@ -5215,6 +5215,9 @@ const result = Array.from(el[prop]);
 // Resolve the start index, supporting negative values (e.g. -1 = last character).
 const pos = $.pos(result.length).loose(start);
 
+// Out-of-bounds position — nothing to mask, return instance.
+if(!result[pos]) return this;
+ 
 if(arguments.length <= 2) {
 // No length given — replace just the single character at `pos`.
 result.splice(pos, 1, symbol);
