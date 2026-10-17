@@ -734,7 +734,9 @@ const regex = new RegExp(`[${$.escapeRegex(el.$jUtils_symbol)}]`, 'g');
 el.$jUtils_maskValue = (el.$jUtils_maskValue ?? '') + el[prop].replace(regex, '');
 
 // Default the mask length to the current text's length if none was given.
-if(!$.isNumeric(length)) length = el[prop].length;
+if(!$.isNumeric(length)) {
+length = Array.from(el[prop]).length;
+}
 
 // Replace the visible text with the repeated mask symbol.
 el[prop] = String(symbol).repeat(length);
@@ -807,7 +809,7 @@ const regex = new RegExp(`[${$.escapeRegex(el.$jUtils_symbol)}]`, 'g');
 // Restore each masked character in the current text from the previously
 // saved original value, positionally, before re-masking the new range.
 el.$jUtils_maskValue = el[prop].replace(regex, (m, i) => {
-return Array.from(el.$jUtils_maskValue)[i];
+return Array.from(el.$jUtils_maskValue ?? [])[i];
 });
 
 // Split the current text into individual characters so specific positions
