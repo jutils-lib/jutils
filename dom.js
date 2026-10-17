@@ -783,6 +783,24 @@ return this.get(el => el.$jUtils_maskValue);
 
 
 /**
+ * Clears any mask state saved on each matched element (the original
+ * value and tracked symbols), without touching the element's current
+ * displayed content. Use before mask() if the displayed content has
+ * changed since the last mask() call, to avoid restoring stale data.
+ *
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.resetMask = function () {
+this.set(el => {
+delete el.$jUtils_maskValue; 
+delete el.$jUtils_symbol;
+}); 
+return this;
+}
+
+
+
+/**
  * Masks a specific range of characters within an element's visible text
  * (or value, for inputs/textareas), replacing them with a repeated symbol.
  * If length is omitted, only the single character at `start` is masked.
