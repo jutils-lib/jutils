@@ -5892,35 +5892,49 @@ return new jUtils(result);
 
 
 /**
- * Inserts HTML content immediately before each matched element.
+ * Inserts content immediately before each matched element — either an
+ * existing element (moved into place) or an HTML string.
  *
- * Behavior:
- * - Uses `insertAdjacentHTML('beforebegin', ...)` to place content before the element.
- * - Expects `input` to be an HTML string.
- *
- * @param {string} input - HTML to insert before the matched elements.
- * @returns {jUtils} The current instance for chaining.
+ * @param {jUtils|Element|string} input - An element/jUtils instance to insert, or an HTML string.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.before = function (input) {
-this.set(el => el.insertAdjacentHTML('beforebegin', input));
+this.set(el => {
+// If input is an actual element (or jUtils-wrapped element), resolve it
+// and move it into position rather than treating it as HTML text.
+if(input instanceof jUtils || (input && input.nodeType === 1)) {
+const target = $(input).get(item => item);
+if(target) el.before(target);
+} else {
+// Otherwise treat input as an HTML string to insert.
+el.insertAdjacentHTML('beforebegin', input);
+}
+});
 return this;   
 }
 
 
 
 /**
- * Inserts HTML content immediately after each matched element.
+ * Inserts content immediately after each matched element — either an
+ * existing element (moved into place) or an HTML string.
  *
- * Behavior:
- * - Uses `insertAdjacentHTML('afterend', ...)` to place content after the element.
- * - Expects `input` to be an HTML string.
- *
- * @param {string} input - HTML to insert after the matched elements.
- * @returns {jUtils} The current instance for chaining.
+ * @param {jUtils|Element|string} input - An element/jUtils instance to insert, or an HTML string.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.after = function (input) {
-this.set(el => el.insertAdjacentHTML('afterend', input));
-return this;       
+this.set(el => {
+// If input is an actual element (or jUtils-wrapped element), resolve it
+// and move it into position rather than treating it as HTML text.
+if(input instanceof jUtils || (input && input.nodeType === 1)) {
+const target = $(input).get(item => item);
+if(target) el.after(target);
+} else {
+// Otherwise treat input as an HTML string to insert.
+el.insertAdjacentHTML('afterend', input);
+}
+});
+return this;   
 }
 
 
