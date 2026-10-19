@@ -3646,6 +3646,8 @@ const {
 
 if(!$.isObject(styles)) $.error(`"${styles}" is not an object.`);
 
+if(typeof render !== 'function') $.error(`"${render}" is not a function.`);
+  
 // Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
 const dialogEl = document.createElement('dialog-4833194063f');
@@ -3764,12 +3766,19 @@ const root = {
  },
  context: () => dialogEl
 }
- 
+
+// Controller for this dialog instance: resolve its promise, or toggle visibility.
+const controls = {
+ resolve: (input) => {
+  resolve(input);   
+  backdropEl.remove();   
+ },
+ hide: () => backdropEl.style.display = 'none',
+ show: () => backdropEl.style.display = 'flex'
+}
+
 // Let the caller wire events and resolve the dialog manually.     
- render(root, (input) => {
-   resolve(input);   
-   backdropEl.remove();
- }); 
+render(root, controls);
 });
 
 // Once the dialog's promise resolves, restore the viewport back to its
@@ -3830,7 +3839,7 @@ return `
 </button-5267732Fb39h>
 `;
 },
-render: (root, resolve) => {
+render: (root, controls) => {
 // Locate the button container and the single confirm button by their
 // unique placeholder tag names.
 const container = root.find('button-5267732Fb39h');
@@ -3848,7 +3857,7 @@ Object.assign(root.context().style, style);
 // Resolve the returned promise once the user clicks the button.
 // Matches $.confirm's { ok, reason } shape for a consistent resolved value
 // across the dialog family, even though $.alert only has one outcome.
-confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
+confirmBtn.onclick = () => controls.resolve({ ok: true, reason: 'confirm' });
 },
 styles: { 
 // Let the caller override the backdrop color via style.backdropColor.
@@ -3923,7 +3932,7 @@ return `
 </button-5267732Fb39h>
 `;
 },
-render: (root, resolve) => { 
+render: (root, controls) => { 
 // Locate the button container and the two action elements by their
 // unique placeholder tag names.
 const container = root.find('button-5267732Fb39h');
@@ -3941,8 +3950,8 @@ confirmBtn.style.fontWeight = 'bold';
 Object.assign(root.context().style, style);
 
 // Resolve the returned promise based on which button the user clicks.
-cancelBtn.onclick = () => resolve({ ok: false, reason: 'cancel' });
-confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm' });
+cancelBtn.onclick = () => controls.resolve({ ok: false, reason: 'cancel' });
+confirmBtn.onclick = () => controls.resolve({ ok: true, reason: 'confirm' });
 },
 styles: {
 // Let the caller override the backdrop color via style.backdropColor.
@@ -4022,7 +4031,7 @@ return `
 </button-5267732Fb39h>
 `;  
 },
-render: (root, resolve) => {
+render: (root, controls) => {
 // Locate the button container, both buttons, and the editable input field
 // by their unique placeholder tag names.
 const container = root.find('button-5267732Fb39h');
@@ -4062,8 +4071,8 @@ confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';
 
 // Resolve the returned promise based on which button the user clicks.
 // Confirm also passes along the text the user typed into the input field.
-cancelBtn.onclick = () => resolve({ ok: false, reason: 'cancel' });
-confirmBtn.onclick = () => resolve({ ok: true, reason: 'confirm', value: inputEl.textContent });
+cancelBtn.onclick = () => controls.resolve({ ok: false, reason: 'cancel' });
+confirmBtn.onclick = () => controls.resolve({ ok: true, reason: 'confirm', value: inputEl.textContent });
  
 },
 styles: {
