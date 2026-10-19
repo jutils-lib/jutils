@@ -1601,29 +1601,34 @@ return this;
 
 
 /**
- * Detaches the matched elements from the DOM and stores their original position.
+ * Removes each matched element from the DOM while remembering its
+ * original position (via its next sibling), so it can later be
+ * reinserted. Unlike a plain remove(), this preserves
+ * enough info to restore the element to the same spot.
  *
- * Behavior:
- * - Prevents detaching `<html>` and `<body>`.
- * - Stores each element's parent and next sibling for later restoration.
- * - Removes the element from the DOM.
- * - Saves the detached elements metadata in `storedElements`.
- *
- * @returns {jUtils} The current instance for chaining.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.detach = function () {
 const result = [];
 this.set(el => {
-if(el === document.body || el === document.documentElement) $.error("Detaching the <html> or <body> element is not supported.");
+// Detaching the document root or body would break the page entirely —
+// refuse rather than allow it.
+if(el === document.body || el === document.documentElement) {
+$.error("Detaching the <html> or <body> element is not supported.");
+}
 
-  result.push({
-    target: el,
-    parent: el.parentNode,    
-    sibling: el.nextSibling 
-  });
- el.remove();
+// Remember both the element, parent node and its next sibling, so its original
+// position can be restored later (inserting before that sibling).
+result.push({
+ target: el,    
+ parent: el.parentNode,
+ sibling: el.nextSibling 
 });
 
+el.remove();
+});
+
+// Save the detached elements on the instance for a later attach() call.
 this.storedElements = result;
 return this;
 }
@@ -1631,50 +1636,53 @@ return this;
 
 
 /**
- * Restores previously removed elements to their original positions.
+ * Reinserts previously detached elements back into the DOM at their
+ * original positions. Uses the parent and sibling references that were
+ * stored by detach(). If a sibling exists the element is inserted before
+ * it; if the sibling is null the element is appended to its parent
+ * (it was the last child).
  *
- * Behavior:
- * - Uses `storedElements` to track original parent/sibling relationships.
- * - If the original sibling still exists in the same parent, inserts the element
- *   before that sibling.
- * - Leaves the element in place if restoration is no longer possible.
- *
- * @returns {jUtils} The current instance for chaining.
+ * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.restore = function () {
+// Nothing to do if no elements were previously stored by detach().
 if(this.storedElements) {
- this.storedElements.forEach(item => {  
-if(item.sibling && item.sibling.parentNode === item.parent) {
- item.parent.insertBefore(item.target, item.sibling);    
-} 
- });
- } 
-return this;
+this.storedElements.forEach(item => {
+if(item.sibling) {
+// Original position was before this sibling
+item.sibling.before(item.target);
+} else {
+// Original position was the last child → append to parent
+item.parent.append(item.target);
 }
+});
+}
+return this;
+};
 
 
 
 /**
- * Moves the matched elements into a new parent element.
+ * Moves the previously detached elements (stored by detach()) and
+ * inserts them in place of the element matched by the given selector.
+ * The target element is replaced by the stored elements.
  *
- * Behavior:
- * - Resolves `selector` through `$()` so it can accept any supported selector/input type.
- * - Uses only the first matched target element as the new parent.
- * - Appends each stored matched element into that parent.
- *
- * @param {*} selector - Target selector, element, or supported jUtils input.
- * @returns {jUtils} The current instance for chaining.
+ * @param {string|Element|jUtils} input - Selector, element, or jUtils
+ *   object identifying the element to replace.
+ * @returns {jUtils} this, for chaining.
  */
-jUtils.fn.moveTo = function (selector) {
-// Resolve the target and use the first matched element only.
-const newParent = $(selector).get(item => item);
-
+jUtils.fn.moveTo = function (input) {
+// Nothing to do if no elements were previously stored by detach().
 if(this.storedElements) {
-this.storedElements.forEach(item => {
-if(newParent) newParent.append(item.target);  
-});    
+// Resolve the target element from the provided input
+const target = $(input).get(item => item);
+
+if(target) {
+// Replace the target with all the stored elements
+target.replaceWith(...this.storedElements.map(item => item.target));
 }
-return this;
+}
+return this; 
 }
 
 
