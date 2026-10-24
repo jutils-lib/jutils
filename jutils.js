@@ -3873,7 +3873,7 @@ styles: {
  dialog: { 
   paddingBottom: '60px',
   minHeight: style.dialogMinHeight ?? '130px',
-  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 20vh)',
+  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
   width: style.dialogWidth,
   maxWidth: style.dialogMaxWidth,
   ...style // Apply any custom styles the caller passed onto the dialog.   
@@ -3970,7 +3970,7 @@ styles: {
  dialog: {   
   paddingBottom: '60px',
   minHeight: style.dialogMinHeight ?? '130px',
-  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 20vh)',
+  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
   width: style.dialogWidth,
   maxWidth: style.dialogMaxWidth,
   ...style // Apply any custom styles the caller passed onto the dialog.
@@ -4016,6 +4016,9 @@ let {
  closeOnBackdrop = true,
  style = {}
 } = Object(options);  
+
+// Validate that style is an object.
+if(!$.isObject(style)) $.error(`"${style}" is not an object.`);
 
 // Resolve content up front in case it's a function/computed value rather than a plain string.
 content = $.compute(content);
@@ -4064,6 +4067,7 @@ inputEl.style.cssText = `
  border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'}; 
  padding: 5px 0; 
  background-color: ${style.inputBackground ?? 'transparent'}; 
+ border-radius: ${style.inputRadius};
  color: ${style.inputColor ?? 'black'};   
  max-height: 15px; 
  overflow-y: auto; 
@@ -4080,11 +4084,8 @@ container.style.cssText = `
 `;
 
 // Style the cancel and confirm buttons.    
-cancelBtn.style.cssText = 'font-weight: bold;margin-right: 30px;';
-confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';      
-
-// Apply any custom styles the caller passed onto the dialog's root element.
-Object.assign(root.dialog().style, style);
+cancelBtn.style.cssText = 'font-weight: bold; margin-right: 30px;';
+confirmBtn.style.cssText = 'font-weight: bold; margin-right: 10px;';      
   
 // Resolve the returned promise based on which button the user clicks.
 // Confirm also passes along the text the user typed into the input field.
@@ -4099,8 +4100,11 @@ styles: {
  // button row (both absolutely positioned) don't overlap the content above. 
  dialog: { 
   paddingBottom: '60px',
-  minHeight: '130px',
-  maxHeight: 'calc(100vh - 22vh)'  
+  minHeight: style.dialogMinHeight ?? '130px',
+  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
+  width: style.dialogWidth,
+  maxWidth: style.dialogMaxWidth,
+  ...style // Apply any custom styles the caller passed onto the dialog.
  }
 },
 closeOnBackdrop,
@@ -4112,7 +4116,7 @@ autoClose,
 // only controls whether the user-supplied `content` inside it is escaped.
 parseHTML: true
 }); 
-}  
+}
 
 
 
