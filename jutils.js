@@ -3825,6 +3825,9 @@ let {
  style = {}
 } = Object(options);  
 
+// Validate that style is an object.
+if(!$.isObject(style)) $.error(`"${style}" is not an object.`);
+
 // Resolve content up front in case it's a function/computed value rather than a plain string.
 content = $.compute(content);
 
@@ -3860,7 +3863,7 @@ container.style.cssText = `position: absolute; bottom: 20px; right: 25px;`;
 confirmBtn.style.fontWeight = 'bold';
 
 // Apply any custom styles the caller passed onto the dialog's root element.
-Object.assign(root.dialog().style, style);
+Object.assign(root.context().dialog.style, style);
 
 // Resolve the returned promise once the user clicks the button.
 // Matches $.confirm's { ok, reason } shape for a consistent resolved value
@@ -3872,8 +3875,10 @@ styles: {
  backdrop: { background: style.backdropColor },
  dialog: { 
   paddingBottom: '60px',
-  minHeight: '130px',
-  maxHeight: 'calc(100vh - 22vh)'  
+  minHeight: style.dialogMinHeight ?? '130px',
+  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 20vh)',
+  width: style.dialogWidth,
+  maxWidth: style.dialogMaxWidth
  }  
 },
 closeOnBackdrop,
