@@ -3769,11 +3769,9 @@ styles: {
  backdrop: { background: style.backdropColor },
  dialog: { 
   paddingBottom: '60px',
-  minHeight: style.dialogMinHeight ?? '130px',
-  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
-  width: style.dialogWidth,
-  maxWidth: style.dialogMaxWidth,
-  ...style // Apply any custom styles the caller passed onto the dialog.   
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)',  
+  ...style // Apply any custom styles the caller passed onto the dialog.       
  }  
 },
 closeOnBackdrop,
@@ -3866,11 +3864,9 @@ styles: {
  backdrop: { background: style.backdropColor },
  dialog: {   
   paddingBottom: '60px',
-  minHeight: style.dialogMinHeight ?? '130px',
-  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
-  width: style.dialogWidth,
-  maxWidth: style.dialogMaxWidth,
-  ...style // Apply any custom styles the caller passed onto the dialog.
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)',  
+  ...style // Apply any custom styles the caller passed onto the dialog.   
  }
 },
 closeOnBackdrop,
@@ -3997,11 +3993,9 @@ styles: {
  // button row (both absolutely positioned) don't overlap the content above. 
  dialog: { 
   paddingBottom: '60px',
-  minHeight: style.dialogMinHeight ?? '130px',
-  maxHeight: style.dialogMaxHeight ?? 'calc(100vh - 22vh)',
-  width: style.dialogWidth,
-  maxWidth: style.dialogMaxWidth,
-  ...style // Apply any custom styles the caller passed onto the dialog.
+  minHeight: '130px',
+  maxHeight: 'calc(100vh - 22vh)',  
+  ...style // Apply any custom styles the caller passed onto the dialog.   
  }
 },
 closeOnBackdrop,
