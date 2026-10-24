@@ -4044,7 +4044,7 @@ inputEl.style.cssText = `
  outline: none; 
  border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'}; 
  padding: 5px 0; 
- background-color: ${style.inputBackground ?? 'transparent'}; 
+ background-color: ${style.inputBackground ?? 'white'}; 
  border-radius: ${style.inputRadius};
  color: ${style.inputColor ?? 'black'};   
  max-height: 15px; 
