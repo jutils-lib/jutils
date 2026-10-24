@@ -3986,11 +3986,13 @@ container.style.cssText = `
 cancelBtn.style.cssText = 'font-weight: bold;margin-right: 30px;';
 confirmBtn.style.cssText = 'font-weight: bold;margin-right: 10px;';      
 
+// Apply any custom styles the caller passed onto the dialog's root element.
+Object.assign(root.dialog().style, style);
+  
 // Resolve the returned promise based on which button the user clicks.
 // Confirm also passes along the text the user typed into the input field.
 cancelBtn.onclick = () => controls.resolve({ ok: false, reason: 'cancel' });
-confirmBtn.onclick = () => controls.resolve({ ok: true, reason: 'confirm', value: inputEl.textContent });
- 
+confirmBtn.onclick = () => controls.resolve({ ok: true, reason: 'confirm', value: inputEl.textContent }); 
 },
 styles: {
 // Let the caller override the backdrop color via style.backdropColor.
