@@ -3559,8 +3559,10 @@ const {
   styles = {}
 } = Object(options);
 
+// Validate that styles is an object.
 if(!$.isObject(styles)) $.error(`"${styles}" is not an object.`);
 
+// Validate that render is a function.
 if(typeof render !== 'function') $.error(`"${render}" is not a function.`);
   
 // Create the dialog DOM structure.
@@ -3658,7 +3660,7 @@ document.body.append(backdropEl);
 
 // Close the dialog when the backdrop is clicked, if enabled.     
 backdropEl.addEventListener('click', (event) => {
- if (event.target === backdropEl && closeOnBackdrop) {  
+ if(event.target === backdropEl && closeOnBackdrop) {  
   resolve({ ok: false, reason: 'backdrop' });
   backdropEl.remove();      
  }  
@@ -3674,14 +3676,18 @@ backdropEl.remove();
 
 // Expose a scoped query helper for dialog content.      
 const root = {
- find: (s) => contentEl.querySelector(s),
+ find: (s) => backdropEl.querySelector(s),
  findAll: (s) => {
-  const nodes = contentEl.querySelectorAll(s);
+  const nodes = backdropEl.querySelectorAll(s);
   return Array.from(nodes);
  },
- content: () => contentEl,
- dialog: () => dialogEl,
- backdrop: () => backdropEl
+ context: () => { 
+  return {
+   content: contentEl, 
+   dialog: dialogEl, 
+   backdrop: backdropEl
+  }
+ } 
 }
 
 // Controller for this dialog instance: resolve its promise, or toggle visibility.
