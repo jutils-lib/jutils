@@ -3679,7 +3679,9 @@ const root = {
   const nodes = contentEl.querySelectorAll(s);
   return Array.from(nodes);
  },
- context: () => dialogEl
+ content: () => contentEl,
+ dialog: () => dialogEl,
+ backdrop: () => backdropEl
 }
 
 // Controller for this dialog instance: resolve its promise, or toggle visibility.
@@ -3767,7 +3769,7 @@ container.style.cssText = `position: absolute; bottom: 20px; right: 25px;`;
 confirmBtn.style.fontWeight = 'bold';
 
 // Apply any custom styles the caller passed onto the dialog's root element.
-Object.assign(root.context().style, style);
+Object.assign(root.dialog().style, style);
 
 // Resolve the returned promise once the user clicks the button.
 // Matches $.confirm's { ok, reason } shape for a consistent resolved value
@@ -3862,7 +3864,7 @@ cancelBtn.style.cssText = 'font-weight: bold; margin-right: 20px;';
 confirmBtn.style.fontWeight = 'bold';
     
 // Apply any custom styles the caller passed onto the dialog's root element.
-Object.assign(root.context().style, style);
+Object.assign(root.dialog().style, style);
 
 // Resolve the returned promise based on which button the user clicks.
 cancelBtn.onclick = () => controls.resolve({ ok: false, reason: 'cancel' });
