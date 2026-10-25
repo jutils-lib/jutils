@@ -3635,11 +3635,10 @@ if(typeof render !== 'function') $.error(`"${render}" is not a function.`);
 // Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
 const dialogEl = document.createElement('dialog-4833194063f');
-const contentEl = document.createElement('content-17921003y');
 
 if(content !== undefined) {
 const prop = parseHTML ? 'innerHTML' : 'textContent';
-contentEl[prop] = $.compute(content);
+dialogEl[prop] = $.compute(content);
 }
 
 
@@ -3709,19 +3708,15 @@ const promise = new Promise(resolve => {
       color: black;
       padding: 10px;      
       position: absolute;  
+      overflow-y: auto;
+      flex-grow: 1;
     `;  
-
-// Allow the dialog's content to scroll internally if it exceeds the
-// container's height, rather than overflowing outside the dialog bounds.
-contentEl.style.cssText = 'overflow-y: auto; flex-grow: 1;';
   
 // Apply user-defined style overrides.   
 Object.assign(backdropEl.style, styles.backdrop);
-Object.assign(dialogEl.style, styles.dialog);
-Object.assign(contentEl.style, styles.content);     
+Object.assign(dialogEl.style, styles.dialog);     
 
-// Mount the dialog into the document.        
-dialogEl.append(contentEl);
+// Mount the dialog into the document.     
 backdropEl.append(dialogEl);
 document.body.append(backdropEl); 
 
@@ -3730,7 +3725,7 @@ backdropEl.addEventListener('click', (event) => {
  if(event.target === backdropEl && closeOnBackdrop) {  
   resolve({ ok: false, reason: 'backdrop' });
   backdropEl.remove();      
- }  
+ } 
 });
 
 // Auto-close the dialog after the configured timeout, if provided.  
@@ -3743,18 +3738,13 @@ backdropEl.remove();
 
 // Expose a scoped query helper for dialog content.      
 const root = {
- find: (s) => backdropEl.querySelector(s),
+ find: (s) => dialogEl.querySelector(s),
  findAll: (s) => {
-  const nodes = backdropEl.querySelectorAll(s);
+  const nodes = dialogEl.querySelectorAll(s);
   return Array.from(nodes);
  },
- context: () => { 
-  return {
-   content: contentEl, 
-   dialog: dialogEl, 
-   backdrop: backdropEl
-  }
- } 
+ dialog: dialogEl,
+ backdrop: backdropEl
 }
 
 // Controller for this dialog instance: resolve its promise, or toggle visibility.
@@ -3774,7 +3764,7 @@ render(root, controls);
 // Once the dialog's promise resolves, restore the viewport back to its
 // original state — but only if it was actually locked in the first place.
 promise.then(() => {
- if(lockViewport) viewportLock.restore();
+if(lockViewport) viewportLock.restore();
 });
 
 return promise;
