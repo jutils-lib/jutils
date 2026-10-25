@@ -4043,12 +4043,14 @@ inputEl.style.cssText = `
  width: 100%; 
  outline: none; 
  border-bottom: 1px solid ${style.inputBorderBottom ?? 'black'}; 
- padding: 5px 0; 
+ padding: 5px 0 23px; 
  background-color: ${style.inputBackground ?? 'white'}; 
  border-radius: ${style.inputRadius};
  color: ${style.inputColor ?? 'black'};   
  max-height: 15px; 
  overflow-y: auto; 
+ padding-left: 2px;
+ box-sizing: border-box;
 `;
 
 // Position the button row bottom, spaced across the dialog's width.
@@ -4079,8 +4081,8 @@ styles: {
  dialog: { 
   paddingBottom: '60px',
   minHeight: '130px',
-  maxHeight: 'calc(100vh - 22vh)',  
-  ...style // Apply any custom styles the caller passed onto the dialog.   
+  maxHeight: 'calc(100vh - 22vh)',
+  ...style // Apply any custom styles the caller passed onto the dialog.
  }
 },
 closeOnBackdrop,
