@@ -470,7 +470,7 @@ const charset = {
 } 
 
 // Build the character set from the specified options, defaulting to letters.
-if(!$.isObject(options)) {
+if(!$.isObject(options) || Object.keys(options).length === 0) {
  str += charset['alpha'];
 } else {
  if(options.alpha) str += charset['alpha'];
