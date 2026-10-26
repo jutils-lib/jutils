@@ -3550,10 +3550,11 @@ if(typeof render !== 'function') $.error(`"${render}" is not a function.`);
 // Create the dialog DOM structure.
 const backdropEl = document.createElement('backdrop-142788r');
 const dialogEl = document.createElement('dialog-4833194063f');
+const contentEl = document.createElement('content-4833194063f');
 
 if(content !== undefined) {
 const prop = parseHTML ? 'innerHTML' : 'textContent';
-dialogEl[prop] = $.compute(content);
+contentEl[prop] = $.compute(content);
 }
 
 
@@ -3622,16 +3623,22 @@ const promise = new Promise(resolve => {
       flex-direction: column;
       color: black;
       padding: 10px;      
-      position: absolute;  
-      overflow-y: auto;
-      flex-grow: 1;
+      position: absolute;        
     `;  
+
+// Base content styling.         
+    contentEl.style.cssText = `
+     overflow-y: auto;
+     flex-grow: 1;
+    `;
   
 // Apply user-defined style overrides.   
 Object.assign(backdropEl.style, styles.backdrop);
-Object.assign(dialogEl.style, styles.dialog);     
+Object.assign(dialogEl.style, styles.dialog);  
+Object.assign(contentEl.style, styles.content);     
 
-// Mount the dialog into the document.     
+// Mount the dialog into the document.  
+dialogEl.append(contentEl);   
 backdropEl.append(dialogEl);
 document.body.append(backdropEl); 
 
@@ -3653,12 +3660,13 @@ backdropEl.remove();
 
 // Expose a scoped query helper for dialog content.      
 const root = {
- find: (s) => dialogEl.querySelector(s),
+ find: (s) => backdropEl.querySelector(s),
  findAll: (s) => {
-  const nodes = dialogEl.querySelectorAll(s);
+  const nodes = backdropEl.querySelectorAll(s);
   return Array.from(nodes);
  },
- dialog: dialogEl,
+ content: contentEl,
+ dialog: dialogEl, 
  backdrop: backdropEl
 }
 
