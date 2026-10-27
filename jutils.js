@@ -4183,8 +4183,28 @@ return obj;
 
 
 
-// Execute the callback only once for the current browser session.
-$.phase = function (callback, key) {
+/**
+ * Runs the given callback only once for the supplied key. Uses
+ * sessionStorage by default (or localStorage when persist is true) to
+ * remember that the phase has already executed. Subsequent calls with
+ * the same key do nothing. Returns an object with a reset() method that
+ * clears the marker so the callback can run again.
+ *
+ * @param {Function} callback - The function to execute on the first run.
+ * @param {Object} [options={}] - Configuration options.
+ * @param {string} options.key - Unique key used to track whether this
+ *   phase has already run.
+ * @param {boolean} [options.persist=false] - When true, use localStorage
+ *   so the phase survives browser restarts; otherwise use sessionStorage.
+ * @returns {{ reset: Function }} Object with a reset() method that
+ *   removes the phase marker.
+ */
+$.phase = function (callback, options = {}) {
+const { key, persist = false } = Object(options);
+
+// Choose persistent or session-only storage based on the option.
+const store = persist ? localStorage : sessionStorage;
+
 // Ensure the supplied callback is callable before attempting execution.
 if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1.`);
 
@@ -4192,10 +4212,13 @@ if(typeof callback !== 'function') $.error(`"${callback}" is not a function at a
 if(key === undefined) $.error('Key cannot be undefined at argument 2.');
   
 // Run the callback when no phase marker exists for the supplied key.
-if(!sessionStorage.getItem(key)) callback();
+if(!store.getItem(key)) callback();
 
 // Mark the phase as completed for the current browser session.
-sessionStorage.setItem(key, 'Default'); 
+store.setItem(key, 'Default'); 
+
+// Allow the caller to clear the marker and re-enable the phase.
+return { reset: () => store.removeItem(key) };
 }
 
 
