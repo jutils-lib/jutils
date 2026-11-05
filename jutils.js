@@ -6572,7 +6572,7 @@ if($.isObject(type)) {
 // Normalize space-separated event names into individual event types.
 type = String(type).match(/\S+/g) ?? [];
 
-this.set(el => {
+this.elements.filter(x => x && x.nodeType === 1 || [window, document].includes(x)).forEach(el => {
 const handler = (e) => {
 if(typeof selector === 'string') {
 // Delegated event: locate the closest matching descendant.
@@ -6668,7 +6668,7 @@ const resolveType = (fields) => {
 return (type ?? '').match(/\S+/g) ?? fields;
 }
 
-this.set(el => {
+this.elements.filter(x => x && x.nodeType === 1 || [window, document].includes(x)).forEach(el => {
 $.jUtilsEvents.forEach(item => {
 resolveType(item.type).forEach(evt => {
 
