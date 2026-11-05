@@ -6713,7 +6713,7 @@ if(!$.isObject(options)) options = { detail: options };
 // Split the event string into individual event names.
 type = String(type).match(/\S+/g) ?? [];
 
-this.set(el => {
+this.elements.filter(x => x && x.nodeType === 1 || [window, document].includes(x)).forEach(el => {
 let mode = 'Event';
 
 // If a second argument was provided, dispatch a CustomEvent.
