@@ -4490,19 +4490,24 @@ if(currentMs > 0) {
  * @returns {*} The result of the selected array method, or `undefined` on error.
  */
 jUtils.fn.get = function (callback, mode) {
- // Exit early if the collection is empty.
-if(this.length === 0) return;
-
 // Extract valid DOM elements from the internal collection structure.
 let elements = this.elements.filter(el => el && el.nodeType === 1);    
 
 // Ensure the first argument is a function before continuing.
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
+if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`);
 
 // Execute callback once for a single element.
-if(arguments.length === 1) return callback(elements[0], 0, elements[0]);
+if(arguments.length === 1) {
+// Don't execute the callback when no element exists.
+if(!elements[0]) return;
+return callback(elements[0], 0, elements[0]);
+}
 
+try {
 return elements[mode](callback); 
+} catch {
+$.error(`"${mode}" is not a valid array method.`);
+}
 }
 
 
@@ -4723,7 +4728,7 @@ jUtils.fn.unwrap = function (index) {
 const items = this.elements;
 
 // Return all flattened items when no index is provided.
-if(index === undefined) return items;
+if(arguments.length === 0) return items;
 
 // Convert negative indexes into a valid positive position.
 const len = $.pos(items.length).loose(index);
@@ -4754,11 +4759,11 @@ jUtils.fn.at = function (index = 0) {
 // Collect the current matched elements as a mapped array.
 const elements = this.get(el => el, 'map');
 
-// return if no element was found.
-if(!elements) return this;
- 
 // Convert negative indexes into a valid positive position.
 const len = $.pos(elements.length).loose(index);
+
+/*// return if no element was found.
+if(!elements[len]) return this;*/
 
 // Return a new jUtils instance wrapping the selected element.
 return new jUtils(elements[len]);
