@@ -338,9 +338,6 @@ const elements = this.get(el => el, 'map');
 // Convert negative indexes into a valid positive position.
 const len = $.pos(elements.length).loose(index);
 
-/*// return if no element was found.
-if(!elements[len]) return this;*/
-
 // Return a new jUtils instance wrapping the selected element.
 return new jUtils(elements[len]);
 }
