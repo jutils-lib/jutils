@@ -75,6 +75,7 @@ if(typeof input === 'string') {
  
 this.elements = result;     
 this.length = result.filter(el => el && el.nodeType === 1).length;
+this.total = result.length;
   }
  }
 }
