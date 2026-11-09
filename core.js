@@ -50,18 +50,22 @@ if(typeof input === 'string') {
  // Try to resolve the string as a CSS selector.
   const elements = Array.from(document.querySelectorAll(input));
   this.elements = elements.length > 0 ? elements : [input];
-  this.length = elements.length;
+  this.length = elements.length; // Valid DOM element length.
  } catch { 
  // If the selector is invalid, store the raw input as a fallback value.
   this.elements = [input];
-  this.length = 0;
+  this.length = 0; // DOM length will likely be 0 here because selector wasn't found.
+ } finally {
+ // Total item length (valid DOM + invalid DOM).
+  this.total = this.elements.length;
  }
     
 } else {
  const result = [];
 
 // Normalize all input into a flat array of values/elements.
- [].concat(input).forEach(item => {     
+ [].concat(input).forEach(item => {   
+ // Merge class own elements.
   if(item instanceof jUtils) {
    result.push(...item.elements);
   } else if(item && Array.from(item).every(el => el && el.nodeType === 1)) {
@@ -75,7 +79,7 @@ if(typeof input === 'string') {
  
 this.elements = result;     
 this.length = result.filter(el => el && el.nodeType === 1).length;
-this.total = result.length;
+this.total = result.length; // Total item length.
   }
  }
 }
