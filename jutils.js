@@ -4443,10 +4443,7 @@ return promise;
  * @param {*} delay - Optional additional delay to add to the stored delay value.
  * @returns {void}
  */
-jUtils.fn.set = function (callback, delay) {
-// Exit early if the collection is empty.
-if(this.length === 0) return;
- 
+jUtils.fn.set = function (callback, delay) { 
 // Extract valid DOM elements from the internal collection structure.
 const elements = this.elements.filter(el => el && el.nodeType === 1);    
 
@@ -4727,14 +4724,14 @@ return this.get(el => el.value);
 jUtils.fn.unwrap = function (index) {
 const items = this.elements;
 
-// Return all flattened items when no index is provided.
+// Return all items when no argument is provided.
 if(arguments.length === 0) return items;
 
 // Convert negative indexes into a valid positive position.
-const len = $.pos(items.length).loose(index);
+const pos = $.pos(items.length).loose(index);
 
 // Return the item at the resolved index.
-return items[len];
+return items[pos];
 }
 
 
@@ -4760,10 +4757,10 @@ jUtils.fn.at = function (index = 0) {
 const elements = this.get(el => el, 'map');
 
 // Convert negative indexes into a valid positive position.
-const len = $.pos(elements.length).loose(index);
+const pos = $.pos(elements.length).loose(index);
 
 // Return a new jUtils instance wrapping the selected element.
-return new jUtils(elements[len]);
+return new jUtils(elements[pos]);
 }
 
 
