@@ -329,13 +329,13 @@ return items[pos];
  * @returns {jUtils} A new `jUtils` instance containing the selected element.
  */
 jUtils.fn.at = function (index = 0) {
-/*// Collect the current matched elements as a mapped array.
-const elements = this.get(el => el, 'map');*/
 const items = this.elements;
 
 // Convert negative indexes into a valid positive position.
 const pos = $.pos(items.length).loose(index);
 
+/*if(!items[pos]) return new jUtils([]);*/
+  
 // Return a new jUtils instance wrapping the selected element.
 return new jUtils(items[pos]);
 }
