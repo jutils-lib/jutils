@@ -40,7 +40,7 @@ if(typeof input === 'string') {
   if(parts[parts.length - 1].startsWith('/') || parts.length > 1) { 
    const temp = document.createElement('div');
    temp.innerHTML = input;     
-   return new jUtils(temp.firstChild);
+   return new jUtils(temp);
   } else {
    const tag = String(parts).replace(/[/>]/g, '');   
    const temp = document.createElement(tag);   
