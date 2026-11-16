@@ -4492,7 +4492,7 @@ if(currentMs > 0) {
  */
 jUtils.fn.get = function (callback, mode) {
 // Extract valid DOM elements from the internal collection structure.
-let elements = this.elements.filter(el => el && el.nodeType === 1);    
+const elements = this.elements.filter(el => el && el.nodeType === 1);    
 
 // Ensure the first argument is a function before continuing.
 if(typeof callback !== 'function') $.error(`"${callback}" is not a function at argument 1`);
