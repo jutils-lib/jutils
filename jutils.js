@@ -4762,10 +4762,8 @@ const items = this.elements;
 // Convert negative indexes into a valid positive position.
 const pos = $.pos(items.length).loose(index);
 
-/*if(!items[pos]) return new jUtils([]);*/
-  
 // Return a new jUtils instance wrapping the selected element.
-return new jUtils(items[pos]);
+return new jUtils(!items[pos] ? [] : items[pos]);
 }
 
 
