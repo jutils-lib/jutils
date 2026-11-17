@@ -5773,30 +5773,23 @@ return this;
 
 
 /**
- * Adds new elements (matching selectors or wrapped objects) to the current jUtils collection,
- * merges them with existing elements, removes duplicates, and returns a new jUtils instance.
+ * Combines the current collection with additional elements or selectors.
+ * Accepts arrays, DOM elements, selectors, and jUtils instances.
+ * The original collection remains unchanged.
  *
- * @param {...(string|HTMLElement|jUtils)} args - One or more CSS selectors, DOM elements, or jUtils objects to add.
- * @return {jUtils} A new jUtils object containing the combined, unique set of elements.
+ * @param {...string|Element|jUtils|Array} args - The elements or selectors to add.
+ * @returns {jUtils} A new jUtils instance containing the combined elements.
  */
 jUtils.fn.add = function (...args) {
+const result = [];
 
-// Process all passed arguments and merge them with the current instance's elements
-let result = args.map(selector => {
-// If the argument is a string CSS selector, query the DOM and convert the NodeList to an Array
-if(typeof selector === 'string') {
-return Array.from(document.querySelectorAll(selector));
-} else {
-// Otherwise, assume it's a jUtils/jQuery-like object and extract its elements array
-return $(selector).elements;   
+while(args.length) {
+const current = args.shift();
+if(Array.isArray(current)) result.push(current);
+else result.push(...$(current).elements);
 }
-}).concat(...this.elements); // Flatten and append the current jUtils instance's elements
 
-// Prevent duplicates, like an element appearing multiple times.
-result = $.unique(...result);
-
-// Return a new jUtils chainable instance with the combined elements
-return new jUtils(result);
+return new jUtils(this.elements.concat(result));
 }
 
 
