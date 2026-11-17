@@ -6842,6 +6842,33 @@ next.after(first);
 });
 return this;    
 }
+
+
+
+/**
+ * Replaces each matched element with the supplied elements.
+ * Accepts selectors, DOM elements, jUtils instances, and arrays.
+ * Invalid values are ignored, and the original collection remains unchanged.
+ *
+ * @param {...string|Element|jUtils|Array} args - The elements or selectors to replace with.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.replaceWith = function (...args) {
+this.set(el => {
+const result = [];
+
+// Resolve each argument into DOM elements.
+while(args.length) {
+const current = args.shift();   
+if(Array.isArray(current)) result.push(current);
+else result.push(...$(current).elements);
+}
+
+// Replace the matched element when valid replacements are available.
+if(result.length > 0) el.replaceWith(...result);
+});
+return this;
+}
 function ui(u) {
 console.log(u);    
 }
