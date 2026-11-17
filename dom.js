@@ -1648,6 +1648,9 @@ item.parent.append(item.target);
 }
 });
 }
+
+// Clear the stored element references after completing the operation.
+delete this.storedElements;
 return this;
 };
 
@@ -1673,6 +1676,9 @@ if(target) {
 target.replaceWith(...this.storedElements.map(item => item.target));
 }
 }
+
+// Clear the stored element references after completing the operation.
+delete this.storedElements;
 return this; 
 }
 
