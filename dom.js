@@ -1654,23 +1654,26 @@ return this;
 
 
 /**
- * Moves each matched element into the position of a target element,
- * replacing the target. The target is resolved from a selector, element,
- * or jUtils instance, and nothing happens if it can't be found.
+ * Moves the previously detached elements (stored by detach()) and
+ * inserts them in place of the element matched by the given selector.
+ * The target element is replaced by the stored elements.
  *
- * @param {string|Element|jUtils} input - The element to replace with the matched element.
+ * @param {string|Element|jUtils} input - Selector, element, or jUtils
+ *   object identifying the element to replace.
  * @returns {jUtils} this, for chaining.
  */
 jUtils.fn.moveTo = function (input) {
-this.set(el => {
-// Resolve the input to a single real element (the first match).
+// Nothing to do if no elements were previously stored by detach().
+if(this.storedElements) {
+// Resolve the target element from the provided input
 const target = $(input).get(item => item);
 
-// Replace the target with the matched element, which also removes it
-// from its original position. Does nothing if no target was found.
-if(target) target.replaceWith(el);
-});
-return this;
+if(target) {
+// Replace the target with all the stored elements
+target.replaceWith(...this.storedElements.map(item => item.target));
+}
+}
+return this; 
 }
 
 
