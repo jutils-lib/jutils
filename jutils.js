@@ -6802,6 +6802,37 @@ document.head.append(style);
 this.set(el => el.dataset[key] = token);
 return this;
 }
+
+
+
+/**
+ * Swaps the position of the first matched element with a target element.
+ * The target is resolved from a selector, DOM element, or jUtils instance.
+ * Only the first matched target is used.
+ *
+ * @param {string|Element|jUtils} input - The target element to swap with.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.swapWith = function (input) {
+this.get(el => {
+const target = $(input).get(item => item);
+if(target) {
+let first = el;
+let second = target;
+
+// Ensure the elements are ordered according to their DOM positions.
+if(!(el.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+first = target; second = el;
+} 
+
+// Exchange the positions of both elements.
+const next = second.previousElementSibling;
+first.replaceWith(second);
+next.after(first);
+}
+});
+return this;    
+}
 function ui(u) {
 console.log(u);    
 }
