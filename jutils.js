@@ -6851,6 +6851,29 @@ return elements[mode](callback);
 }
 */
 
+
+/*
+ * Moves the previously detached elements (stored by detach()) and
+ * inserts them in place of the element matched by the given selector.
+ * The target element is replaced by the stored elements.
+ *
+ * @param {string|Element|jUtils} input - Selector, element, or jUtils
+ *   object identifying the element to replace.
+ * @returns {jUtils} this, for chaining.
+jUtils.fn.moveTo = function (input) {
+// Nothing to do if no elements were previously stored by detach().
+if(this.storedElements) {
+// Resolve the target element from the provided input
+const target = $(input).get(item => item);
+
+if(target) {
+// Replace the target with all the stored elements
+target.replaceWith(...this.storedElements.map(item => item.target));
+}
+}
+return this; 
+}*/
+
 /**
  * Locks all existing methods on `jUtils.fn` so they cannot be overwritten or reconfigured.
  *
