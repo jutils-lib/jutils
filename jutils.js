@@ -42,9 +42,11 @@ if(typeof input === 'string') {
    temp.innerHTML = input;     
    return new jUtils(temp);
   } else {
-   const tag = String(parts).replace(/[/>]/g, '');   
-   const temp = document.createElement(tag);   
-   return new jUtils(temp);
+   try {
+    const tag = String(parts).replace(/[/>]/g, '');   
+    const temp = document.createElement(tag);   
+    return new jUtils(temp);
+   } catch {}
   }
  }
     
