@@ -6832,6 +6832,10 @@ first = target; second = el;
 
 // Exchange the positions of both elements.
 const next = second.previousElementSibling;
+
+// Exit if no sibling was found.
+if(!next) return;
+  
 first.replaceWith(second);
 next.after(first);
 }
