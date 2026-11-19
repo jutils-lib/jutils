@@ -1767,20 +1767,17 @@ return this;
  */
 jUtils.fn.hide = function () {
 this.set(el => {
-// Save the current display value if the element is visible.
-if(el.offsetParent !== null) {
-el.$jUtils_display = getComputedStyle(el).display;  
-} else {
-// Infer the default display value for hidden elements using a temporary element.
-const tag = el.tagName.toLowerCase();
-const element = document.createElement(tag);
-document.body.append(element);
-el.$jUtils_display = getComputedStyle(element).display;
-element.remove();
+let originalDisplay = getComputedStyle(el).display;
+
+// If it was originally hidden, restore its browser default display and re-capture it.
+if(originalDisplay === 'none') {
+el.style.display = 'revert';
+originalDisplay = getComputedStyle(el).display;
 }
 
 // Hide the element.
-el.style.display = 'none';   
+el.style.display = 'none';     
+el.$jUtils_display = originalDisplay;
 });
 return this; 
 }
@@ -1822,13 +1819,10 @@ return this;
  */
 jUtils.fn.toggle = function () {
 this.set(el => {
-// If the element is hidden, show it; otherwise hide it.
-if(el.offsetParent === null) {
-if(!el.$jUtils_display) $(el).show();
-else el.style.display = el.$jUtils_display;
-} else {
-$(el).hide();
-}
+const originalDisplay = getComputedStyle(el).display;
+
+if(originalDisplay === 'none') $(el).show();
+else $(el).hide();
 });
 return this;   
 }
