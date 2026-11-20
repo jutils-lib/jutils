@@ -4492,7 +4492,7 @@ if(currentMs > 0) {
  * @param {string} [mode="default"] - Array method name to apply.
  * @returns {*} The result of the selected array method, or `undefined` on error.
  */
-jUtils.fn.get = function (callback, mode) {
+jUtils.fn.get = function (callback = 0, mode) {
 // Extract valid DOM elements from the internal collection structure.
 const elements = this.elements.filter(el => el && el.nodeType === 1);    
 
