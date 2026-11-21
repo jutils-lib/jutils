@@ -4780,7 +4780,7 @@ const items = this.elements;
 const pos = $.pos(items.length).loose(index);
 
 // Return a new jUtils instance wrapping the selected element.
-return new jUtils(!items[pos] ? [] : items[pos]);
+return new jUtils(items[pos] ?? []);
 }
 
 
