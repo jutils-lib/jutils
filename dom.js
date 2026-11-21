@@ -1145,31 +1145,78 @@ return $(input).elements.includes(el);
 
 
 /**
- * Transforms the matched elements using a callback and returns a new `jUtils` instance.
+ * Creates a new jUtils collection by calling the provided function on
+ * every element in the current set. The return values of the callback
+ * become the new set of elements.
  *
- * Behavior:
- * - Validates that `callback` is a function.
- * - Flattens the current element collection before mapping.
- * - Passes the native `Array.prototype.map(...)` arguments to the callback.
- * - Wraps the mapped result in a new `jUtils` instance.
- *
- * Notes:
- * - This method does not modify the original collection.
- * - The callback receives `(element, index, array)` as in native `map`.
- * - This method is chainable through the returned `jUtils` instance.
- *
- * @param {Function} callback - The mapping function applied to each matched element.
- * @returns {jUtils} A new `jUtils` instance containing the mapped result.
+ * @param {Function} callback - Function called for each element.
+ *   Receives the same arguments as Array.prototype.map.
+ * @returns {jUtils} A new jUtils instance containing the mapped values,
+ *   for chaining.
  */
 jUtils.fn.map = function (callback) {
-if(typeof callback !== 'function') {
- $.error(`${callback} is not a function at argument 1`);
-}
+// Validate that callback is a function.
+if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
 
 // Map the collection and wrap the result in a new instance.
 const result = this.elements.map(callback);
 return new jUtils(result);
-}
+};
+
+
+
+/**
+ * Iterates over every element in the current set, calling the provided
+ * function for each one. Returns the original jUtils instance so that
+ * chaining can continue.
+ *
+ * @param {Function} callback - Function called for each element.
+ *   Receives the same arguments as Array.prototype.forEach.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.each = function (callback) {
+// Validate that callback is a function.
+if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
+
+this.elements.forEach(callback);
+return this;
+};
+
+
+
+/**
+ * Tests whether at least one element in the current set passes the
+ * provided test function.
+ *
+ * @param {Function} callback - Function called for each element.
+ *   Receives the same arguments as Array.prototype.some.
+ * @returns {boolean} true if any element passes the test, otherwise false.
+ */
+jUtils.fn.some = function (callback) {
+// Validate that callback is a function.
+if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
+
+// Check if any element matches and return the result.
+return this.elements.some(callback);
+};
+
+
+
+/**
+ * Tests whether every element in the current set passes the provided
+ * test function.
+ *
+ * @param {Function} callback - Function called for each element.
+ *   Receives the same arguments as Array.prototype.every.
+ * @returns {boolean} true if every element passes the test, otherwise false.
+ */
+jUtils.fn.every = function (callback) {
+// Validate that callback is a function.
+if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
+
+// Check if every element matches and return the result.
+return this.elements.every(callback);
+};
 
 
 
