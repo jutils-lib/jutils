@@ -5794,26 +5794,6 @@ return new jUtils(result);
 
 
 /**
- * Iterates over each matched element and executes a callback.
- *
- * Behavior:
- * - Validates that `callback` is a function.
- * - Calls `forEach` on the internal element collection.
- * - Returns a new jUtils instance wrapping the result.
- *
- * @param {Function} callback - Function invoked for each element.
- * @returns {jUtils} A new jUtils instance.
- */
-jUtils.fn.each = function (callback) {
-if(typeof callback !== 'function') $.error(`${callback} is not a function at argument 1`);
-
-this.elements.forEach(callback);
-return this;    
-}
-
-
-
-/**
  * Combines the current collection with additional elements or selectors.
  * Accepts arrays, DOM elements, selectors, and jUtils instances.
  * The original collection remains unchanged.
@@ -5836,62 +5816,54 @@ return new jUtils(this.elements.concat(result));
 
 
 /**
- * Gets the next sibling element of the first matched element, or filters it by input.
+ * Gets the next sibling element of each matched element. When a selector
+ * is provided, only next siblings that match the selector are returned.
+ * When no selector is given, every nextElementSibling is included
+ * (including nulls filtered out by the chain).
  *
- * Behavior:
- * - With no arguments, returns the next element sibling.
- * - With a string selector, returns the next sibling only if it matches the selector.
- * - With a function, filters the next sibling through the predicate.
- * - With any other supported input, returns the next sibling if it matches the resolved elements.
- *
- * @param {string|Function|*} [input] - Optional filter or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
+ * @param {string} [selector] - Optional selector used to filter the
+ *   next siblings. Only elements that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the matching
+ *   next siblings, for chaining.
  */
-jUtils.fn.next = function (input) {
-const result = this.get((el, index, arr) => {
-const sibling = el.nextElementSibling;
+jUtils.fn.next = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
 
-if(arguments.length === 0) return sibling;
-
-if(typeof input === 'string' && sibling.matches(input)) return sibling;
-
-if(typeof input === 'function') return [].concat(sibling).filter(input);
-
-return $(input).elements.filter(item => item === sibling);  
-}); 
+// Map each element in the current set to its nextElementSibling,
+// then keep only those that either had no selector or are present
+// in the targets list.
+const result = this.get(el => el.nextElementSibling, 'map')
+.filter(item => arguments.length === 0 || targets.includes(item));
 
 return new jUtils(result);
-}
+};
 
 
 
 /**
- * Gets the previous sibling element of the first matched element, or filters it by input.
+ * Gets the previous sibling element of each matched element. When a
+ * selector is provided, only previous siblings that match the selector
+ * are returned. When no selector is given, every previousElementSibling
+ * is included (including nulls filtered out by the chain).
  *
- * Behavior:
- * - With no arguments, returns the previous element sibling.
- * - With a string selector, returns the previous sibling only if it matches the selector.
- * - With a function, filters the previous sibling through the predicate.
- * - With any other supported input, returns the previous sibling if it matches the resolved elements.
- *
- * @param {string|Function|*} [input] - Optional filter or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
+ * @param {string} [selector] - Optional selector used to filter the
+ *   previous siblings. Only elements that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the matching
+ *   previous siblings, for chaining.
  */
-jUtils.fn.prev = function (input) {
-const result = this.get((el, index, arr) => {
-const sibling = el.previousElementSibling;
+jUtils.fn.prev = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
 
-if(arguments.length === 0) return sibling;
+// Map each element in the current set to its previousElementSibling,
+// then keep only those that either had no selector or are present
+// in the targets list.
+const result = this.get(el => el.previousElementSibling, 'map')
+.filter(item => arguments.length === 0 || targets.includes(item));
 
-if(typeof input === 'string' && sibling.matches(input)) return sibling;
-
-if(typeof input === 'function') return [].concat(sibling).filter(input);
-
-return $(input).elements.filter(item => item === sibling);  
-}); 
-
-return new jUtils(result);    
-}
+return new jUtils(result);
+};
 
 
 
