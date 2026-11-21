@@ -4519,12 +4519,14 @@ $.error(`"${mode}" is not a valid array method.`);
 
 
 /**
- * Retrieves all valid elements as an array.
- * @returns {Array} An array of valid elements.
+ * Returns a plain array containing every element in the current set.
+ * Equivalent to mapping each element to itself.
+ *
+ * @returns {Element[]} An array of all matched elements.
  */
 jUtils.fn.getAll = function () {
-return this.get(el => el, 'map');   
-}
+return this.get(el => el, 'map');
+};
 
 
 
