@@ -1042,64 +1042,63 @@ return this;
 
 
 /**
- * Filters the matched elements using a selector, callback, or element collection.
+ * Reduces the current set to only those elements that match the given
+ * selector or pass the given filter function. When a function is
+ * provided it is used as the filter predicate; otherwise the elements
+ * that appear in the selector’s result set are kept.
  *
- * Behavior:
- * - If `input` is a string, keeps elements that match the selector via `el.matches(...)`.
- * - If `input` is a function, keeps elements for which the callback returns a truthy value.
- * - Otherwise, treats `input` as a jQuery-like/jUtils-like collection and keeps elements
- *   that exist in that collection.
- *
- * Notes:
- * - Only element nodes are tested against CSS selectors.
- * - The returned value is a new `jUtils` instance containing the filtered elements.
- *
- * @param {string|Function|*} input - Selector, predicate, or collection used for filtering.
- * @returns {jUtils} A new `jUtils` instance with the filtered elements.
+ * @param {string|Element|jUtils|Function} selector - Selector, element,
+ *   jUtils object, or filter function used to decide which elements to
+ *   keep.
+ * @returns {jUtils} A new jUtils instance containing the matching
+ *   elements, for chaining.
  */
-jUtils.fn.filter = function (input) {
-const result = this.elements.filter((el, index, arr) => {
-// Match by selector, callback, or membership in another collection.
-if(typeof input === 'string' && (el && el.nodeType === 1)) return el.matches(input);  
+jUtils.fn.filter = function (selector) {
+let result;
 
-if(typeof input === 'function') return input(el, index, arr);
-
-return $(input).elements.some(item => item === el);
-});
-
-return new jUtils(result);   
+if(typeof selector === 'function') {
+// Use the provided function as the filter predicate.
+result = this.elements.filter(selector);
+} else {
+// Collect all elements that match the selector, then keep only
+// those that are present in the current set.
+const targets = $(selector).getAll();
+result = this.elements.filter(item => targets.includes(item));
 }
+
+return new jUtils(result);
+};
 
 
 
 /**
- * Excludes matched elements using a selector, callback, or element collection.
+ * Removes elements from the current set. When a selector (or element /
+ * jUtils object) is provided, any element that matches is excluded.
+ * When a function is provided, it is called for each element and those
+ * for which it returns a truthy value are excluded.
  *
- * Behavior:
- * - If `input` is a string, removes elements that match the selector via `el.matches(...)`.
- * - If `input` is a function, removes elements for which the callback returns a truthy value.
- * - Otherwise, treats `input` as a jQuery-like/jUtils-like collection and removes elements
- *   that exist in that collection.
- *
- * Notes:
- * - Only element nodes are tested against CSS selectors.
- * - The returned value is a new `jUtils` instance containing the remaining elements.
- *
- * @param {string|Function|*} input - Selector, predicate, or collection used for exclusion.
- * @returns {jUtils} A new `jUtils` instance with the excluded elements removed.
+ * @param {string|Element|jUtils|Function} selector - Selector, element,
+ *   jUtils object, or filter function used to decide which elements to
+ *   remove from the set.
+ * @returns {jUtils} A new jUtils instance containing the remaining
+ *   elements, for chaining.
  */
-jUtils.fn.not = function (input) {
-const result = this.elements.filter((el, index, arr) => {
-// Exclude by selector, callback, or membership in another collection.
-if(typeof input === 'string' && (el && el.nodeType === 1)) return !el.matches(input);
+jUtils.fn.not = function (selector) {
+let result;
 
-if(typeof input === 'function') return !input(el, index, arr); 
-
-return !$(input).elements.some(item => item === el);
-});  
+if(typeof selector === 'function') {
+// Call the provided function for each element; keep those for which
+// it returns a falsy value.
+result = this.elements.filter((...args) => !selector(...args));
+} else {
+// Collect all elements that match the selector, then keep only
+// those that are not present in the current set.
+const targets = $(selector).getAll();
+result = this.elements.filter(item => !targets.includes(item));
+}
 
 return new jUtils(result);
-}
+};
 
 
 
