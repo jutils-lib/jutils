@@ -1145,42 +1145,6 @@ return this;
 
 
 /**
- * Tests whether at least one element in the current set passes the
- * provided test function.
- *
- * @param {Function} callback - Function called for each element.
- *   Receives the same arguments as Array.prototype.some.
- * @returns {boolean} true if any element passes the test, otherwise false.
- */
-jUtils.fn.some = function (callback) {
-// Validate that callback is a function.
-if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
-
-// Check if any element matches and return the result.
-return this.elements.some(callback);
-};
-
-
-
-/**
- * Tests whether every element in the current set passes the provided
- * test function.
- *
- * @param {Function} callback - Function called for each element.
- *   Receives the same arguments as Array.prototype.every.
- * @returns {boolean} true if every element passes the test, otherwise false.
- */
-jUtils.fn.every = function (callback) {
-// Validate that callback is a function.
-if(typeof callback !== 'function')  $.error(`"${callback}" is not a function at argument 1`);
-
-// Check if every element matches and return the result.
-return this.elements.every(callback);
-};
-
-
-
-/**
  * Gets the children of each matched element. When a selector is
  * provided, only children that match the selector are returned. When
  * no selector is given, every child element is included.
