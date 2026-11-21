@@ -1105,47 +1105,6 @@ return new jUtils(result);
 
 
 /**
- * Checks whether any element in the current collection matches the given condition.
- *
- * @param {string|Function|jUtils} input - Selector, pseudo-selector, predicate,
- * or element collection used to check for a match.
- * @returns {boolean} Whether at least one element matches the condition.
- */
-jUtils.fn.is = function (input) {
-return this.get((el, index, arr) => {
-// Check for a selector or supported pseudo-selector.
-if(typeof input === 'string') {
- switch(input.trim()) {
-  case ':visible': 
-   return el.offsetParent !== null;
-  case ':hidden':
-   return el.offsetParent === null;
-  case ':removed':
-   return !el;
-  case ':checked':
-   return el.checked;
-  case ':enabled':
-   return !el.disabled;
-  case ':disabled':
-   return el.disabled;
-  case ':selected':
-   return el.selected;   
-  default:
-   return el.matches(input);
- }
-} else if(typeof input === 'function') {
-// Check each element using the provided predicate.
-return input(el, index, arr);
-} else {
-// Check whether the element exists in the provided collection.
-return $(input).elements.includes(el); 
-}
-}, 'some');
-}
-
-
-
-/**
  * Creates a new jUtils collection by calling the provided function on
  * every element in the current set. The return values of the callback
  * become the new set of elements.
@@ -1323,49 +1282,6 @@ return new jUtils(result);
 
 
 /**
- * Gets the closest ancestor element that matches the given selector or input.
- *
- * Behavior:
- * - Traverses upward through the DOM tree from each matched element.
- * - If `selector` is a string, returns the first ancestor that matches it.
- * - Otherwise, resolves `selector` through `$()` and checks for identity match.
- * - Stops at the first match for each element.
- *
- * @param {string|*} selector - CSS selector or supported jUtils input.
- * @returns {jUtils} A new jUtils instance containing the matched ancestors.
- */
-jUtils.fn.closest = function (selector) {
-const result = [];
-
-this.set(el => {
-// Traverse upward through DOM tree.
-while(el) { 
-
-if (typeof selector === 'string') {
- if(el.matches(selector)) {
-  result.push(el);
-  break; // stop at first match
- }
-} else {
-const items = $(selector).elements.filter(item => item === el);
-
-if(items.length > 0) {
-result.push(items);
-break;    
-} 
-}
-
-// Move to parent element. 
-el = el.parentElement;    
-}    
-}); 
-     
-return new jUtils(result);
-}
-
-
-
-/**
  * Combines the current collection with additional elements or selectors.
  * Accepts arrays, DOM elements, selectors, and jUtils instances.
  * The original collection remains unchanged.
@@ -1440,109 +1356,357 @@ return new jUtils(result);
 
 
 /**
- * Gets the first child element of the first matched element, or filters it by input.
+ * Gets all following sibling elements of each matched element. When a
+ * selector is provided, only siblings that match the selector are
+ * returned. When no selector is given, every following sibling is
+ * included. Duplicate elements are removed.
  *
- * Behavior:
- * - With no arguments, returns the first element child.
- * - With a string selector, returns the first child only if it matches the selector.
- * - With a function, filters the first child through the predicate.
- * - With any other supported input, returns the first child if it matches the resolved elements.
- *
- * @param {string|Function|*} [input] - Optional filter or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
+ * @param {string} [selector] - Optional selector used to filter the
+ *   following siblings. Only siblings that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the unique matching
+ *   following siblings, for chaining.
  */
-jUtils.fn.first = function (input) {
-const result = this.get((el, index, arr) => {
-const child = el.firstElementChild;
+jUtils.fn.nextAll = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
 
-if(arguments.length === 0) return child;
+const result = [];
 
-if(typeof input === 'string' && child.matches(input)) return child;
-
-if(typeof input === 'function') return [].concat(child).filter(input);
-
-return $(input).elements.filter(item => item === child);  
-}); 
-
-return new jUtils(result);       
-}
-
-
-
-/**
- * Gets the last child element of the first matched element, or filters it by input.
- *
- * Behavior:
- * - With no arguments, returns the last element child.
- * - With a string selector, returns the last child only if it matches the selector.
- * - With a function, filters the last child through the predicate.
- * - With any other supported input, returns the last child if it matches the resolved elements.
- *
- * @param {string|Function|*} [input] - Optional filter or selector.
- * @returns {jUtils} A new jUtils instance containing the result.
- */
-jUtils.fn.last = function (input) {
-const result = this.get((el, index, arr) => {
-const child = el.lastElementChild;
-
-if(arguments.length === 0) return child;
-
-if(typeof input === 'string' && child.matches(input)) return child;
-
-if(typeof input === 'function') return [].concat(child).filter(input);
-
-return $(input).elements.filter(item => item === child);  
-}); 
-
-return new jUtils(result);          
-}
-
-
-
-/**
- * Inserts content immediately before each matched element — either an
- * existing element (moved into place) or an HTML string.
- *
- * @param {jUtils|Element|string} input - An element/jUtils instance to insert, or an HTML string.
- * @returns {jUtils} this, for chaining.
- */
-jUtils.fn.before = function (input) {
+// Walk forward through every nextElementSibling of each element in
+// the current set, collecting those that match the selector (or all
+// of them when no selector was given).
 this.set(el => {
-// If input is an actual element (or jUtils-wrapped element), resolve it
-// and move it into position rather than treating it as HTML text.
-if(input instanceof jUtils || (input && input.nodeType === 1)) {
-const target = $(input).get(item => item);
-if(target) el.before(target);
-} else {
-// Otherwise treat input as an HTML string to insert.
-el.insertAdjacentHTML('beforebegin', input);
+el = el.nextElementSibling;
+while (el) {
+if(arguments.length === 0 || targets.includes(el)) {
+result.push(el);
+}
+el = el.nextElementSibling;
 }
 });
-return this;   
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
 }
 
 
 
 /**
- * Inserts content immediately after each matched element — either an
- * existing element (moved into place) or an HTML string.
+ * Gets all preceding sibling elements of each matched element. When a
+ * selector is provided, only siblings that match the selector are
+ * returned. When no selector is given, every preceding sibling is
+ * included. Duplicate elements are removed.
  *
- * @param {jUtils|Element|string} input - An element/jUtils instance to insert, or an HTML string.
- * @returns {jUtils} this, for chaining.
+ * @param {string} [selector] - Optional selector used to filter the
+ *   preceding siblings. Only siblings that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the unique matching
+ *   preceding siblings, for chaining.
  */
-jUtils.fn.after = function (input) {
+jUtils.fn.prevAll = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// Walk backward through every previousElementSibling of each element
+// in the current set, collecting those that match the selector (or
+// all of them when no selector was given).
 this.set(el => {
-// If input is an actual element (or jUtils-wrapped element), resolve it
-// and move it into position rather than treating it as HTML text.
-if(input instanceof jUtils || (input && input.nodeType === 1)) {
-const target = $(input).get(item => item);
-if(target) el.after(target);
-} else {
-// Otherwise treat input as an HTML string to insert.
-el.insertAdjacentHTML('afterend', input);
+el = el.previousElementSibling;
+while (el) {
+if(arguments.length === 0 || targets.includes(el)) {
+result.push(el);
+}
+el = el.previousElementSibling;
 }
 });
-return this;   
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Gets all preceding sibling elements of each matched element until
+ * (but not including) an element that matches the given selector is
+ * reached. Duplicate elements are removed.
+ *
+ * @param {string|Element|jUtils} selector - Selector, element, or
+ *   jUtils object that marks the stopping point.
+ * @returns {jUtils} A new jUtils instance containing the unique
+ *   preceding siblings up to (but not including) the matching element,
+ *   for chaining.
+ */
+jUtils.fn.prevUntil = function (selector) {
+// Collect all elements that match the selector (the stopping points).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// Walk backward through every previousElementSibling of each element
+// in the current set, collecting siblings until a target is hit.
+this.set(el => {
+el = el.previousElementSibling;
+while(el) {
+if(targets.includes(el)) break;
+result.push(el);
+el = el.previousElementSibling;
+}
+});
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Gets all following sibling elements of each matched element until
+ * (but not including) an element that matches the given selector is
+ * reached. Duplicate elements are removed.
+ *
+ * @param {string|Element|jUtils} selector - Selector, element, or
+ *   jUtils object that marks the stopping point.
+ * @returns {jUtils} A new jUtils instance containing the unique
+ *   following siblings up to (but not including) the matching element,
+ *   for chaining.
+ */
+jUtils.fn.nextUntil = function (selector) {
+// Collect all elements that match the selector (the stopping points).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// Walk forward through every nextElementSibling of each element in
+// the current set, collecting siblings until a target is hit.
+this.set(el => {
+el = el.nextElementSibling;
+while(el) {
+if(targets.includes(el)) break;
+result.push(el);
+el = el.nextElementSibling;
+}
+});
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Gets the sibling elements of each matched element. When a selector is
+ * provided, only siblings that match the selector are returned. When no
+ * selector is given, every sibling is included. The element itself is
+ * excluded. Duplicate elements are removed.
+ *
+ * @param {string} [selector] - Optional selector used to filter the
+ *   siblings. Only siblings that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the unique matching
+ *   siblings, for chaining.
+ */
+jUtils.fn.siblings = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// For each element, walk through all children of its parent and keep
+// those that are not the element itself and that match the selector
+// (or all of them when no selector was given).
+this.set(el => {
+const allChildren = Array.from(el.parentElement.children);
+
+while(allChildren.length) {
+const current = allChildren.shift();
+
+if(current !== el && (arguments.length === 0 || targets.includes(current))) {
+result.push(current);
+}
+}
+});
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Gets all ancestor elements of each matched element. When a selector is
+ * provided, only ancestors that match the selector are returned. When no
+ * selector is given, every ancestor is included. Duplicate elements are
+ * removed.
+ *
+ * @param {string} [selector] - Optional selector used to filter the
+ *   ancestors. Only ancestors that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the unique matching
+ *   ancestors, for chaining.
+ */
+jUtils.fn.parents = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// Walk up the parentElement chain of each element in the current set,
+// collecting those that match the selector (or all of them when no
+// selector was given).
+this.set(el => {
+el = el.parentElement;
+while(el) {
+if(arguments.length === 0 || targets.includes(el)) {
+result.push(el);
+}
+el = el.parentElement;
+}
+});
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Gets the closest ancestor of each matched element that matches the
+ * given selector (including the element itself if it matches). Stops
+ * at the first match for each starting element. Duplicate elements are
+ * removed.
+ *
+ * @param {string|Element|jUtils} selector - Selector, element, or
+ *   jUtils object used to identify the closest matching ancestor.
+ * @returns {jUtils} A new jUtils instance containing the unique closest
+ *   matching ancestors, for chaining.
+ */
+jUtils.fn.closest = function (selector) {
+// Collect all elements that match the selector (the potential matches).
+const targets = $(selector).getAll();
+
+const result = [];
+
+// Starting from each element (including itself), walk up the
+// parentElement chain until a match is found, then stop.
+this.set(el => {
+while(el) {
+if(targets.includes(el)) {
+result.push(el);
+break;
+}
+el = el.parentElement;
+}
+});
+
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+}
+
+
+
+/**
+ * Checks whether any element in the current set matches the given
+ * selector or pseudo-selector. Supports common pseudo-classes such as
+ * :visible, :hidden, :checked, :enabled, :disabled, :selected, :focus
+ * and :empty, as well as ordinary selectors.
+ *
+ * @param {string|Element|jUtils} selector - Selector, element, jUtils
+ *   object, or supported pseudo-selector to test against.
+ * @returns {boolean} true if at least one element matches, otherwise false.
+ */
+jUtils.fn.is = function (selector) {
+// Collect all elements that match the selector (used by the default case).
+const targets = $(selector).getAll();
+
+return this.get(el => {
+switch(typeof selector === 'string' && selector.trim()) {
+ case ':visible':
+  return !$(el).is(':hidden');
+ case ':hidden':
+// An element is hidden if it or any of its ancestors has
+// display: none.
+  return this.parents().unwrap().concat(el)
+  .some(item => getComputedStyle(item).display === 'none');
+ case ':checked':
+  return el.checked;
+ case ':enabled':
+  return !el.disabled;
+ case ':disabled':
+  return el.disabled;
+ case ':selected':
+  return el.selected;
+ case ':focus':
+  return el === document.activeElement;
+ case ':empty':
+// Consider an element empty only when it has no child nodes
+// of type Element, Text, or Comment (nodeType < 6).
+  for(const child of el.childNodes) {
+   if(child.nodeType < 6) return false;
+  }
+  return true;
+ default:
+// Ordinary selector / element / jUtils object.
+  return targets.includes(el);
+}
+}, 'some');
+}
+
+
+
+/**
+ * Reduces the current set to its first element.
+ *
+ * @returns {jUtils} A new jUtils instance containing only the first
+ *   element, for chaining.
+ */
+jUtils.fn.first = function () {
+return this.at(0);
+}
+
+
+
+/**
+ * Reduces the current set to its last element.
+ *
+ * @returns {jUtils} A new jUtils instance containing only the last
+ *   element, for chaining.
+ */
+jUtils.fn.last = function () {
+return this.at(-1);
+}
+
+
+
+/**
+ * Inserts the given content immediately before each element in the
+ * current set. Accepts the same argument types as the native
+ * Element.before() method (nodes, strings, etc.).
+ *
+ * @param {...(Node|string)} args - Content to insert before each
+ *   matched element.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.before = function (...args) {
+const targets = $(args).elements;
+this.set(el => el.before(...targets));
+return this;
+}
+
+
+
+/**
+ * Inserts the given content immediately after each element in the
+ * current set. Accepts the same argument types as the native
+ * Element.after() method (nodes, strings, etc.).
+ *
+ * @param {...(Node|string)} args - Content to insert after each
+ *   matched element.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.after = function (...args) {
+const targets = $(args).elements;
+this.set(el => el.after(...targets));
+return this;
 }
 
 
