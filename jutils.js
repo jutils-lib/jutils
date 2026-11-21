@@ -5650,123 +5650,103 @@ return this.elements.every(callback);
 
 
 /**
-  * Gets the child elements of the current collection.
-  *
-  * @param {number|string|Function|jUtils} [input] - Index, selector,
-  * predicate, or element collection used to filter the children.
-  * @returns {jUtils} A new jUtils instance containing the matched children.
-  */
-jUtils.fn.child = function (input) {
-const children = this.get(el => Array.from(el.children), 'map').flat();
+ * Gets the children of each matched element. When a selector is
+ * provided, only children that match the selector are returned. When
+ * no selector is given, every child element is included.
+ *
+ * @param {string} [selector] - Optional selector used to filter the
+ *   child elements. Only children that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the matching
+ *   child elements, for chaining.
+ */
+jUtils.fn.children = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
 
-let result;
+// Flatten the children of every element in the current set, then
+// keep only those that either had no selector or are present in
+// the targets list.
+const children = this.get(el => Array.from(el.children), 'flatMap')
+.filter(child => arguments.length === 0 || targets.includes(child));
 
-if(arguments.length === 0) {
-result = children;  
-} else if(typeof input === 'number') {
-// Support negative index. 
-const len = $.pos(children.length).loose(input);
-result = children[len];    
-} else if(typeof input === 'string') {
-result = children.filter(e => e.matches(input)); 
-} else if(typeof input === 'function') {
-result = children.filter(input);
-} else {
-result = $(input).elements.filter(item => children.includes(item)); 
-}
-
-return new jUtils(result);
-}    
+return new jUtils(children);
+};
 
 
 
 /**
- * Gets the parent elements of the current collection.
+ * Gets the parent element of each matched element. When a selector is
+ * provided, only parents that match the selector are returned. When no
+ * selector is given, every parentElement is included. Duplicate parents
+ * are removed.
  *
- * @param {number|string|Function|jUtils} [input] - Index, selector,
- * predicate, or element collection used to filter the parent elements.
- * @returns {jUtils} A new jUtils instance containing the matched parents.
+ * @param {string} [selector] - Optional selector used to filter the
+ *   parent elements. Only parents that match are kept.
+ * @returns {jUtils} A new jUtils instance containing the unique matching
+ *   parent elements, for chaining.
  */
-jUtils.fn.parent = function (input) {
-const parent = this.get(el => el.parentElement, 'map').flat();
+jUtils.fn.parent = function (selector) {
+// Collect all elements that match the optional selector (used for filtering).
+const targets = $(selector).getAll();
 
-let result;
+// Map each element to its parentElement, then keep only those that
+// either had no selector or are present in the targets list.
+const result = this.get(el => el.parentElement, 'map').filter(item => arguments.length === 0 || targets.includes(item));
 
-if(arguments.length === 0) {
-result = parent; 
-} else if(typeof input === 'number') { 
-// Support negative index.
-const len = $.pos(parent.length).loose(input);
-result = parent[len]; 
-} else if(typeof input === 'string') {
-// Filter parents using a CSS selector.
-result = parent.filter(el => el && el.matches(input));  
-} else if(typeof input === 'function') {
-// Filter parents using a custom predicate.
-result = parent.filter(input);  
-} else {
-// Match the provided elements against the parent collection.
-result = $(input).elements.filter(item => parent.includes(item));    
-}
-
-return new jUtils(result);
-}
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+};
 
 
 
 /**
- * Finds descendant elements within the current collection.
+ * Finds all descendant elements that match the given selector within
+ * each element of the current set. Returns a new jUtils collection
+ * containing the unique matching descendants.
  *
- * @param {string|Function|jUtils|Node} input - CSS selector, filter
- * function, or element collection used to find matching descendants.
- * @returns {jUtils} A new jUtils instance containing the matched descendants.
+ * @param {string|Element|jUtils} selector - Selector, element, or
+ *   jUtils object used to identify the descendants to collect.
+ * @returns {jUtils} A new jUtils instance containing the unique
+ *   matching descendants, for chaining.
  */
-jUtils.fn.find = function (input) {
+jUtils.fn.find = function (selector) {
+// Collect all elements that match the selector (the potential descendants).
+const targets = $(selector).getAll();
+
+// For each element in the current set, keep only the targets that are
+// contained within it, then flatten the results.
 const result = this.get(el => {
-// Find descendants using a CSS selector
-if(typeof input === 'string') {
-return Array.from(el.querySelectorAll(input));  
-} else if(typeof input === 'function') {
-// Find descendants using a custom filter function
-return Array.from(el.querySelectorAll('*')).filter(input);    
-} else {
-// Find matching descendants from the provided elements
-return $(input).elements.filter(item => {
-if(item !== el && item instanceof Node) return el.contains(item);
-});
-} 
-}, 'map').flat();
+return targets.filter(item => el.contains(item));
+}, 'flatMap');
 
-return new jUtils(result);
-}
+// Remove any duplicates and wrap in a new jUtils instance.
+return new jUtils($.unique(...result));
+};
 
 
 
 /**
- * Filters the current collection to elements that contain a matching descendant.
+ * Filters the current set to only those elements that contain at least
+ * one of the elements matched by the given selector. Uses the native
+ * contains() method to test ancestry.
  *
- * @param {string|Function|jUtils|Node} input - CSS selector, predicate,
- * or element collection used to check for matching descendants.
- * @returns {jUtils} A new jUtils instance containing elements that have a match.
+ * @param {string|Element|jUtils} selector - Selector, element, or
+ *   jUtils object whose matched elements are tested for containment.
+ * @returns {jUtils} A new jUtils instance containing only the elements
+ *   that contain one or more of the target elements, for chaining.
  */
-jUtils.fn.has = function (input) {
+jUtils.fn.has = function (selector) {
+// Collect all elements that match the selector (the potential descendants).
+const targets = $(selector).getAll();
+
+// Keep only those elements in the current set that contain at least
+// one of the target elements.
 const result = this.get(el => {
-// Check for a matching descendant using a CSS selector.
-if(typeof input === 'string') {
-if(el.querySelector(input)) return true;
-} else if(typeof input === 'function') {
-// Check descendants using a custom predicate.
-return Array.from(el.querySelectorAll('*')).some(input);
-} else {
-// Check whether the element contains any of the provided elements.
-return $(input).elements.some(item => {
-if(item !== el && item instanceof Node) return el.contains(item);
-});
-}
+return targets.some(item => el.contains(item));
 }, 'filter');
 
 return new jUtils(result);
-}
+};
 
 
 
