@@ -6157,44 +6157,36 @@ return this;
 
 
 /**
- * Gets or sets the outer HTML of each matched element. With no argument,
- * returns the outer HTML (or a previously-set override) for the first
- * matched element. With an argument, replaces each matched element
- * entirely — accepts either an HTML string or another element/selector
- * to replace with.
+ * Inserts the given content as the last child of each element in the
+ * current set. Accepts the same argument types as the native
+ * Element.append() method (nodes, strings, etc.).
  *
- * @param {string|*} [input] - HTML string, or a selector/element to replace with. Omit to get the current outer HTML.
- * @returns {string|jUtils} The outer HTML when getting; this (for chaining) when setting.
+ * @param {...(Node|string)} args - Content to append to each matched
+ *   element.
+ * @returns {jUtils} this, for chaining.
  */
-jUtils.fn.outerHTML = function (input) {
-// No argument — act as a getter.
-if(arguments.length === 0) {
-return this.get(el => {
-// Prefer a previously-set override, since a live element's real
-// outerHTML may differ after replacement (e.g. attributes added by
-// the browser), otherwise fall back to its actual outerHTML.
-return el.$jUtils_outerHTML ?? el.outerHTML;
-});
-}
-
-// Argument given — act as a setter, replacing each matched element.
-this.set(el => {
-if(typeof input === 'string') {
-// Replace with raw HTML, and remember what was set for the getter above.
-el.outerHTML = input;  
-el.$jUtils_outerHTML = input;    
-} else {
-// Resolve input (selector, element, etc.) to a single real element.
-const target = $(input).get(item => item); 
-if(target) {
-// Replace this element with the resolved target element.
-el.replaceWith(target);  
-el.$jUtils_outerHTML = target.outerHTML; 
-}
-}
-});
+jUtils.fn.append = function (...args) {
+const targets = $(args).elements;
+this.set(el => el.append(...targets));
 return this;
-}
+};
+
+
+
+/**
+ * Inserts the given content as the first child of each element in the
+ * current set. Accepts the same argument types as the native
+ * Element.prepend() method (nodes, strings, etc.).
+ *
+ * @param {...(Node|string)} args - Content to prepend to each matched
+ *   element.
+ * @returns {jUtils} this, for chaining.
+ */
+jUtils.fn.prepend = function (...args) {
+const targets = $(args).elements;
+this.set(el => el.prepend(...targets));
+return this;
+};
 
 
 
@@ -6287,32 +6279,6 @@ target.replaceWith(...this.storedElements.map(item => item.target));
 // Clear the stored element references after completing the operation.
 delete this.storedElements;
 return this; 
-}
-
-
-
-/**
- * Appends one or more nodes or strings to each matched element.
- *
- * @param {...Node|string} args - Content to append.
- * @returns {jUtils} The current instance for chaining.
- */
-jUtils.fn.append = function (...args) {
-this.set(el => el.append(...args));
-return this; 
-}
-
-
-
-/**
- * Prepends one or more nodes or strings to each matched element.
- *
- * @param {...Node|string} args - Content to prepend.
- * @returns {jUtils} The current instance for chaining.
- */
-jUtils.fn.prepend = function (...args) {
-this.set(el => el.prepend(...args));
-return this;     
 }
 
 
