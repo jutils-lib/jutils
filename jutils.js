@@ -5575,7 +5575,7 @@ const targets = $(selector).getAll();
 const result = this.get(el => el.parentElement, 'map').filter(item => arguments.length === 0 || targets.includes(item));
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 };
 
 
@@ -5601,7 +5601,7 @@ return targets.filter(item => el.contains(item));
 }, 'flatMap');
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 };
 
 
@@ -5736,7 +5736,7 @@ el = el.nextElementSibling;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5772,7 +5772,7 @@ el = el.previousElementSibling;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5806,7 +5806,7 @@ el = el.previousElementSibling;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5840,7 +5840,7 @@ el = el.nextElementSibling;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5878,7 +5878,7 @@ result.push(current);
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5914,7 +5914,7 @@ el = el.parentElement;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
@@ -5949,7 +5949,7 @@ el = el.parentElement;
 });
 
 // Remove any duplicates and wrap in a new jUtils instance.
-return new jUtils($.unique(...result));
+return new jUtils($.dedupe(...result));
 }
 
 
