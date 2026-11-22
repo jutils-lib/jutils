@@ -1589,36 +1589,6 @@ return Object.is(a, b);
 
 
 /**
- * Returns a new array containing only unique values from the provided arguments.
- *
- * Uniqueness is determined using `$.equals()`, allowing deep comparison of
- * primitives, arrays, objects, and other supported values.
- *
- * @param {...*} args - Values to filter for uniqueness.
- * @returns {Array<*>} A new array containing unique values.
- */
-$.unique = function (...args) {
-const result = [];
-
-// Skip values that already exist in the result.
-outer:
- for(const item of args) {
-  for(const existing of result) {
-   if($.equals(item, existing)) {
-    continue outer;
-   }
-  }
-
-// Store the value if no duplicate was found.
-result.push(item);
-}
-
-return result;
-}
-
-
-
-/**
  * Checks whether a value is even.
  *
  * Behavior:
