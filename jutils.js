@@ -2811,7 +2811,7 @@ Object.assign(result.deep, {
  * @returns {Array} this, for chaining.
  */
  add: function (...args) {
-  result.push(...$.dedupes(...args));
+  result.push(...$.dedupe(...args));
   return this;
  },
   
