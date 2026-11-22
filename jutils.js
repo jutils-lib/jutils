@@ -2761,129 +2761,115 @@ return result.join('');
 
 
 /**
- * Creates a deduplication utility backed by a Set and exposes chainable methods
- * for checking, adding, deleting, removing, and clearing values.
+ * Creates a deduplicated array from the supplied values, using
+ * $.equals() for deep comparison. The returned array is extended with
+ * helper methods for adding, checking, removing and clearing values,
+ * plus a deep namespace that performs the same operations with deep
+ * equality.
  *
- * The utility supports both raw comparison and deep comparison for object-like values
- * using JSON stringification.
- *
- * @param {...any} args - Initial values used to populate the internal unique collection.
- * @returns {Object} A chainable dedupe utility object.
+ * @param {...*} args - Values to include in the deduplicated collection.
+ * @returns {Array} A plain array of unique values, augmented with
+ *   .add(), .has(), .remove(), .clear() and a .deep object containing
+ *   deep-equality variants of those methods.
  */
 $.dedupe = function (...args) {
- // Initialize the unique collection
-let unique = new Set(args);  
+const result = [];
 
-const obj = {
-  get length() {
- return unique.size;
+// Skip values that already exist in the result (deep comparison).
+outer:
+for(const item of args) {
+ for(const existing of result) {
+  if($.equals(item, existing)) {
+   continue outer;
   }
-};
-
-
-obj.add = {
-// Add values using deep comparison for object-like items  
- deep(...values) {
-const arr = [];
-
-values.forEach(item => {
-if(typeof item !== 'object') {
-arr.push(item);
-} else {
-arr.push(...$.unique(...arr, item));
-}
-});
-arr.forEach(item => unique.add(item));
-return this;
- },
- 
- // Add values using raw Set behavior   
- raw(...values) {
-values.forEach(item => unique.add(item));   
-return this;
- }     
-}
-
-
-obj.delete = {
-// Delete values using deep comparison for object-like items  
- deep(...values) {
-const items = Array.from(unique).filter(item => {
-return values.some(v => !$.equals(v, item)); 
-});
-
-unique = new Set(items);
-return this;
- },
- 
-// Delete values using raw Set behavior   
- raw(...values) {
-values.forEach(item => unique.delete(item));
-return this;   
- }     
-}
-
-
-obj.has = {
-// Check whether a value exists using deep comparison for object-like items
- deep(value) {
-if(typeof value !== 'object') {
-return unique.has(value);      
-} else {
-return Array.from(unique).some(item => $.equals(item, value));
-} 
- },
- 
-// Check whether a value exists using raw Set behavior    
- raw(value) {
-return unique.has(value);  
- }    
-}
-
-
-// Clear all values from the collection
-obj.clear = function () {
-unique.clear();
-return this; 
-}
-
-
-// Return a cloned array of all unique values 
-obj.all = function () {
-return $.clone(Array.from(unique));
-}
-
-
-obj.remove = {
-// Remove values at the specified indexes  
- at(index = []) {
-index = [].concat(index);
-const filtered = Array.from(unique).filter((_, i) => !index.includes(i));  
-unique = new Set(filtered);
-return this;
- },
- 
-// Remove a range of values starting at `start` for `count` items   
- range(start, count) {
-const items = Array.from(unique);
-items.splice(start, count);
-unique = new Set(items); 
-return this;
- },
- 
-// Remove values that match a predicate function   
- where(fn) {
-if(typeof fn !== 'function') $.error(`"${fn}" is not a function at argument 1`);
-
-const filtered = Array.from(unique).filter((...args) => {
-  if(!fn(...args)) return true;
-  else return false;
-});
-unique = new Set(filtered);    
  }
+
+// Store the value if no duplicate was found.
+result.push(item);
 }
 
-return obj;     
+
+/**
+   * Adds one or more values to the collection (shallow uniqueness via Set).
+   * @returns {Array} this, for chaining.
+   */
+result.add = function (...args) {
+const data = Array.from(new Set(args));
+result.push(...data);
+return this;
+}
+
+
+/**
+   * Checks whether the collection contains the given value (shallow).
+   * @returns {boolean}
+   */
+result.has = function (value) {
+return result.includes(value); 
+}
+
+
+/**
+   * Removes one or more values from the collection (shallow comparison).
+   * @returns {Array} this, for chaining.
+   */
+result.remove = function (...args) {
+const data = result.filter(item => !args.includes(item));
+
+result.length = 0;
+
+result.push(...data);
+return this;
+}
+
+
+/**
+   * Removes every value from the collection.
+   * @returns {Array} this, for chaining.
+   */
+result.clear = function () {
+result.length = 0;
+return this;  
+}
+
+
+// Deep-equality variants of the helper methods.
+result.deep = {};
+Object.assign(result.deep, {
+/**
+ * Adds values using deep deduplication ($.dedupe).
+ * @returns {Array} this, for chaining.
+ */
+ add: function (...args) {
+  result.push(...$.dedupes(...args));
+  return this;
+ },
+  
+/**
+  * Checks for the presence of a value using deep equality.
+  * @returns {boolean}
+  */
+ has: function (value) {
+  return result.some(item => $.equals(item, value));
+ },
+ 
+/**
+ * Removes values using deep equality comparison.
+ * @returns {Array} this, for chaining.
+ */
+ remove: function (...args) {
+  const data = result.filter(item => {   
+   return args.some(v => !$.equals(v, item));
+  }); 
+  
+  result.length = 0;
+    
+  result.push(...data);
+  return this;
+ }  
+});
+
+return result;
 }
 
 
